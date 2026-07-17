@@ -4,10 +4,76 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+enum ReviewStatus {
+  QUEUED
+  PROCESSING
+  DONE
+  FAILED
+}
+
+model Repository {
+  id             String        @id @default(cuid())
+  githubRepoId   BigInt        @unique
+  owner          String
+  name           String
+  installationId BigInt
+
+  pullRequests   PullRequest[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model PullRequest {
+  id          String @id @default(cuid())
+
+  repositoryId String
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  number      Int
+  headSha     String
+  status      String
+
+  reviewJobs  ReviewJob[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([repositoryId, number])
+}
+
+model ReviewJob {
+  id            String @id @default(cuid())
+
+  pullRequestId String
+  pullRequest   PullRequest @relation(fields: [pullRequestId], references: [id], onDelete: Cascade)
+
+  status        ReviewStatus @default(QUEUED)
+
+  comments      ReviewComment[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model ReviewComment {
+  id            String @id @default(cuid())
+
+  reviewJobId   String
+  reviewJob     ReviewJob @relation(fields: [reviewJobId], references: [id], onDelete: Cascade)
+
+  filePath      String
+  lineNumber    Int
+  body          String
+
+  posted        Boolean @default(false)
+
+  createdAt     DateTime @default(now())
 }
