@@ -1,23 +1,25 @@
-import express from 'express';
+import express from "express";
+import githubRoutes from "./routes/github.routes";
+import dotenv from "dotenv";
+
+dotenv.config();
 const app = express();
+
+app.use("/webhooks", express.raw({type: "application/json"}) , githubRoutes);
 app.use(express.json());
 
-// app.use('/api', verifyAuth); // ALl '/api' routes  are protected 
-console.log("Starting the backend server...");
-app.get('/', (req, res) => {
-  console.log("Hello from the backend server!");
-  res.send('Hello from the backend server!');
+app.get("/", (req, res) => {
+  res.send("Home");
 });
-app.post("/webhooks/github", (req, res) => {
-  console.log("Webhook received!");
-  console.log(req.headers);
-  console.log(req.body);
-
-  res.sendStatus(200);
+app.get("/health", (req, res) => {
+  res.send("OK");
+});
+app.use((req, res, next) => {
+  console.log(">>>", req.method, req.url);
+  next();
 });
 
-const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+app.listen(5000, () => {
+  console.log("Listening on 5000");
 });
