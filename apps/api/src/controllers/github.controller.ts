@@ -25,7 +25,7 @@ export const handleWebhook = async (req: Request, res: Response) => {
   // verify the signature
   //reject if invalid
   console.log("STARTING WEBHOOK HANDLER");
-  console.log("Secret:", process.env.GITHUB_WEBHOOK_SECRET);
+  console.log("Secret:", process.env.WEBHOOK_SECRET);
   const signature = req.headers["x-hub-signature-256"];
   if (typeof signature !== "string") {
     return res.status(401).send("Unauthorized: No signature provided");
