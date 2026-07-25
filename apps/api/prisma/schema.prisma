@@ -11,69 +11,54 @@ datasource db {
   provider = "postgresql"
 }
 
-enum ReviewStatus {
-  QUEUED
-  PROCESSING
-  DONE
-  FAILED
+enum PullRequestStatus {
+  pending
+  processing
+  completed
+  failed
+}
+
+enum ReviewJobStatus {
+  queued
+  running
+  completed
+  failed
 }
 
 model Repository {
-  id             String        @id @default(cuid())
-  githubRepoId   BigInt        @unique
-  owner          String
-  name           String
-  installationId BigInt
+  id          Int           @id @default(autoincrement())
+  githubId    BigInt        @unique
+  name        String
+  fullName    String        @unique
+  owner       String
 
-  pullRequests   PullRequest[]
-
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  pullRequests PullRequest[]
 }
 
 model PullRequest {
-  id          String @id @default(cuid())
+  id            Int                @id @default(autoincrement())
+  githubPrId    BigInt             @unique
+  number        Int
+  title         String
+  headSha       String
+  status        PullRequestStatus
+  action        String
 
-  repositoryId String
-  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  repositoryId  Int
+  repository    Repository         @relation(fields: [repositoryId], references: [id])
 
-  number      Int
-  headSha     String
-  status      String
-
-  reviewJobs  ReviewJob[]
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@unique([repositoryId, number])
-}
-
-model ReviewJob {
-  id            String @id @default(cuid())
-
-  pullRequestId String
-  pullRequest   PullRequest @relation(fields: [pullRequestId], references: [id], onDelete: Cascade)
-
-  status        ReviewStatus @default(QUEUED)
-
-  comments      ReviewComment[]
+  reviewJobs    ReviewJob[]
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
 
-model ReviewComment {
-  id            String @id @default(cuid())
+model ReviewJob {
+  id             Int               @id @default(autoincrement())
 
-  reviewJobId   String
-  reviewJob     ReviewJob @relation(fields: [reviewJobId], references: [id], onDelete: Cascade)
+  pullRequestId  Int
+  pullRequest    PullRequest       @relation(fields: [pullRequestId], references: [id])
 
-  filePath      String
-  lineNumber    Int
-  body          String
-
-  posted        Boolean @default(false)
-
-  createdAt     DateTime @default(now())
+  status         ReviewJobStatus
+  createdAt      DateTime @default(now())
 }

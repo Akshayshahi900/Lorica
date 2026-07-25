@@ -19,7 +19,9 @@ function verifySignature(
 
   return crypto.timingSafeEqual(sigBuffer, expectedBuffer);
 }
-
+function insertIntoDatabase(payload: any) {
+    
+}
 export const handleWebhook = async (req: Request, res: Response) => {
   // Handle the webhook payload here
   // verify the signature
@@ -39,18 +41,26 @@ export const handleWebhook = async (req: Request, res: Response) => {
   if (!isValid) {
     return res.status(401).send("Invalid Signature");
   }
+  //insert into database
+  insertIntoDatabase(req.body);
   // signature is valid , now parse the JSON
   const payload = JSON.parse(req.body.toString("utf-8"));
   const event = req.header("X-Github-Event");
 
-  if(event !== "pull_request"){
+  if (event !== "pull_request") {
     return res.status(200).send("Ignoring non pull_request event");
   }
   const action = payload.action;
-  if(action !== "opened" && action !== "reopened" && action !== "synchronize"){
-    return res.status(200).send("Ignoring non opened/reopened/synchronize action");
+  if (
+    action !== "opened" &&
+    action !== "reopened" &&
+    action !== "synchronize"
+  ) {
+    return res
+      .status(200)
+      .send("Ignoring non opened/reopened/synchronize action");
   }
-console.log(`Processing PR ${action}`);
-console.log(payload.pull_request.title);
-    res.status(200).send("Webhook received");
+  console.log(`Processing PR ${action}`);
+  console.log(payload.pull_request.title);
+  res.status(200).send("Webhook received");
 };
