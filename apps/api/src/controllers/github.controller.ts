@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import crypto from "crypto";
-
+import { prisma } from "../lib/prisma";
+import { ReviewJobStatus , PullRequestStatus } from "@prisma/client";
 function verifySignature(
   payload: Buffer,
   signature: string,
@@ -19,8 +20,55 @@ function verifySignature(
 
   return crypto.timingSafeEqual(sigBuffer, expectedBuffer);
 }
-function insertIntoDatabase(payload: any) {
-    
+
+
+async function insertIntoDatabase(payload: any) {
+  // 1. Create or fetch repository
+  const repository = await prisma.repository.upsert({
+    where: {
+      githubId: BigInt(payload.repository.id),
+    },
+    update: {}, // nothing to update for now
+    create: {
+      githubId: BigInt(payload.repository.id),
+      name: payload.repository.name,
+      fullName: payload.repository.full_name,
+      owner: payload.repository.owner.login,
+    },
+  });
+
+  // 2. Create or update Pull Request
+  const pullRequest = await prisma.pullRequest.upsert({
+    where: {
+      githubPrId: BigInt(payload.pull_request.id),
+    },
+    update: {
+      title: payload.pull_request.title,
+      headSha: payload.pull_request.head.sha,
+      action: payload.action,
+      status:,
+    },
+    create: {
+      githubPrId: BigInt(payload.pull_request.id),
+      number: payload.pull_request.number,
+      title: payload.pull_request.title,
+      headSha: payload.pull_request.head.sha,
+      action: payload.action,
+      status: "pending",
+
+      repositoryId: repository.id,
+    },
+  });
+
+  // 3. Queue a review job
+  await prisma.reviewJob.create({
+    data: {
+      pullRequestId: pullRequest.id,
+      status: ReviewJobStatus.queued,
+    },
+  });
+
+  console.log("Inserted successfully!");
 }
 export const handleWebhook = async (req: Request, res: Response) => {
   // Handle the webhook payload here
@@ -42,7 +90,9 @@ export const handleWebhook = async (req: Request, res: Response) => {
     return res.status(401).send("Invalid Signature");
   }
   //insert into database
-  insertIntoDatabase(req.body);
+  const payload = JSON.parse(req.body.toString("utf-8"));
+
+  await insertIntoDatabase(payload);
   // signature is valid , now parse the JSON
   const payload = JSON.parse(req.body.toString("utf-8"));
   const event = req.header("X-Github-Event");
