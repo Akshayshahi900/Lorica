@@ -1,7 +1,8 @@
 import { Request, Response } from "express";
 import crypto from "crypto";
 import { prisma } from "../lib/prisma";
-import { ReviewJobStatus , PullRequestStatus } from "@prisma/client";
+import { PullRequestStatus, ReviewJobStatus } from "@prisma/client";
+
 function verifySignature(
   payload: Buffer,
   signature: string,
@@ -21,14 +22,17 @@ function verifySignature(
   return crypto.timingSafeEqual(sigBuffer, expectedBuffer);
 }
 
-
 async function insertIntoDatabase(payload: any) {
-  // 1. Create or fetch repository
+  // Repository
   const repository = await prisma.repository.upsert({
     where: {
       githubId: BigInt(payload.repository.id),
     },
-    update: {}, // nothing to update for now
+    update: {
+      name: payload.repository.name,
+      fullName: payload.repository.full_name,
+      owner: payload.repository.owner.login,
+    },
     create: {
       githubId: BigInt(payload.repository.id),
       name: payload.repository.name,
@@ -37,7 +41,7 @@ async function insertIntoDatabase(payload: any) {
     },
   });
 
-  // 2. Create or update Pull Request
+  // Pull Request
   const pullRequest = await prisma.pullRequest.upsert({
     where: {
       githubPrId: BigInt(payload.pull_request.id),
@@ -46,7 +50,7 @@ async function insertIntoDatabase(payload: any) {
       title: payload.pull_request.title,
       headSha: payload.pull_request.head.sha,
       action: payload.action,
-      status:,
+      status: PullRequestStatus.pending,
     },
     create: {
       githubPrId: BigInt(payload.pull_request.id),
@@ -54,13 +58,12 @@ async function insertIntoDatabase(payload: any) {
       title: payload.pull_request.title,
       headSha: payload.pull_request.head.sha,
       action: payload.action,
-      status: "pending",
-
+      status: PullRequestStatus.pending,
       repositoryId: repository.id,
     },
   });
 
-  // 3. Queue a review job
+  // Review Job
   await prisma.reviewJob.create({
     data: {
       pullRequestId: pullRequest.id,
@@ -70,47 +73,57 @@ async function insertIntoDatabase(payload: any) {
 
   console.log("Inserted successfully!");
 }
+
 export const handleWebhook = async (req: Request, res: Response) => {
-  // Handle the webhook payload here
-  // verify the signature
-  //reject if invalid
-  console.log("STARTING WEBHOOK HANDLER");
-  console.log("Secret:", process.env.WEBHOOK_SECRET);
-  const signature = req.headers["x-hub-signature-256"];
-  if (typeof signature !== "string") {
-    return res.status(401).send("Unauthorized: No signature provided");
-  }
-  const isValid = verifySignature(
-    req.body,
-    signature,
-    process.env.WEBHOOK_SECRET!,
-  );
+  try {
+    console.log("STARTING WEBHOOK HANDLER");
 
-  if (!isValid) {
-    return res.status(401).send("Invalid Signature");
-  }
-  //insert into database
-  const payload = JSON.parse(req.body.toString("utf-8"));
+    const signature = req.headers["x-hub-signature-256"];
 
-  await insertIntoDatabase(payload);
-  // signature is valid , now parse the JSON
-  const payload = JSON.parse(req.body.toString("utf-8"));
-  const event = req.header("X-Github-Event");
+    if (typeof signature !== "string") {
+      return res.status(401).send("Unauthorized: No signature provided");
+    }
 
-  if (event !== "pull_request") {
-    return res.status(200).send("Ignoring non pull_request event");
+    const secret = process.env.WEBHOOK_SECRET;
+
+    if (!secret) {
+      return res.status(500).send("Webhook secret not configured");
+    }
+
+    const isValid = verifySignature(req.body, signature, secret);
+
+    if (!isValid) {
+      return res.status(401).send("Invalid signature");
+    }
+
+    const payload = JSON.parse(req.body.toString("utf8"));
+
+    const event = req.header("X-Github-Event");
+
+    if (event !== "pull_request") {
+      return res.status(200).send("Ignoring non pull_request event");
+    }
+
+    const action = payload.action;
+
+    if (
+      action !== "opened" &&
+      action !== "reopened" &&
+      action !== "synchronize"
+    ) {
+      return res
+        .status(200)
+        .send("Ignoring non opened/reopened/synchronize action");
+    }
+
+    console.log(`Processing PR ${action}`);
+    console.log(payload.pull_request.title);
+
+    await insertIntoDatabase(payload);
+
+    return res.status(200).send("Webhook received");
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send("Internal Server Error");
   }
-  const action = payload.action;
-  if (
-    action !== "opened" &&
-    action !== "reopened" &&
-    action !== "synchronize"
-  ) {
-    return res
-      .status(200)
-      .send("Ignoring non opened/reopened/synchronize action");
-  }
-  console.log(`Processing PR ${action}`);
-  console.log(payload.pull_request.title);
-  res.status(200).send("Webhook received");
 };
