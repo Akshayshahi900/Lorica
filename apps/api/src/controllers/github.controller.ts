@@ -76,6 +76,7 @@ async function insertIntoDatabase(payload: any) {
 
 export const handleWebhook = async (req: Request, res: Response) => {
   try {
+    console.log("DATABASE URL:", process.env.DATABASE_URL);
     console.log("STARTING WEBHOOK HANDLER");
 
     const signature = req.headers["x-hub-signature-256"];
