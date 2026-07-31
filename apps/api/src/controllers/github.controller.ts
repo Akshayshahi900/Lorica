@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import crypto from "crypto";
 import { prisma } from "../lib/prisma";
 import { PullRequestStatus, ReviewJobStatus } from "@prisma/client";
+import { reviewQueue } from "../queue";
 
 function verifySignature(
   payload: Buffer,
@@ -64,12 +65,16 @@ async function insertIntoDatabase(payload: any) {
   });
 
   // Review Job
-  await prisma.reviewJob.create({
+ const reviewJob = await prisma.reviewJob.create({
     data: {
       pullRequestId: pullRequest.id,
       status: ReviewJobStatus.queued,
     },
   });
+
+  await reviewQueue.add('review', {reviewJobId:reviewJob.id});
+
+  
 
   console.log("Inserted successfully!");
 }
