@@ -19,12 +19,12 @@ services:
   redis:
     image: redis:7-alpine
     container_name: lorica-redis
+    restart: unless-stopped
     ports:
-     -"6379:6379"
+      - "6379:6379"
     volumes:
-      -redis-data:/data
+      - redis-data:/data
     command: redis-server --appendonly yes
-    
 
 volumes:
   pgdata:

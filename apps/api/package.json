@@ -5,8 +5,10 @@
   "main": "index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
+    "dev:worker": "tsx watch  src/services/worker/worker.ts",
     "build": "tsc",
     "start": "node dist/index.js",
+    "start:worker": "node dist/worker.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio"
