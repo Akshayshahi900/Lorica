@@ -1,9 +1,15 @@
 import {Worker , Job} from 'bullmq';
 import {connection , ReviewJobPayload} from '../../queue';
+import { prisma } from '../../lib/prisma';
 
 const worker = new Worker<ReviewJobPayload>(
     'review',
     async(job:Job<ReviewJobPayload>) =>{
+
+        const reviewJob = await prisma.reviewJob.findUniqueOrThrow({
+            where: {id: job.data.reviewJobId},
+        })
+        
         console.log(`[worker] picked up job ${job.id}`, job.data);
         //TODO:fetch ReviewJob from postgres , run diff parsing parsing + RAg + Claude review
     },

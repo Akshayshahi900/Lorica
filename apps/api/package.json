@@ -17,6 +17,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@octokit/auth-app": "^8.2.0",
+    "@octokit/rest": "^22.0.1",
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.8.0",
     "bullmq": "^6.0.1",
@@ -24,6 +26,7 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "ioredis": "^5.11.1",
+    "parse-diff": "^0.12.0",
     "pg": "^8.22.0"
   },
   "devDependencies": {
