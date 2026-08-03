@@ -1,64 +1,67 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+  // This is your Prisma schema file,
+  // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
+  // Get a free hosted Postgres database in seconds: `npx create-db`
 
-generator client {
-  provider = "prisma-client-js"
-}
+  generator client {
+    provider = "prisma-client-js"
+  }
 
-datasource db {
-  provider = "postgresql"
-}
+  datasource db {
+    provider = "postgresql"
+  }
 
-enum PullRequestStatus {
-  pending
-  processing
-  completed
-  failed
-}
+  enum PullRequestStatus {
+    pending
+    processing
+    completed
+    failed
+  }
 
-enum ReviewJobStatus {
-  queued
-  running
-  completed
-  failed
-}
+  enum ReviewJobStatus {
+    queued
+    running
+    completed
+    failed
+  }
 
-model Repository {
-  id          Int           @id @default(autoincrement())
-  githubId    BigInt        @unique
-  name        String
-  fullName    String        @unique
-  owner       String
+  model Repository {
+    id          Int           @id @default(autoincrement())
+    githubId    BigInt        @unique
+    name        String
+    fullName    String        @unique
+    owner       String
 
-  pullRequests PullRequest[]
-}
+    pullRequests PullRequest[]
+  }
 
-model PullRequest {
-  id            Int                @id @default(autoincrement())
-  githubPrId    BigInt             @unique
-  number        Int
-  title         String
-  headSha       String
-  status        PullRequestStatus
-  action        String
+  model PullRequest {
+    id            Int                @id @default(autoincrement())
+    githubPrId    BigInt             @unique
+    prNumber        Int       // pr number
+    repoName         String    // reponame
+    headSha       String
+    status        PullRequestStatus
+    action        String
 
-  repositoryId  Int
-  repository    Repository         @relation(fields: [repositoryId], references: [id])
 
-  reviewJobs    ReviewJob[]
+    installationId   Int             // installation.id
+    repoOwner        String              // repo.owner.login
+    repositoryId  Int                 
+    repository    Repository         @relation(fields: [repositoryId], references: [id])
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-}
+    reviewJobs    ReviewJob[]
 
-model ReviewJob {
-  id             Int               @id @default(autoincrement())
+    createdAt     DateTime @default(now())
+    updatedAt     DateTime @updatedAt
+  }
 
-  pullRequestId  Int
-  pullRequest    PullRequest       @relation(fields: [pullRequestId], references: [id])
+  model ReviewJob {
+    id             Int               @id @default(autoincrement())
 
-  status         ReviewJobStatus
-  createdAt      DateTime @default(now())
-}
+    pullRequestId  Int
+    pullRequest    PullRequest       @relation(fields: [pullRequestId], references: [id])
+
+    status         ReviewJobStatus
+    createdAt      DateTime @default(now())
+  }

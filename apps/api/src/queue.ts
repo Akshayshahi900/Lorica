@@ -6,7 +6,7 @@ export const connection = new IORedis(process.env.REDIS_URL || 'redis://localhos
 });
 
 export interface ReviewJobPayload{
-    reviewJobId:string;
+    reviewJobId:number;
 }
 
 export const reviewQueue = new Queue<ReviewJobPayload>('review', {connection, 

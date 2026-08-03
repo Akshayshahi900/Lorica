@@ -1,6 +1,8 @@
 import {Worker , Job} from 'bullmq';
 import {connection , ReviewJobPayload} from '../../queue';
 import { prisma } from '../../lib/prisma';
+import { fetchPrFiles } from '../../github/fetchDiff';
+import { parseFileDiffs } from '../../github/parseDiff';
 
 const worker = new Worker<ReviewJobPayload>(
     'review',
@@ -10,8 +12,27 @@ const worker = new Worker<ReviewJobPayload>(
             where: {id: job.data.reviewJobId},
         })
         
-        console.log(`[worker] picked up job ${job.id}`, job.data);
-        //TODO:fetch ReviewJob from postgres , run diff parsing parsing + RAg + Claude review
+        const pullRequestId = reviewJob.pullRequestId;
+        
+        const pullrequest = await prisma.pullRequest.findUnique({
+            where: {githubPrId:pullRequestId}
+        });
+        
+        const {repoName , installationId , repoOwner , prNumber  } = pullrequest;
+
+
+
+        const files = await fetchPrFiles(
+            installationId,
+            repoOwner,
+            repoName,
+            prNumber
+        );
+
+        const parseDiffs = parseFileDiffs(files);
+        console.log(`[worker] parsed  ${parseDiffs.length} files for job ${job.id}   ----- ${parseDiffs}`);
+
+        //next step:rag + claude review genreation on parsedDiffs 
     },
     {
         connection, concurrency:2
