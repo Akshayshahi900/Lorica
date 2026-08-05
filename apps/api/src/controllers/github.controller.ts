@@ -48,15 +48,17 @@ async function insertIntoDatabase(payload: any) {
       githubPrId: BigInt(payload.pull_request.id),
     },
     update: {
-      title: payload.pull_request.title,
+      repoName: payload.repository.name,
       headSha: payload.pull_request.head.sha,
       action: payload.action,
       status: PullRequestStatus.pending,
     },
     create: {
       githubPrId: BigInt(payload.pull_request.id),
-      number: payload.pull_request.number,
-      title: payload.pull_request.title,
+      installationId: payload.installation.id,
+      repoOwner: payload.repository.owner.login,
+      prNumber: payload.pull_request.number,
+      repoName: payload.repository.name,
       headSha: payload.pull_request.head.sha,
       action: payload.action,
       status: PullRequestStatus.pending,
@@ -65,16 +67,14 @@ async function insertIntoDatabase(payload: any) {
   });
 
   // Review Job
- const reviewJob = await prisma.reviewJob.create({
+  const reviewJob = await prisma.reviewJob.create({
     data: {
       pullRequestId: pullRequest.id,
       status: ReviewJobStatus.queued,
     },
   });
 
-  await reviewQueue.add('review', {reviewJobId:reviewJob.id});
-
-  
+  await reviewQueue.add("review", { reviewJobId: reviewJob.id });
 
   console.log("Inserted successfully!");
 }
