@@ -37,8 +37,9 @@ const worker = new Worker<ReviewJobPayload>(
 
     //next step:rag + claude review genreation on parsedDiffs
 
-    const result = callLLM(parseDiffs.toString() , promptTemplate);
-    console.log(result);
+    console.log("Printing the LLM RESULT to the CONSOLE");
+    const result = await callLLM(parseDiffs.toString() , promptTemplate);
+    // console.log(result);
   },
   {
     connection,
