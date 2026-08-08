@@ -5,6 +5,8 @@ import { connection, ReviewJobPayload } from "../../queue";
 import { prisma } from "../../lib/prisma";
 import { fetchPrFiles } from "../../github/fetchDiff";
 import { parseFileDiffs } from "../../github/parseDiff";
+import { callLLM } from "../../intelligence/llm";
+import { promptTemplate } from "../../intelligence/prompt";
 
 const worker = new Worker<ReviewJobPayload>(
   "review",
@@ -34,6 +36,9 @@ const worker = new Worker<ReviewJobPayload>(
     console.dir(parseDiffs, { depth: null });
 
     //next step:rag + claude review genreation on parsedDiffs
+
+    const result = callLLM(parseDiffs.toString() , promptTemplate);
+    console.log(result);
   },
   {
     connection,
