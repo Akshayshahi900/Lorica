@@ -5,8 +5,8 @@ import { connection, ReviewJobPayload } from "../../queue";
 import { prisma } from "../../lib/prisma";
 import { fetchPrFiles } from "../../github/fetchDiff";
 import { parseFileDiffs } from "../../github/parseDiff";
-import { callLLM } from "../../intelligence/llm";
-import { promptTemplate } from "../../intelligence/prompt";
+import { callLLM } from "../../llm/llm";
+import { promptTemplate } from "../../llm/prompt";
 
 const worker = new Worker<ReviewJobPayload>(
   "review",
