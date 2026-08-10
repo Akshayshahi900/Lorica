@@ -33,13 +33,36 @@ const worker = new Worker<ReviewJobPayload>(
     const parseDiffs = parseFileDiffs(files);
     console.log(`[worker] parsed ${parseDiffs.length} files for job ${job.id}`);
 
-    console.dir(parseDiffs, { depth: null });
+    // console.dir(parseDiffs, { depth: null });
 
-    //next step:rag + claude review genreation on parsedDiffs
+    // //next step:rag + claude review genreation on parsedDiffs
 
-    console.log("Printing the LLM RESULT to the CONSOLE");
-    const result = await callLLM(parseDiffs.toString() , promptTemplate);
+    // const diffText = JSON.stringify(parseDiffs, null, 2);
+
+    // console.log("========== DIFF SENT TO LLM ==========");
+    // console.log(diffText);
+    // console.log("=======================================");
+
+    // const result = await callLLM(diffText, promptTemplate);
+    // console.log("========================Printing the LLM RESULT to the CONSOLE=====================");
     // console.log(result);
+    const diffText = files
+      .filter((f) => f.patch)
+      .map((f) => {
+        return `diff --git a/${f.filePath} b/${f.filePath}
+${f.patch}`;
+      })
+      .join("\n\n");
+
+    console.log("========== DIFF SENT TO LLM ==========");
+    console.log(diffText);
+    console.log("======================================");
+
+    const result = await callLLM(diffText, promptTemplate);
+    console.log(
+      "========================Printing the LLM RESULT to the CONSOLE=====================",
+    );
+    console.log(result);
   },
   {
     connection,
