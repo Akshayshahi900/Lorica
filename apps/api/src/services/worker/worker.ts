@@ -3,10 +3,13 @@ dotenv.config();
 import { Worker, Job } from "bullmq";
 import { connection, ReviewJobPayload } from "../../queue";
 import { prisma } from "../../lib/prisma";
-import { fetchPrFiles } from "../../github/fetchDiff";
-import { parseFileDiffs } from "../../github/parseDiff";
+import { fetchPrFiles } from "../../pullrequests/fetchDiff";
+import { parseFileDiffs } from "../../pullrequests/parseDiff";
 import { callLLM } from "../../llm/llm";
 import { promptTemplate } from "../../llm/prompt";
+import { renderReview } from "../../github/commentBuilder";
+import { postPRComment } from "../../github/postComment";
+import { getInstallationOctokit } from "../../pullrequests/octokit";
 
 const worker = new Worker<ReviewJobPayload>(
   "review",
@@ -23,6 +26,8 @@ const worker = new Worker<ReviewJobPayload>(
 
     const { repoName, installationId, repoOwner, prNumber } = pullrequest;
 
+    const octokit = await getInstallationOctokit(installationId);
+
     const files = await fetchPrFiles(
       installationId,
       repoOwner,
@@ -30,22 +35,6 @@ const worker = new Worker<ReviewJobPayload>(
       prNumber,
     );
 
-    const parseDiffs = parseFileDiffs(files);
-    console.log(`[worker] parsed ${parseDiffs.length} files for job ${job.id}`);
-
-    // console.dir(parseDiffs, { depth: null });
-
-    // //next step:rag + claude review genreation on parsedDiffs
-
-    // const diffText = JSON.stringify(parseDiffs, null, 2);
-
-    // console.log("========== DIFF SENT TO LLM ==========");
-    // console.log(diffText);
-    // console.log("=======================================");
-
-    // const result = await callLLM(diffText, promptTemplate);
-    // console.log("========================Printing the LLM RESULT to the CONSOLE=====================");
-    // console.log(result);
     const diffText = files
       .filter((f) => f.patch)
       .map((f) => {
@@ -59,10 +48,15 @@ ${f.patch}`;
     console.log("======================================");
 
     const result = await callLLM(diffText, promptTemplate);
-    console.log(
-      "========================Printing the LLM RESULT to the CONSOLE=====================",
-    );
-    console.log(result);
+
+    const comment = renderReview(result);
+
+    await postPRComment(octokit, {
+      owner: repoOwner,
+      repo: repoName,
+      prNumber,
+      body: comment,
+    });
   },
   {
     connection,

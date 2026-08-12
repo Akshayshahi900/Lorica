@@ -1,6 +1,6 @@
 export async function callLLM(
   diffText: string,
-  promptTemplate: string
+  promptTemplate: string,
 ): Promise<string> {
   const response = await fetch("http://localhost:11434/api/chat", {
     method: "POST",
@@ -17,7 +17,9 @@ export async function callLLM(
         },
         {
           role: "user",
-          content: `Review this Git diff:
+          content: `Here is the complete Git diff of the pull request.
+
+Review ONLY the changes shown in this diff  
 
 \`\`\`diff
 ${diffText}
@@ -32,7 +34,7 @@ ${diffText}
 
   if (!response.ok) {
     throw new Error(
-      `Ollama request failed: ${response.status} ${await response.text()}`
+      `Ollama request failed: ${response.status} ${await response.text()}`,
     );
   }
 

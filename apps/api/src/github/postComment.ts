@@ -1,37 +1,26 @@
-export async function postPRComment({
-  owner,
-  repo,
-  prNumber,
-  body,
-  token,
-}: {
-  owner: string;
-  repo: string;
-  prNumber: number;
-  body: string;
-  token: string;
-}) {
-  const response = await fetch(
-    `https://api.github.com/repos/${owner}/${repo}/issues/${prNumber}/comments`,
-    {
-      method: "POST",
-      headers: {
-        Accept: "application/vnd.github+json",
-        Authorization: `Bearer ${token}`,
-        "X-GitHub-Api-Version": "2026-03-10",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ body }),
-    }
-  );
+import { Octokit } from "@octokit/rest";
 
-  if (!response.ok) {
-    const error = await response.text();
 
-    throw new Error(
-      `GitHub comment failed: ${response.status} ${error}`
-    );
+
+export async function postPRComment(
+  octokit:Octokit,{
+    owner , 
+    repo, 
+    prNumber,
+    body,
+  }:{
+    owner :string;
+    repo:string;
+    prNumber:number;
+    body:string;
   }
+){
+  const response = await octokit.issues.createComment({
+    owner,
+    repo, 
+    issue_number:prNumber,
+    body,
+  });
 
-  return response.json();
+  return response.data; 
 }

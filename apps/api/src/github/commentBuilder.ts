@@ -1,3 +1,4 @@
+import { ReviewResult } from "../../../../types/types";
 export function renderReview(result: ReviewResult): string {
   if (result.reviews.length === 0) {
     return `<!-- lorica-review -->
