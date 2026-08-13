@@ -1,5 +1,11 @@
-import { ReviewResult } from "../../../../types/types";
+import { zodToJsonSchema } from "zod-to-json-schema";
+import {
+  ReviewResult,
+  ReviewResultSchema,
+} from "../../../../types/types";
 
+const reviewResultJsonSchema =
+  zodToJsonSchema(ReviewResultSchema);
 export async function callLLM(
   diffText: string,
   promptTemplate: string,
@@ -30,7 +36,10 @@ ${diffText}
       ],
 
       stream: false,
-      format: "json",
+      format: reviewResultJsonSchema,
+      options: {
+        temperature: 0,
+      },
     }),
   });
 
@@ -46,9 +55,10 @@ ${diffText}
   console.log(data.message?.content);
   console.log("======================================");
 
-  if(!data.message?.content){
+  if (!data.message?.content) {
     throw new Error("LLM returned an empty response");
   }
 
-  return JSON.parse(data.message.content) as ReviewResult;
+  const parsedContent = JSON.parse(data.message.content);
+  return ReviewResultSchema.parse(parsedContent);
 }
