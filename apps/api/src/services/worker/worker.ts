@@ -43,13 +43,20 @@ ${f.patch}`;
       })
       .join("\n\n");
 
-    console.log("========== DIFF SENT TO LLM ==========");
-    console.log(diffText);
-    console.log("======================================");
+    // console.log("========== DIFF SENT TO LLM ==========");
+    // console.log(diffText);
+    // console.log("======================================");
 
-    const result = await callLLM(diffText, promptTemplate);
+    const resultObject = await callLLM(diffText, promptTemplate);
 
-    const comment = renderReview(result);
+    
+    console.log(resultObject);
+
+    const comment = renderReview(resultObject);
+
+    console.log("========== COMMENT ==========");
+    console.log(comment);
+    console.log("=============================");
 
     await postPRComment(octokit, {
       owner: repoOwner,

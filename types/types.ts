@@ -1,4 +1,4 @@
-export interface ReviewFinding{
+export type ReviewFinding = {
     filePath:string;
     lineNumber:number;
     code:string;
@@ -13,7 +13,8 @@ export interface ReviewFinding{
     suggestion?:string;
 }
 
-export interface ReviewResult{
+export type  ReviewResult = {
     summary:string;
     reviews:ReviewFinding[];
 }
+

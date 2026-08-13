@@ -1,7 +1,9 @@
+import { ReviewResult } from "../../../../types/types";
+
 export async function callLLM(
   diffText: string,
   promptTemplate: string,
-): Promise<string> {
+): Promise<ReviewResult> {
   const response = await fetch("http://localhost:11434/api/chat", {
     method: "POST",
     headers: {
@@ -44,5 +46,9 @@ ${diffText}
   console.log(data.message?.content);
   console.log("======================================");
 
-  return data.message?.content ?? "";
+  if(!data.message?.content){
+    throw new Error("LLM returned an empty response");
+  }
+
+  return JSON.parse(data.message.content) as ReviewResult;
 }
