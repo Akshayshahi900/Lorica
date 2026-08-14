@@ -6,3 +6,9 @@
 3. CALL GRAPH
 4. IMPACT SNIPPET
 COMBINING THIS AND GIVING  AND GIVING TO THE LLM
+
+
+
+ v1 tree sitter + call graph + pr meta data
+ v2 previous comments fetching and storing
+ v3 impact analysis
