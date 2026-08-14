@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import crypto from "crypto";
-import { prisma } from "../lib/prisma";
+import { prisma } from "../db/prisma";
 import { PullRequestStatus, ReviewJobStatus } from "@prisma/client";
-import { reviewQueue } from "../queue";
+import { reviewQueue } from "../jobs/queue";
 
 function verifySignature(
   payload: Buffer,

@@ -1,15 +1,15 @@
 import dotenv from "dotenv";
 dotenv.config();
 import { Worker, Job } from "bullmq";
-import { connection, ReviewJobPayload } from "../../queue";
-import { prisma } from "../../lib/prisma";
-import { fetchPrFiles } from "../../pullrequests/fetchDiff";
-import { parseFileDiffs } from "../../pullrequests/parseDiff";
-import { callLLM } from "../../llm/llm";
-import { promptTemplate } from "../../llm/prompt";
-import { renderReview } from "../../github/commentBuilder";
-import { postPRComment } from "../../github/postComment";
-import { getInstallationOctokit } from "../../pullrequests/octokit";
+import { connection, ReviewJobPayload } from "./queue";
+import { prisma } from "../db/prisma";
+import { fetchPrFiles } from "../vcs/github/fetchDiff";
+// import { parseFileDiffs } from "../../pullrequests/parseDiff";
+import { callLLM } from "../llm/client";
+import { REVIEW_PROMPT } from "../llm/prompt";
+import { renderReview } from "../vcs/github/commentBuilder";
+import { postPRComment } from "../vcs/github/postComment";
+import { getInstallationOctokit } from "../vcs/github/octokit";
 
 const worker = new Worker<ReviewJobPayload>(
   "review",
@@ -24,6 +24,9 @@ const worker = new Worker<ReviewJobPayload>(
       where: { id: reviewJob.pullRequestId },
     });
 
+    if (!pullrequest) {
+      throw new Error(`Pull request ${pullRequestId} not found`);
+    }
     const { repoName, installationId, repoOwner, prNumber } = pullrequest;
 
     const octokit = await getInstallationOctokit(installationId);
@@ -47,9 +50,8 @@ ${f.patch}`;
     // console.log(diffText);
     // console.log("======================================");
 
-    const resultObject = await callLLM(diffText, promptTemplate);
+    const resultObject = await callLLM(diffText, REVIEW_PROMPT);
 
-    
     console.log(resultObject);
 
     const comment = renderReview(resultObject);
