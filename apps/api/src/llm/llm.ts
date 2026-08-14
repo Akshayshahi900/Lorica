@@ -1,11 +1,10 @@
-import { zodToJsonSchema } from "zod-to-json-schema";
-import {
-  ReviewResult,
-  ReviewResultSchema,
-} from "../../../../types/types";
+import {z} from "zod";
+import { ReviewResult, ReviewResultSchema } from "../../../../types/types";
 
-const reviewResultJsonSchema =
-  zodToJsonSchema(ReviewResultSchema);
+const reviewResultJsonSchema = z.toJSONSchema(ReviewResultSchema);
+
+console.dir(reviewResultJsonSchema, { depth: null });
+
 export async function callLLM(
   diffText: string,
   promptTemplate: string,
