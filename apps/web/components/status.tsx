@@ -1,1 +1,0 @@
-export function Status({children,type="neutral"}:{children:React.ReactNode;type?:"success"|"warning"|"error"|"info"|"neutral"}){return <span className={`status ${type}`}><span className="status-dot"/>{children}</span>}

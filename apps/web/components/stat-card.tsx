@@ -1,2 +1,0 @@
-import { IconAlertTriangle, IconGitPullRequest, IconSparkles } from "@tabler/icons-react";
-export function StatCard({label,value,delta,type}:{label:string;value:string;delta:string;type:"reviews"|"prs"|"issues"}){const I=type==="reviews"?IconSparkles:type==="prs"?IconGitPullRequest:IconAlertTriangle;return <div className="stat-card"><div className="stat-icon"><I size={17}/></div><div className="stat-label">{label}</div><div className="stat-value">{value}</div><div className="stat-delta">{delta}</div></div>}

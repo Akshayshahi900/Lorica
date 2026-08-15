@@ -1,0 +1,25 @@
+apps/dashboard/
+├── package.json
+├── next.config.js
+├── tsconfig.json
+├── tailwind.config.ts
+├── postcss.config.js
+├── .env.example
+├── app/
+│   ├── layout.tsx
+│   ├── page.tsx                  (landing / login)
+│   ├── dashboard/
+│   │   ├── layout.tsx
+│   │   └── page.tsx              (main stats)
+│   └── api/
+│       └── auth/
+│           └── [...nextauth]/
+│               └── route.ts
+├── components/
+│   ├── Sidebar.tsx
+│   ├── StatCard.tsx
+│   ├── PRTable.tsx
+│   ├── ActivityFeed.tsx
+│   └── InstallBanner.tsx
+└── lib/
+    └── auth.ts
