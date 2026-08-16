@@ -1,7 +1,7 @@
 "use client";
 import { Github, ArrowRight, CheckCircle2, Terminal, Puzzle, Key } from "lucide-react";
 
-const APP_NAME = process.env.NEXT_PUBLIC_GITHUB_APP_NAME ?? "rabbit-review";
+const APP_NAME = process.env.NEXT_PUBLIC_GITHUB_APP_NAME ?? "Lorica-Akshay";
 
 const STEPS = [
   {
@@ -33,10 +33,10 @@ const STEPS = [
     icon: Key,
     title: "Configure (optional)",
     description:
-      "Add a .rabbit.yml file to the root of your repo to customise review rules — which files to skip, strictness level, and focus areas.",
+      "Add a .lorica.yml file to the root of your repo to customise review rules — which files to skip, strictness level, and focus areas.",
     action: (
       <pre className="mt-2 text-xs font-mono bg-bg-base border border-bg-border rounded-lg p-3 text-text-secondary leading-relaxed">
-        {`# .rabbit.yml\nstrictness: standard   # strict | standard | relaxed\nskip:\n  - "**/*.test.ts"\n  - "docs/**"\nfocus:\n  - security\n  - performance`}
+        {`# .lorica.yml\nstrictness: standard   # strict | standard | relaxed\nskip:\n  - "**/*.test.ts"\n  - "docs/**"\nfocus:\n  - security\n  - performance`}
       </pre>
     ),
   },

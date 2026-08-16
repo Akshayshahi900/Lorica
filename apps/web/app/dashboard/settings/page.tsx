@@ -54,7 +54,7 @@ export default function SettingsPage() {
             Default review behaviour
           </h2>
           <p className="text-xs text-text-muted mt-0.5">
-            These are defaults. Override per-repo with .rabbit.yml
+            These are defaults. Override per-repo with .lorica.yml
           </p>
         </div>
 

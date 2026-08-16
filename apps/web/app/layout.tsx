@@ -4,7 +4,7 @@ import { Providers } from "./providers";
 
 export const metadata: Metadata = {
   title: "Lorica· AI Code Reviewer",
-  description: "Automated PR reviews powered by Rabbit",
+  description: "Automated PR reviews powered by Lorica",
 };
 
 export default function RootLayout({

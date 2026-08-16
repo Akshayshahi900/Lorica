@@ -2,7 +2,7 @@
 import { Puzzle, ArrowRight } from "lucide-react";
 
 export function InstallBanner({ installedCount }: { installedCount: number }) {
-  const appName = process.env.NEXT_PUBLIC_GITHUB_APP_NAME ?? "rabbit-review";
+  const appName = process.env.NEXT_PUBLIC_GITHUB_APP_NAME ?? "lorica-review";
 
   if (installedCount > 0) return null;
 

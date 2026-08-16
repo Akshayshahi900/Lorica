@@ -16,7 +16,7 @@ export default function PullsPage() {
     <div className="p-6 max-w-6xl mx-auto space-y-5">
       <div>
         <h1 className="text-lg font-semibold text-text-primary">Pull Requests</h1>
-        <p className="text-xs text-text-muted font-mono mt-0.5">All PRs reviewed by Rabbit</p>
+        <p className="text-xs text-text-muted font-mono mt-0.5">All PRs reviewed by Lorica</p>
       </div>
 
       <div className="bg-bg-panel border border-bg-border rounded-xl p-4">

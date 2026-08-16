@@ -35,9 +35,9 @@ export default function LandingPage() {
       {/* Header */}
       <header className="relative z-10 border-b border-bg-border px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <span className="text-xl">🐇</span>
+          <span className="text-xl"></span>
           <span className="font-mono font-semibold text-text-primary tracking-tight">
-            rabbit
+            Lorica 
           </span>
           <span className="text-text-muted font-mono text-xs px-1.5 py-0.5 rounded border border-bg-border">
             v1
