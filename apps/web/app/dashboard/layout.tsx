@@ -29,7 +29,7 @@ export default function DashboardLayout({
   return (
     <div className="min-h-screen bg-bg-base flex">
       <Sidebar session={session} />
-      <main className="flex-1 min-w-0 overflow-auto">{children}</main>
+      <main className="flex-1 min-w-0 overflow-auto pb-20 lg:pb-0">{children}</main>
     </div>
   );
 }

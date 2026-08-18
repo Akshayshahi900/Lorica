@@ -21,9 +21,9 @@ export function StatCard({
   return (
     <div
       className={clsx(
-        "bg-bg-panel border rounded-xl p-4 flex flex-col gap-3 transition-colors",
+        "bg-bg-panel border rounded-xl p-4 flex flex-col gap-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/10",
         accent
-          ? "border-accent-violet/30 bg-accent-violet-glow"
+          ? "border-accent-violet/30 bg-accent-violet-glow shadow-lg shadow-accent-violet/5"
           : "border-bg-border hover:border-bg-hover"
       )}
     >

@@ -12,6 +12,11 @@
     color: #f0f2f8;
   }
 
+  :focus-visible {
+    outline: 2px solid #7c6af7;
+    outline-offset: 3px;
+  }
+
   /* Custom scrollbar */
   ::-webkit-scrollbar {
     width: 6px;
@@ -43,5 +48,9 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+  }
+
+  .safe-area-bottom {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
   }
 }

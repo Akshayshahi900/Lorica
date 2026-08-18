@@ -24,7 +24,8 @@ export function Sidebar({ session }: { session: Session }) {
   const pathname = usePathname();
 
   return (
-    <aside className="w-56 flex-shrink-0 bg-bg-panel border-r border-bg-border flex flex-col h-screen sticky top-0">
+    <>
+    <aside className="hidden lg:flex w-56 flex-shrink-0 bg-bg-panel border-r border-bg-border flex-col h-screen sticky top-0">
       {/* Logo */}
       <div className="px-4 py-4 border-b border-bg-border flex items-center gap-2.5">
         <span className="text-lg">🐇</span>
@@ -91,5 +92,25 @@ export function Sidebar({ session }: { session: Session }) {
         </button>
       </div>
     </aside>
+    <nav className="lg:hidden fixed bottom-0 inset-x-0 z-20 border-t border-bg-border bg-bg-panel/95 backdrop-blur px-2 py-2 grid grid-cols-4 gap-1 safe-area-bottom">
+      {NAV.map(({ href, icon: Icon, label }) => {
+        const active = href === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(href);
+        return (
+          <Link
+            key={href}
+            href={href}
+            aria-label={label}
+            className={clsx(
+              "flex min-h-12 flex-col items-center justify-center gap-1 rounded-lg text-[10px] font-mono transition-colors",
+              active ? "bg-accent-violet-glow text-accent-violet" : "text-text-muted hover:text-text-secondary",
+            )}
+          >
+            <Icon size={16} />
+            <span>{label}</span>
+          </Link>
+        );
+      })}
+    </nav>
+    </>
   );
 }
