@@ -8,7 +8,7 @@ export interface PRRow {
   title: string;
   number: number;
   comments: number;
-  status: "reviewed" | "pending" | "skipped";
+  status: "reviewed" | "pending" | "failed";
   author: string;
   reviewedAt: string;
   url: string;
@@ -17,7 +17,7 @@ export interface PRRow {
 const STATUS_STYLES: Record<PRRow["status"], string> = {
   reviewed: "text-status-green bg-status-green/10 border-status-green/20",
   pending: "text-status-yellow bg-status-yellow/10 border-status-yellow/20",
-  skipped: "text-text-muted bg-bg-hover border-bg-border",
+  failed: "text-status-red bg-status-red/10 border-status-red/20",
 };
 
 export function PRTable({ rows }: { rows: PRRow[] }) {

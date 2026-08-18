@@ -50,6 +50,8 @@ async function insertIntoDatabase(payload: any) {
     update: {
       repoName: payload.repository.name,
       headSha: payload.pull_request.head.sha,
+      title: payload.pull_request.title,
+      author: payload.pull_request.user?.login,
       action: payload.action,
       status: PullRequestStatus.pending,
     },
@@ -59,6 +61,8 @@ async function insertIntoDatabase(payload: any) {
       repoOwner: payload.repository.owner.login,
       prNumber: payload.pull_request.number,
       repoName: payload.repository.name,
+      title: payload.pull_request.title,
+      author: payload.pull_request.user?.login,
       headSha: payload.pull_request.head.sha,
       action: payload.action,
       status: PullRequestStatus.pending,
@@ -81,9 +85,6 @@ async function insertIntoDatabase(payload: any) {
 
 export const handleWebhook = async (req: Request, res: Response) => {
   try {
-    console.log("DATABASE URL:", process.env.DATABASE_URL);
-    console.log("STARTING WEBHOOK HANDLER");
-
     const signature = req.headers["x-hub-signature-256"];
 
     if (typeof signature !== "string") {

@@ -23,6 +23,10 @@ const TYPE_LABEL = {
 };
 
 export function ActivityFeed({ items }: { items: ActivityItem[] }) {
+  if (items.length === 0) {
+    return <p className="py-6 text-center text-xs font-mono text-text-muted">No review activity yet.</p>;
+  }
+
   return (
     <ul className="space-y-2">
       {items.map((item) => (

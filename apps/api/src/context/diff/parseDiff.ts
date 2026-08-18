@@ -1,6 +1,6 @@
 // apps/api/src/github/parseDiff.ts
 import parseDiff from 'parse-diff';
-import type { FileDiff } from './fetchDiff';
+import type { FileDiff } from '../../types/types';
 
 export interface DiffChange {
   type: 'add' | 'del' | 'normal';

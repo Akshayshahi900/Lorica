@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { PRTable, PRRow } from "@/components/PRTable";
+import { fetchPullRequests, toPRRows } from "@/lib/pull-requests";
 
 export default function PullsPage() {
   const [prs, setPrs] = useState<PRRow[]>([]);
@@ -9,20 +10,13 @@ export default function PullsPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchPRs() {
+    const controller = new AbortController();
+
+    async function loadPullRequests() {
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/pulls`
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch pull requests");
-        }
-
-        const data = await response.json();
-
-        setPrs(data);
+        setPrs(toPRRows(await fetchPullRequests(controller.signal)));
       } catch (error) {
+        if ((error as Error).name === "AbortError") return;
         console.error(error);
         setError("Failed to load pull requests");
       } finally {
@@ -30,7 +24,8 @@ export default function PullsPage() {
       }
     }
 
-    fetchPRs();
+    loadPullRequests();
+    return () => controller.abort();
   }, []);
 
   return (
