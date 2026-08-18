@@ -6,7 +6,7 @@ export async function reviewDiff(diffText :string):Promise<ReviewResult>{
     let result:ReviewResult;
     
     try{
-        result = JSON.parse(raw);
+        result = raw;
     }catch{
         throw new Error(`LLM returned invalid JSON:\n${raw}`);
     }

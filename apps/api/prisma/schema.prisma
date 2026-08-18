@@ -40,6 +40,8 @@
     githubPrId    BigInt             @unique
     prNumber        Int       // pr number
     repoName         String    // reponame
+    title            String?
+    author           String?
     headSha       String
     status        PullRequestStatus
     action        String
@@ -63,5 +65,7 @@
     pullRequest    PullRequest       @relation(fields: [pullRequestId], references: [id])
 
     status         ReviewJobStatus
+    commentsCount  Int               @default(0)
     createdAt      DateTime @default(now())
+    completedAt    DateTime?
   }

@@ -3,6 +3,7 @@ dotenv.config();
 import { Worker, Job } from "bullmq";
 import { connection, ReviewJobPayload } from "./queue";
 import { prisma } from "../db/prisma";
+import { PullRequestStatus, ReviewJobStatus } from "@prisma/client";
 import { fetchPrFiles } from "../vcs/github/fetchDiff";
 // import { parseFileDiffs } from "../../pullrequests/parseDiff";
 import { callLLM } from "../llm/client";
@@ -17,6 +18,17 @@ const worker = new Worker<ReviewJobPayload>(
     const reviewJob = await prisma.reviewJob.findUniqueOrThrow({
       where: { id: job.data.reviewJobId },
     });
+
+    await prisma.$transaction([
+      prisma.reviewJob.update({
+        where: { id: reviewJob.id },
+        data: { status: ReviewJobStatus.running },
+      }),
+      prisma.pullRequest.update({
+        where: { id: reviewJob.pullRequestId },
+        data: { status: PullRequestStatus.processing },
+      }),
+    ]);
 
     const pullRequestId = reviewJob.pullRequestId;
 
@@ -66,6 +78,21 @@ ${f.patch}`;
       prNumber,
       body: comment,
     });
+
+    await prisma.$transaction([
+      prisma.reviewJob.update({
+        where: { id: reviewJob.id },
+        data: {
+          status: ReviewJobStatus.completed,
+          commentsCount: resultObject.reviews.length,
+          completedAt: new Date(),
+        },
+      }),
+      prisma.pullRequest.update({
+        where: { id: pullRequestId },
+        data: { status: PullRequestStatus.completed },
+      }),
+    ]);
   },
   {
     connection,
@@ -78,5 +105,19 @@ worker.on("completed", (job) => {
 
 worker.on("failed", (job, err) => {
   console.error(`[worker] job  ${job?.id} failed`, err.message);
+
+  const attempts = job?.opts.attempts ?? 1;
+  if (job?.data.reviewJobId && job.attemptsMade >= attempts) {
+    void prisma.$transaction([
+      prisma.reviewJob.update({
+        where: { id: job.data.reviewJobId },
+        data: { status: ReviewJobStatus.failed },
+      }),
+      prisma.pullRequest.updateMany({
+        where: { reviewJobs: { some: { id: job.data.reviewJobId } } },
+        data: { status: PullRequestStatus.failed },
+      }),
+    ]);
+  }
 });
 console.log("Review worker started , waiting for jobs.....");

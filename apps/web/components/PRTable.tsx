@@ -8,7 +8,7 @@ export interface PRRow {
   title: string;
   number: number;
   comments: number;
-  status: "reviewed" | "pending" | "skipped";
+  status: "reviewed" | "pending" | "failed";
   author: string;
   reviewedAt: string;
   url: string;
@@ -17,7 +17,7 @@ export interface PRRow {
 const STATUS_STYLES: Record<PRRow["status"], string> = {
   reviewed: "text-status-green bg-status-green/10 border-status-green/20",
   pending: "text-status-yellow bg-status-yellow/10 border-status-yellow/20",
-  skipped: "text-text-muted bg-bg-hover border-bg-border",
+  failed: "text-status-red bg-status-red/10 border-status-red/20",
 };
 
 export function PRTable({ rows }: { rows: PRRow[] }) {
@@ -32,7 +32,7 @@ export function PRTable({ rows }: { rows: PRRow[] }) {
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-sm">
+      <table className="w-full min-w-[680px] text-sm">
         <thead>
           <tr className="border-b border-bg-border">
             {["Repository", "Pull Request", "Comments", "Status", "Reviewed", ""].map(
@@ -49,14 +49,14 @@ export function PRTable({ rows }: { rows: PRRow[] }) {
         </thead>
         <tbody className="divide-y divide-bg-border">
           {rows.map((row) => (
-            <tr key={row.id} className="group hover:bg-bg-hover/50 transition-colors">
+            <tr key={row.id} className="group hover:bg-bg-hover/60 transition-colors">
               <td className="py-3 px-3 pl-0">
                 <span className="font-mono text-xs text-accent-violet bg-accent-violet-glow px-2 py-0.5 rounded border border-accent-violet/20">
                   {row.repo}
                 </span>
               </td>
               <td className="py-3 px-3 max-w-xs">
-                <p className="text-text-primary text-xs font-medium truncate">
+                <p className="text-text-primary text-xs font-medium truncate group-hover:text-accent-violet transition-colors">
                   {row.title}
                 </p>
                 <p className="text-text-muted font-mono text-xs">
@@ -86,7 +86,8 @@ export function PRTable({ rows }: { rows: PRRow[] }) {
                   href={row.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="opacity-0 group-hover:opacity-100 transition-opacity text-text-muted hover:text-text-secondary"
+                  aria-label={`Open pull request #${row.number} on GitHub`}
+                  className="text-text-muted hover:text-accent-violet transition-colors lg:opacity-0 lg:group-hover:opacity-100"
                 >
                   <ExternalLink size={12} />
                 </a>
