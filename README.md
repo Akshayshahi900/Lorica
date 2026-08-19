@@ -156,4 +156,4 @@ Failed workers mark the associated review job and pull request as failed. BullMQ
 
 ## License
 
-No license has been declared for this repository.
+This project is licensed under the [Apache License 2.0](LICENSE).
