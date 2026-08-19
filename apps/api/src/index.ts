@@ -26,10 +26,17 @@ app.get("/health", (req, res) => {
 });
 
 const apiAccessToken = process.env.API_ACCESS_TOKEN;
+const isProduction = process.env.NODE_ENV === "production";
 
 app.use("/api", (req, res, next) => {
   if (!apiAccessToken) {
-    return res.status(500).json({ error: "API_ACCESS_TOKEN is not configured" });
+    if (isProduction) {
+      return res.status(503).json({ error: "API_ACCESS_TOKEN is not configured" });
+    }
+
+    // The dashboard proxy is the only local consumer. Requiring an unconfigured
+    // shared secret made every local dashboard request fail before the route ran.
+    return next();
   }
 
   const token = req.header("x-lorica-api-token");
@@ -49,6 +56,8 @@ app.use((req, res, next) => {
   next();
 });
 
-app.listen(5000, () => {
-  console.log("Listening on 5000");
+const port = Number(process.env.PORT ?? 5000);
+
+app.listen(port, () => {
+  console.log(`Listening on ${port}`);
 });

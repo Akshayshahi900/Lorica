@@ -2,7 +2,13 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-const apiBaseUrl = process.env.LORICA_API_URL ?? process.env.NEXT_PUBLIC_API_URL;
+// NEXT_PUBLIC_API_URL is kept as a backwards-compatible local-development
+// setting. LORICA_API_URL is preferred because this value is only needed on
+// the server.
+const apiBaseUrl =
+  process.env.LORICA_API_URL ??
+  process.env.NEXT_PUBLIC_API_URL ??
+  "http://localhost:5000";
 const apiAccessToken = process.env.LORICA_API_TOKEN;
 
 export async function GET() {
@@ -13,29 +19,21 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!apiBaseUrl) {
-    return NextResponse.json(
-      { error: "The Lorica API URL is not configured" },
-      { status: 500 },
-    );
-  }
-
-  if (!apiAccessToken) {
-    return NextResponse.json(
-      { error: "The Lorica API token is not configured" },
-      { status: 500 },
-    );
-  }
-
   try {
     const response = await fetch(
       `${apiBaseUrl.replace(/\/$/, "")}/api/pulls?owner=${encodeURIComponent(login)}`,
       {
         cache: "no-store",
-        headers: { "x-lorica-api-token": apiAccessToken },
+        // Local development can run without API_ACCESS_TOKEN. Production
+        // validates that configuration in the API service.
+        headers: apiAccessToken
+          ? { "x-lorica-api-token": apiAccessToken }
+          : undefined,
       },
     );
-    const body = await response.json();
+    const body = (await response.json().catch(() => null)) ?? {
+      error: "The Lorica API returned an invalid response",
+    };
 
     return NextResponse.json(body, { status: response.status });
   } catch (error) {
