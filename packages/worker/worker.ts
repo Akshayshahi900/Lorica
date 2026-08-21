@@ -5,7 +5,6 @@ import { connection, ReviewJobPayload } from "./queue";
 import { prisma } from "../db/prisma";
 import { PullRequestStatus, ReviewJobStatus } from "@prisma/client";
 import { fetchPrFiles } from "../vcs/github/fetchDiff";
-// import { parseFileDiffs } from "../../pullrequests/parseDiff";
 import { callLLM } from "../llm/client";
 import { REVIEW_PROMPT } from "../llm/prompt";
 import { renderReview } from "../vcs/github/commentBuilder";
