@@ -1,12 +1,12 @@
 {
-  "name": "@lorica/queue",
+  "name": "@lorica/db",
   "version": "0.0.0",
   "private": true,
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "dependencies": {
-    "bullmq": "^6.0.1",
-    "ioredis": "^5.11.1"
-
+    "@prisma/adapter-pg": "^7.9.1",
+    "@prisma/client": "^7.8.0",
+    "dotenv": "^17.4.2"
   }
 }

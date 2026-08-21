@@ -20,27 +20,27 @@ importers:
 
   apps/api:
     dependencies:
+      '@lorica/context':
+        specifier: workspace:*
+        version: link:../../packages/context
+      '@lorica/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@lorica/llm':
+        specifier: workspace:*
+        version: link:../../packages/llm
       '@lorica/queue':
         specifier: workspace:*
         version: link:../../packages/queue
+      '@lorica/vcs':
+        specifier: workspace:*
+        version: link:../../packages/vcs
       '@octokit/auth-app':
         specifier: ^8.2.0
         version: 8.3.0
       '@octokit/rest':
         specifier: ^22.0.1
         version: 22.0.1
-      '@prisma/adapter-pg':
-        specifier: ^7.9.1
-        version: 7.9.1
-      '@prisma/client':
-        specifier: ^7.8.0
-        version: 7.9.1(prisma@7.9.1(@types/react-dom@18.3.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@7.0.2))(typescript@7.0.2)
-      '@xberg-io/tree-sitter-language-pack':
-        specifier: ^1.14.3
-        version: 1.14.3
-      bullmq:
-        specifier: ^6.0.1
-        version: 6.0.7(ioredis@5.11.1)(pg@8.22.0)
       cors:
         specifier: ^2.8.6
         version: 2.8.6
@@ -50,15 +50,6 @@ importers:
       express:
         specifier: ^5.2.1
         version: 5.2.1
-      ioredis:
-        specifier: ^5.11.1
-        version: 5.11.1
-      parse-diff:
-        specifier: ^0.12.0
-        version: 0.12.0
-      pg:
-        specifier: ^8.22.0
-        version: 8.22.0
       zod:
         specifier: ^4.4.3
         version: 4.4.3
@@ -128,16 +119,67 @@ importers:
         specifier: ^5
         version: 5.9.2
 
+  apps/worker:
+    dependencies:
+      '@lorica/queue':
+        specifier: workspace:*
+        version: link:../../packages/queue
+    devDependencies:
+      '@types/node':
+        specifier: ^22.20.1
+        version: 22.20.1
+      tsx:
+        specifier: ^4.23.5
+        version: 4.23.5
+      typescript:
+        specifier: ^7.0.2
+        version: 7.0.2
+
+  packages/context:
+    dependencies:
+      '@xberg-io/tree-sitter-language-pack':
+        specifier: ^1.14.3
+        version: 1.14.3
+      parse-diff:
+        specifier: ^0.12.0
+        version: 0.12.0
+
+  packages/db:
+    dependencies:
+      '@prisma/adapter-pg':
+        specifier: ^7.9.1
+        version: 7.9.1
+      '@prisma/client':
+        specifier: ^7.8.0
+        version: 7.9.1(prisma@7.9.1(@types/react-dom@18.3.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@5.9.2))(typescript@5.9.2)
+      dotenv:
+        specifier: ^17.4.2
+        version: 17.4.2
+
+  packages/llm:
+    dependencies:
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
+
   packages/queue:
     dependencies:
       bullmq:
-        specifier: ^6.0.7
+        specifier: ^6.0.1
         version: 6.0.7(ioredis@5.11.1)(pg@8.22.0)
       ioredis:
         specifier: ^5.11.1
         version: 5.11.1
 
+  packages/types:
+    dependencies:
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
+
   packages/typescript-config: {}
+
+  packages/vcs: {}
 
 packages:
 
@@ -2493,12 +2535,12 @@ snapshots:
 
   '@prisma/client-runtime-utils@7.9.1': {}
 
-  '@prisma/client@7.9.1(prisma@7.9.1(@types/react-dom@18.3.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@7.0.2))(typescript@7.0.2)':
+  '@prisma/client@7.9.1(prisma@7.9.1(@types/react-dom@18.3.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@5.9.2))(typescript@5.9.2)':
     dependencies:
       '@prisma/client-runtime-utils': 7.9.1
     optionalDependencies:
-      prisma: 7.9.1(@types/react-dom@18.3.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@7.0.2)
-      typescript: 7.0.2
+      prisma: 7.9.1(@types/react-dom@18.3.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@5.9.2)
+      typescript: 5.9.2
 
   '@prisma/config@7.9.1':
     dependencies:
@@ -2512,6 +2554,27 @@ snapshots:
   '@prisma/debug@7.2.0': {}
 
   '@prisma/debug@7.9.1': {}
+
+  '@prisma/dev@0.24.17(typescript@5.9.2)':
+    dependencies:
+      '@electric-sql/pglite': 0.4.3
+      '@electric-sql/pglite-socket': 0.1.3(@electric-sql/pglite@0.4.3)
+      '@electric-sql/pglite-tools': 0.3.3(@electric-sql/pglite@0.4.3)
+      '@prisma/get-platform': 7.2.0
+      '@prisma/query-plan-executor': 7.2.0
+      '@prisma/streams-local': 0.1.11
+      find-my-way: 9.7.0
+      foreground-child: 3.3.1
+      get-port-please: 3.2.0
+      pathe: 2.0.3
+      proper-lockfile: 4.1.2
+      remeda: 2.33.4
+      std-env: 3.10.0
+      valibot: 1.4.2(typescript@5.9.2)
+      zeptomatch: 2.1.0
+    transitivePeerDependencies:
+      - typescript
+    optional: true
 
   '@prisma/dev@0.24.17(typescript@7.0.2)':
     dependencies:
@@ -3777,6 +3840,24 @@ snapshots:
 
   pretty-format@3.8.0: {}
 
+  prisma@7.9.1(@types/react-dom@18.3.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@5.9.2):
+    dependencies:
+      '@prisma/config': 7.9.1
+      '@prisma/dev': 0.24.17(typescript@5.9.2)
+      '@prisma/engines': 7.9.1
+      '@prisma/studio-core': 0.33.0(@types/react-dom@18.3.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      mysql2: 3.15.3
+      postgres: 3.4.7
+    optionalDependencies:
+      typescript: 5.9.2
+    transitivePeerDependencies:
+      - '@types/react'
+      - '@types/react-dom'
+      - magicast
+      - react
+      - react-dom
+    optional: true
+
   prisma@7.9.1(@types/react-dom@18.3.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@7.0.2):
     dependencies:
       '@prisma/config': 7.9.1
@@ -4122,6 +4203,11 @@ snapshots:
   util-deprecate@1.0.2: {}
 
   uuid@11.1.1: {}
+
+  valibot@1.4.2(typescript@5.9.2):
+    optionalDependencies:
+      typescript: 5.9.2
+    optional: true
 
   valibot@1.4.2(typescript@7.0.2):
     optionalDependencies:

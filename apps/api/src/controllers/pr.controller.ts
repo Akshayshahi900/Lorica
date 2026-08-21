@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
-import { prisma } from "../db/prisma";
-
+import { prisma } from "@lorica/db";
 export const getPullRequests = async (req: Request, res: Response) => {
   try {
     const owner = req.query.owner;

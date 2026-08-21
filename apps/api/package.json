@@ -5,10 +5,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "dev:worker": "tsx watch --env-file=.env src/jobs/worker.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "start:worker": "node dist/worker.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio"
@@ -18,18 +16,15 @@
   "license": "ISC",
   "dependencies": {
     "@lorica/queue": "workspace:*",
+    "@lorica/db":"workspace:*",
+    "@lorica/context":"workspace:*",
+    "@lorica/llm":"workspace:*",
+    "@lorica/vcs":"workspace:*",
     "@octokit/auth-app": "^8.2.0",
     "@octokit/rest": "^22.0.1",
-    "@prisma/adapter-pg": "^7.9.1",
-    "@prisma/client": "^7.8.0",
-    "@xberg-io/tree-sitter-language-pack": "^1.14.3",
-    "bullmq": "^6.0.1",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "ioredis": "^5.11.1",
-    "parse-diff": "^0.12.0",
-    "pg": "^8.22.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
