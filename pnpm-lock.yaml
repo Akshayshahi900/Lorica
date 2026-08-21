@@ -20,6 +20,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@lorica/queue':
+        specifier: workspace:*
+        version: link:../../packages/queue
       '@octokit/auth-app':
         specifier: ^8.2.0
         version: 8.3.0
@@ -124,6 +127,15 @@ importers:
       typescript:
         specifier: ^5
         version: 5.9.2
+
+  packages/queue:
+    dependencies:
+      bullmq:
+        specifier: ^6.0.7
+        version: 6.0.7(ioredis@5.11.1)(pg@8.22.0)
+      ioredis:
+        specifier: ^5.11.1
+        version: 5.11.1
 
   packages/typescript-config: {}
 
