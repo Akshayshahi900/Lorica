@@ -1,15 +1,14 @@
-import dotenv from "dotenv";
-dotenv.config();
-import { Worker, Job } from "bullmq";
-import { connection, ReviewJobPayload } from "./queue";
-import { prisma } from "../db/prisma";
-import { PullRequestStatus, ReviewJobStatus } from "@prisma/client";
-import { fetchPrFiles } from "../vcs/github/fetchDiff";
-import { callLLM } from "../llm/client";
-import { REVIEW_PROMPT } from "../llm/prompt";
-import { renderReview } from "../vcs/github/commentBuilder";
-import { postPRComment } from "../vcs/github/postComment";
-import { getInstallationOctokit } from "../vcs/github/octokit";
+import "dotenv/config";
+import { connection} from "@lorica/queue";
+import { prisma, PullRequestStatus, ReviewJobStatus } from "@lorica/db";
+import { callLLM, REVIEW_PROMPT } from "@lorica/llm";
+import { renderReview } from "@lorica/vcs";
+import {
+  fetchPrFiles,
+  getInstallationOctokit,
+  postPRComment,
+} from "@lorica/vcs";
+import { ReviewJobPayload } from "@lorica/types";
 
 const worker = new Worker<ReviewJobPayload>(
   "review",

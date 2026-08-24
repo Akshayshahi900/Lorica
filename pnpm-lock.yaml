@@ -121,9 +121,27 @@ importers:
 
   apps/worker:
     dependencies:
+      '@lorica/context':
+        specifier: workspace:*
+        version: link:../../packages/context
+      '@lorica/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@lorica/llm':
+        specifier: workspace:*
+        version: link:../../packages/llm
       '@lorica/queue':
         specifier: workspace:*
         version: link:../../packages/queue
+      '@lorica/vcs':
+        specifier: workspace:*
+        version: link:../../packages/vcs
+      bullmq:
+        specifier: ^6.0.7
+        version: 6.0.7(ioredis@5.11.1)(pg@8.22.0)
+      dotenv:
+        specifier: ^17.4.2
+        version: 17.4.2
     devDependencies:
       '@types/node':
         specifier: ^22.20.1

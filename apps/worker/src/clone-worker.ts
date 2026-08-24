@@ -1,4 +1,4 @@
-import { CloneRepoJob } from "../types/types";
+import { CloneRepoJob } from "../../../packages/types/types";
 // await codeReviewQueue.add(
 //   "clone-repo",
 //   {
@@ -15,7 +15,7 @@ import { CloneRepoJob } from "../types/types";
 
 
 import {Worker }from "bullmq";
-import {redis} from "../lib/redis";
+import {redis} from "../../../packages/lib/redis";
 
 const worker = new Worker(
     "code-index",

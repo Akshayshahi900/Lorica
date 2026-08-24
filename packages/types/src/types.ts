@@ -41,3 +41,7 @@ export interface CloneRepoJob {
   baseCommitSha?: string;
   branch?: string;
 }
+
+export type ReviewJobPayload = {
+    reviewJobId:number;
+}
