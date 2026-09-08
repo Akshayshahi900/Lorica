@@ -22,10 +22,10 @@ export const reviewQueue = new Queue<ReviewJobPayload>('review', {connection,
 });
 
 export const indexQueue = new Queue<CloneRepoJob>('code-index', {connection, defaultJobOptions:{
-    attempts:1,
+    attempts:2,
     backoff:{
         type:'exponential',
-        delay:1000,
+        delay:3000,
     },
     removeOnComplete:100,
     removeOnFail:500,

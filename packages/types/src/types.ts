@@ -37,6 +37,7 @@ export type ReviewResult = z.infer<typeof ReviewResultSchema>;
 export interface CloneRepoJob {
   reviewId: string;
   repositoryUrl: string;
+  commit:string;
   commitSha: string;
   baseCommitSha?: string;
   branch?: string;
