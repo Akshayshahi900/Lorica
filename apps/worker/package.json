@@ -1,0 +1,23 @@
+{
+  "name": "@lorica/worker",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@lorica/queue": "workspace:*",
+    "@lorica/context": "workspace:*",
+    "@lorica/db": "workspace:*",
+    "@lorica/llm": "workspace:*",
+    "@lorica/vcs": "workspace:*",
+    "@lorica/types": "workspace:*",
+    "bullmq": "^6.0.7",
+    "dotenv": "^17.4.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.1",
+    "tsx": "^4.23.5",
+    "typescript": "^7.0.2"
+  }
+}

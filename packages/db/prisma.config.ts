@@ -1,5 +1,9 @@
-import "dotenv/config"; // mandatory in Prisma 7 — CLI no longer auto-loads .env
 import { defineConfig, env } from "prisma/config";
+import dotenv from "dotenv";
+
+dotenv.config({
+  path: "../../apps/api/.env",
+});
 
 export default defineConfig({
   schema: "prisma/schema.prisma",

@@ -33,3 +33,16 @@ export const ReviewResultSchema = z.object({
 
 export type ReviewFinding = z.infer<typeof ReviewFindingSchema>;
 export type ReviewResult = z.infer<typeof ReviewResultSchema>;
+
+export interface CloneRepoJob {
+  reviewId: string;
+  repositoryUrl: string;
+  commit:string;
+  commitSha: string;
+  baseCommitSha?: string;
+  branch?: string;
+}
+
+export type ReviewJobPayload = {
+    reviewJobId:number;
+}

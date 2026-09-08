@@ -1,16 +1,15 @@
-import dotenv from "dotenv";
-dotenv.config();
-import { Worker, Job } from "bullmq";
-import { connection, ReviewJobPayload } from "./queue";
-import { prisma } from "../db/prisma";
-import { PullRequestStatus, ReviewJobStatus } from "@prisma/client";
-import { fetchPrFiles } from "../vcs/github/fetchDiff";
-// import { parseFileDiffs } from "../../pullrequests/parseDiff";
-import { callLLM } from "../llm/client";
-import { REVIEW_PROMPT } from "../llm/prompt";
-import { renderReview } from "../vcs/github/commentBuilder";
-import { postPRComment } from "../vcs/github/postComment";
-import { getInstallationOctokit } from "../vcs/github/octokit";
+import "dotenv/config";
+import { connection } from "@lorica/queue";
+import { prisma, PullRequestStatus, ReviewJobStatus } from "@lorica/db";
+import { callLLM, REVIEW_PROMPT } from "@lorica/llm";
+import { renderReview } from "@lorica/vcs";
+import {
+  fetchPrFiles,
+  getInstallationOctokit,
+  postPRComment,
+} from "@lorica/vcs";
+import {Worker , Job} from "bullmq";
+import { ReviewJobPayload } from "@lorica/types";
 
 const worker = new Worker<ReviewJobPayload>(
   "review",
@@ -32,17 +31,18 @@ const worker = new Worker<ReviewJobPayload>(
 
     const pullRequestId = reviewJob.pullRequestId;
 
-    const pullrequest = await prisma.pullRequest.findUnique({
+    const pullRequest = await prisma.pullRequest.findUnique({
       where: { id: reviewJob.pullRequestId },
     });
 
-    if (!pullrequest) {
+    if (!pullRequest) {
       throw new Error(`Pull request ${pullRequestId} not found`);
     }
-    const { repoName, installationId, repoOwner, prNumber } = pullrequest;
+    const { repoName, installationId, repoOwner, prNumber } = pullRequest;
 
     const octokit = await getInstallationOctokit(installationId);
 
+    // fetching files from the github api
     const files = await fetchPrFiles(
       installationId,
       repoOwner,
@@ -50,6 +50,7 @@ const worker = new Worker<ReviewJobPayload>(
       prNumber,
     );
 
+    // generating diff text
     const diffText = files
       .filter((f) => f.patch)
       .map((f) => {
@@ -57,10 +58,6 @@ const worker = new Worker<ReviewJobPayload>(
 ${f.patch}`;
       })
       .join("\n\n");
-
-    // console.log("========== DIFF SENT TO LLM ==========");
-    // console.log(diffText);
-    // console.log("======================================");
 
     const resultObject = await callLLM(diffText, REVIEW_PROMPT);
 
@@ -99,11 +96,11 @@ ${f.patch}`;
     concurrency: 2,
   },
 );
-worker.on("completed", (job) => {
+worker.on("completed", (job: any) => {
   console.log(`[worker] job ${job.id} completed`);
 });
 
-worker.on("failed", (job, err) => {
+worker.on("failed", (job: any, err: Error) => {
   console.error(`[worker] job  ${job?.id} failed`, err.message);
 
   const attempts = job?.opts.attempts ?? 1;

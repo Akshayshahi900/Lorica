@@ -1,5 +1,5 @@
 import {z} from "zod";
-import { ReviewResult, ReviewResultSchema } from "../types/types";
+import { ReviewResult, ReviewResultSchema } from "../../types/src/types";
 
 const reviewResultJsonSchema = z.toJSONSchema(ReviewResultSchema);
 

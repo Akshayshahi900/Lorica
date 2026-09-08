@@ -17,7 +17,7 @@ export async function createExpense(req, res) {
 `
 );
 
-const root = result!.tree.rootNode();
+const root = result.tree.rootNode();
 
 function walk(node: any, depth = 0) {
   const indent = "  ".repeat(depth);
