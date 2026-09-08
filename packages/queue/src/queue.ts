@@ -1,6 +1,7 @@
 import {Queue} from 'bullmq';
 import IORedis from 'ioredis';
-import type {CloneRepoJob} from '@lorica/types';
+import type {CloneRepoJob , ReviewJobPayload} from '@lorica/types';
+
 
 export const connection = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {
   maxRetriesPerRequest: null,

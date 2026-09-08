@@ -11,6 +11,7 @@
     "@lorica/db": "workspace:*",
     "@lorica/llm": "workspace:*",
     "@lorica/vcs": "workspace:*",
+    "@lorica/types": "workspace:*",
     "bullmq": "^6.0.7",
     "dotenv": "^17.4.2"
   },

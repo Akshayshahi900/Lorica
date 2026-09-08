@@ -6,7 +6,8 @@
   "types": "./src/index.ts",
   "dependencies": {
     "bullmq": "^6.0.1",
-    "ioredis": "^5.11.1"
+    "ioredis": "^5.11.1",
+    "@lorica/types": "workspace:*"
 
   }
 }
