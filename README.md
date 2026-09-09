@@ -77,6 +77,9 @@ GITHUB_APP_ID="your-github-app-id"
 GITHUB_PRIVATE_KEY_PATH="./github-app-private-key.pem"
 WEB_ORIGIN="http://localhost:3001"
 API_ACCESS_TOKEN="a-long-random-shared-secret"
+NEO4J_URI="bolt://localhost:7687"
+NEO4J_USER="neo4j"
+NEO4J_PASSWORD="password123"
 ```
 
 Create `apps/web/.env.local`:

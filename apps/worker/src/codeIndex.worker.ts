@@ -9,6 +9,7 @@ import path from "path";
 import { discoverSourceFiles } from "./indexer/discoverFiles";
 import { parseTypeScript } from "./indexer/parser";
 import { extractFile } from "./indexer/extractFile";
+import { persistCodeGraph } from "./neo4j";
 
 const execFileAsync = promisify(execFile);
 const indexQueueName = process.env.INDEX_QUEUE_NAME ?? "code-index";
@@ -46,6 +47,8 @@ export const indexWorker = new Worker(
          // index repo ast
 
          const graph = await indexRepository(repoDir, repositoryUrl , branch , commit);
+         await persistCodeGraph(graph, { repositoryUrl, branch, commit });
+         console.log(`Graph saved to Neo4j`);
          console.log(`Repository indexed successfully`);
 
          return {
