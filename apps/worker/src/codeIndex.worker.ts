@@ -82,19 +82,17 @@ async function indexRepository(repoDir:string , repositoryUrl:string , branch:st
         nodes:[],
         relationships:[],
     };
-
-
-
-
     console.log(`Found ${files.length} source files`);
     for(const filePath of files ){
         const source = await readFile(filePath, "utf-8");
         
         const tree = parseTypeScript(source);
+        const relativePath = path.relative(repoDir , filePath);
+
         const fileGraph = extractFile(
             tree , 
-            path.relative(repoDir , filePath)
-        );
+            relativePath,
+    );
 
 
         graph.nodes.push(...fileGraph.nodes);
@@ -107,6 +105,8 @@ async function indexRepository(repoDir:string , repositoryUrl:string , branch:st
     console.log(
         `Relationships: ${graph.relationships.length}`
     );
+
+    console.log(JSON.stringify(graph , null , 2))
 
     //neo4j part 
 }
