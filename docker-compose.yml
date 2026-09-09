@@ -1,6 +1,7 @@
 services:
   postgres:
     image: postgres:16
+    container_name: lorica-psql
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
@@ -25,7 +26,27 @@ services:
     volumes:
       - redis-data:/data
     command: redis-server --appendonly yes
+  
+  neo4j:
+    image: neo4j:5
+    container_name: lorica-neo4j
+    restart: unless-stopped
+
+    ports:
+      - "7474:7474"   # Neo4j Browser
+      - "7687:7687"   # Bolt
+
+    environment:
+      NEO4J_AUTH: neo4j/password123
+
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+      - neo4j_plugins:/plugins
 
 volumes:
   pgdata:
   redis-data:
+  neo4j_data:
+  neo4j_logs:
+  neo4j_plugins:
