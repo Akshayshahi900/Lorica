@@ -11,11 +11,12 @@ import { parseTypeScript } from "./indexer/parser";
 import { extractFile } from "./indexer/extractFile";
 
 const execFileAsync = promisify(execFile);
+const indexQueueName = process.env.INDEX_QUEUE_NAME ?? "code-index";
 
 
 
-const worker = new Worker(
-    "code-index",
+export const indexWorker = new Worker(
+    indexQueueName,
     async(job :Job<CloneRepoJob>) => {
       const {repositoryUrl , branch , commit} = job.data;
 
@@ -44,12 +45,12 @@ const worker = new Worker(
 
          // index repo ast
 
-         await indexRepository(repoDir, repositoryUrl , branch , commit);
+         const graph = await indexRepository(repoDir, repositoryUrl , branch , commit);
          console.log(`Repository indexed successfully`);
 
          return {
             success:true,
-            repoDir,
+            graph,
          }
       }
       catch(error){
@@ -74,7 +75,7 @@ const worker = new Worker(
     }
 );
 
-async function indexRepository(repoDir:string , repositoryUrl:string , branch:string , commit:string){
+async function indexRepository(repoDir:string , repositoryUrl:string , branch:string , commit:string): Promise<CodeGraph>{
     // discover all files
     const files = await discoverSourceFiles(repoDir);
 
@@ -82,6 +83,8 @@ async function indexRepository(repoDir:string , repositoryUrl:string , branch:st
         nodes:[],
         relationships:[],
     };
+    const logDetails = process.env.LOG_INDEX_DETAILS === "true";
+    const logAst = process.env.LOG_INDEX_AST === "true";
     console.log(`Found ${files.length} source files`);
     for(const filePath of files ){
         const source = await readFile(filePath, "utf-8");
@@ -89,10 +92,25 @@ async function indexRepository(repoDir:string , repositoryUrl:string , branch:st
         const tree = parseTypeScript(source);
         const relativePath = path.relative(repoDir , filePath);
 
+        if (logAst) {
+            console.log(`\n[ast] ${relativePath}\n${tree.rootNode.toString()}`);
+        }
+
         const fileGraph = extractFile(
             tree , 
             relativePath,
     );
+
+        if (logDetails) {
+            const symbols = fileGraph.nodes
+                .filter((node) => node.type !== "File")
+                .map((node) => `${node.type}:${node.properties.name ?? node.id}`);
+            console.log(
+                `[index] ${relativePath} | read + parsed | ` +
+                `${fileGraph.nodes.length} nodes, ${fileGraph.relationships.length} relationships` +
+                (symbols.length ? ` | ${symbols.join(", ")}` : ""),
+            );
+        }
 
 
         graph.nodes.push(...fileGraph.nodes);
@@ -100,13 +118,15 @@ async function indexRepository(repoDir:string , repositoryUrl:string , branch:st
     }
 
     console.log(
-        `Nodes: ${graph.relationships.length}`
+        `Nodes: ${graph.nodes.length}`
     )
     console.log(
         `Relationships: ${graph.relationships.length}`
     );
 
-    console.log(JSON.stringify(graph , null , 2))
+    if (process.env.LOG_CODE_GRAPH === "true") {
+        console.dir(graph, { depth: null });
+    }
 
-    //neo4j part 
+    return graph;
 }

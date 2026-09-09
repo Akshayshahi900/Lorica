@@ -3,7 +3,7 @@ import { ReviewResult, ReviewResultSchema } from "../../types/src/types";
 
 const reviewResultJsonSchema = z.toJSONSchema(ReviewResultSchema);
 
-console.dir(reviewResultJsonSchema, { depth: null });
+// console.dir(reviewResultJsonSchema, { depth: null });
 
 export async function callLLM(
   diffText: string,
