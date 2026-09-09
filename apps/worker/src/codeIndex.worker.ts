@@ -1,11 +1,14 @@
-import { CloneRepoJob } from "@lorica/types";
+import { CloneRepoJob, CodeGraph } from "@lorica/types";
 import {Worker, Job }from "bullmq";
 import {connection} from "@lorica/queue";
 import {execFile} from "child_process";
 import {promisify} from 'util';
-import {mkdtemp , rm } from "fs/promises";
+import {mkdtemp , readFile, rm } from "fs/promises";
 import {tmpdir} from "os";
 import path from "path";
+import { discoverSourceFiles } from "./indexer/discoverFiles";
+import { parseTypeScript } from "./indexer/parser";
+import { extractFile } from "./indexer/extractFile";
 
 const execFileAsync = promisify(execFile);
 
@@ -41,7 +44,7 @@ const worker = new Worker(
 
          // index repo ast
 
-         await indexRepository(repoDir);
+         await indexRepository(repoDir, repositoryUrl , branch , commit);
          console.log(`Repository indexed successfully`);
 
          return {
@@ -71,6 +74,39 @@ const worker = new Worker(
     }
 );
 
-async function indexRepository(repoDir:string){
-    
+async function indexRepository(repoDir:string , repositoryUrl:string , branch:string , commit:string){
+    // discover all files
+    const files = await discoverSourceFiles(repoDir);
+
+    const graph:CodeGraph = {
+        nodes:[],
+        relationships:[],
+    };
+
+
+
+
+    console.log(`Found ${files.length} source files`);
+    for(const filePath of files ){
+        const source = await readFile(filePath, "utf-8");
+        
+        const tree = parseTypeScript(source);
+        const fileGraph = extractFile(
+            tree , 
+            path.relative(repoDir , filePath)
+        );
+
+
+        graph.nodes.push(...fileGraph.nodes);
+        graph.relationships.push(...fileGraph.relationships);
+    }
+
+    console.log(
+        `Nodes: ${graph.relationships.length}`
+    )
+    console.log(
+        `Relationships: ${graph.relationships.length}`
+    );
+
+    //neo4j part 
 }

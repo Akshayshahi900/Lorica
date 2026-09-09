@@ -1,5 +1,5 @@
 import "dotenv/config";
-import './clone-worker';
+import './codeIndex.worker';
 import './diff.worker';
 
 console.log('[lorica:worker] All workers booted, waiting for jobs...');
