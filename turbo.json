@@ -15,11 +15,17 @@
     },
     "dev": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "env": ["*"]
     },
     "dev:worker" : {
       "cache": false,
-      "persistent" :true
+      "persistent" :true,
+      "env": ["*"]
+    },
+    "test:index": {
+      "cache": false,
+      "env": ["*"]
     }
   }
 }

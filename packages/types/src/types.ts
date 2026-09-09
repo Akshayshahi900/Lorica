@@ -40,9 +40,52 @@ export interface CloneRepoJob {
   commit:string;
   commitSha: string;
   baseCommitSha?: string;
-  branch?: string;
+  branch: string;
 }
 
 export type ReviewJobPayload = {
     reviewJobId:number;
+}
+
+
+export type NodeType =
+    | "Repository"
+    | "File"
+    | "Class"
+    | "Interface"
+    | "Function"
+    | "Method"
+    | "Variable";
+
+export type RelationshipType =
+    | "CONTAINS"
+    | "DEFINES"
+    // | "IMPORTS"
+    // | "CALLS"
+    // | "EXTENDS"
+    // | "IMPLEMENTS"
+    // | "USES";
+
+export interface GraphNode {
+    id: string;
+    type: NodeType;
+
+    properties: {
+        name?: string;
+        path?: string;
+        language?: string;
+        startLine?: number;
+        endLine?: number;
+    };
+}
+
+export interface GraphRelationship {
+    from: string;
+    type: RelationshipType;
+    to: string;
+}
+
+export interface CodeGraph {
+    nodes: GraphNode[];
+    relationships: GraphRelationship[];
 }

@@ -1,9 +1,26 @@
 import { Octokit } from '@octokit/rest';
 import { createAppAuth } from '@octokit/auth-app';
 import fs from 'fs';
+import path from 'path';
 
 const appId = process.env.GITHUB_APP_ID!;
-const privateKey = fs.readFileSync(process.env.GITHUB_PRIVATE_KEY_PATH!, 'utf-8');
+const configuredPrivateKeyPath = process.env.GITHUB_PRIVATE_KEY_PATH;
+
+if (!configuredPrivateKeyPath) {
+  throw new Error('GITHUB_PRIVATE_KEY_PATH is not configured');
+}
+
+// Root `pnpm dev` loads the repository .env and sets LORICA_ROOT. This keeps
+// relative paths stable even when this workspace package is imported by an app.
+const privateKeyPath = path.isAbsolute(configuredPrivateKeyPath)
+  ? configuredPrivateKeyPath
+  : path.resolve(process.env.LORICA_ROOT ?? process.cwd(), configuredPrivateKeyPath);
+
+if (!fs.existsSync(privateKeyPath)) {
+  throw new Error(`GitHub App private key file was not found: ${privateKeyPath}`);
+}
+
+const privateKey = fs.readFileSync(privateKeyPath, 'utf-8');
 
 export async function getInstallationOctokit(installationId: number): Promise<Octokit> {
   return new Octokit({

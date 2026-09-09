@@ -3,7 +3,8 @@
   "private": true,
   "scripts": {
     "build": "turbo run build",
-    "dev": "turbo run dev dev:worker --parallel",
+    "dev": "LORICA_ROOT=\"$PWD\" node --env-file=.env ./node_modules/turbo/bin/turbo run dev dev:worker --parallel",
+    "test:index": "LORICA_ROOT=\"$PWD\" node --env-file=.env ./node_modules/turbo/bin/turbo run test:index --filter=@lorica/worker",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types"
@@ -15,6 +16,6 @@
   },
   "packageManager": "pnpm@9.0.0",
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   }
 }

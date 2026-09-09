@@ -49,7 +49,7 @@ The dashboard does not use hard-coded data. Its internal API route reads the aut
 
 ## Requirements
 
-- Node.js 18 or newer (Node 20+ recommended)
+- Node.js 20 or newer
 - pnpm 9
 - Docker and Docker Compose
 - A GitHub OAuth App for dashboard sign-in
@@ -65,16 +65,21 @@ pnpm install
 docker compose up -d
 ```
 
-Create `apps/api/.env`:
+Create the root `.env`. `pnpm dev` loads it once and passes those variables to
+every app and workspace package. Relative file paths in this file are resolved
+from the repository root.
 
 ```dotenv
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/app"
 REDIS_URL="redis://localhost:6379"
 WEBHOOK_SECRET="your-github-app-webhook-secret"
 GITHUB_APP_ID="your-github-app-id"
-GITHUB_PRIVATE_KEY_PATH="/absolute/path/to/github-app-private-key.pem"
+GITHUB_PRIVATE_KEY_PATH="./github-app-private-key.pem"
 WEB_ORIGIN="http://localhost:3001"
 API_ACCESS_TOKEN="a-long-random-shared-secret"
+NEO4J_URI="bolt://localhost:7687"
+NEO4J_USER="neo4j"
+NEO4J_PASSWORD="password123"
 ```
 
 Create `apps/web/.env.local`:
