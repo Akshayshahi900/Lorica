@@ -6,12 +6,7 @@ export const ReviewFindingSchema = z.object({
 
   code: z.string(),
 
-  severity: z.enum([
-    "critical",
-    "high",
-    "medium",
-    "low",
-  ]),
+  severity: z.enum(["critical", "high", "medium", "low"]),
 
   category: z.enum([
     "bug",
@@ -37,55 +32,57 @@ export type ReviewResult = z.infer<typeof ReviewResultSchema>;
 export interface CloneRepoJob {
   reviewId: string;
   repositoryUrl: string;
-  commit:string;
+  commit: string;
   commitSha: string;
   baseCommitSha?: string;
   branch: string;
 }
 
 export type ReviewJobPayload = {
-    reviewJobId:number;
-}
-
+  reviewJobId: number;
+};
 
 export type NodeType =
-    | "Repository"
-    | "File"
-    | "Class"
-    | "Interface"
-    | "Function"
-    | "Method"
-    | "Variable";
+  | "Repository"
+  | "File"
+  | "Class"
+  | "Interface"
+  | "Function"
+  | "Method"
+  | "Variable"
+  | "ExternalModule";
 
 export type RelationshipType =
-    | "CONTAINS"
-    | "DEFINES"
-    // | "IMPORTS"
-    // | "CALLS"
-    // | "EXTENDS"
-    // | "IMPLEMENTS"
-    // | "USES";
+  | "CONTAINS"
+  | "DEFINES"
+  | "IMPORTS"
+  | "CALLS"
+  | "EXTENDS"
+  | "IMPLEMENTS"
+  | "USES";
 
 export interface GraphNode {
-    id: string;
-    type: NodeType;
+  id: string;
+  type: NodeType;
 
-    properties: {
-        name?: string;
-        path?: string;
-        language?: string;
-        startLine?: number;
-        endLine?: number;
-    };
+  properties: {
+    name?: string;
+    path?: string;
+    language?: string;
+    startLine?: number;
+    endLine?: number;
+    startColumn?: number;
+    endColumn?: number;
+  };
 }
 
 export interface GraphRelationship {
-    from: string;
-    type: RelationshipType;
-    to: string;
+  from: string;
+  type: RelationshipType;
+  to: string;
 }
 
 export interface CodeGraph {
-    nodes: GraphNode[];
-    relationships: GraphRelationship[];
+  nodes: GraphNode[];
+  relationships: GraphRelationship[];
 }

@@ -1,6 +1,15 @@
 import neo4j from "neo4j-driver";
 import type { CodeGraph } from "@lorica/types";
 
+const PERSISTED_RELATIONSHIP_TYPES = [
+  "DEFINES",
+  "IMPORTS",
+  "CALLS",
+  "EXTENDS",
+  "IMPLEMENTS",
+  "USES",
+] as const;
+
 type GraphMetadata = {
   repositoryUrl: string;
   branch: string;
@@ -62,13 +71,19 @@ export async function persistCodeGraph(
         { repositoryKey, nodes: graph.nodes },
       );
 
-      await transaction.run(
-        `UNWIND $relationships AS row
-         MATCH (source:CodeGraphNode { repositoryKey: $repositoryKey, id: row.from })
-         MATCH (target:CodeGraphNode { repositoryKey: $repositoryKey, id: row.to })
-         MERGE (source)-[:DEFINES]->(target)`,
-        { repositoryKey, relationships: graph.relationships },
-      );
+      for (const type of PERSISTED_RELATIONSHIP_TYPES) {
+        const relationships = graph.relationships.filter(
+          (relationship) => relationship.type === type,
+        );
+        if (!relationships.length) continue;
+        await transaction.run(
+          `UNWIND $relationships AS row
+           MATCH (source:CodeGraphNode { repositoryKey: $repositoryKey, id: row.from })
+           MATCH (target:CodeGraphNode { repositoryKey: $repositoryKey, id: row.to })
+           MERGE (source)-[:${type}]->(target)`,
+          { repositoryKey, relationships },
+        );
+      }
     });
   } finally {
     await session.close();
