@@ -6,6 +6,8 @@
   "types": "./src/index.ts",
   "dependencies": {
     "@xberg-io/tree-sitter-language-pack": "^1.14.3",
-    "parse-diff": "^0.12.0"
+    "parse-diff": "^0.12.0",
+    "@lorica/types": "workspace:*",
+    "zod": "^4.4.3"
   }
 }

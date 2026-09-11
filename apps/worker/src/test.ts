@@ -4,6 +4,9 @@ import type { CloneRepoJob, CodeGraph } from "@lorica/types";
 import path from "path";
 import { pathToFileURL } from "url";
 import { mkdir, writeFile } from "fs/promises";
+import { parseTypeScript } from "./indexer/parser.js";
+import { extractFile } from "./indexer/extractFile.js";
+import { extractRelationships } from "./indexer/relationships.js";
 
 type IndexResult = {
   success: boolean;
@@ -22,16 +25,74 @@ function validateGraph(graph: CodeGraph): void {
   );
 
   const nodeIds = new Set(graph.nodes.map((node) => node.id));
-  assert(nodeIds.size === graph.nodes.length, "The graph contains duplicate node IDs");
+  assert(
+    nodeIds.size === graph.nodes.length,
+    "The graph contains duplicate node IDs",
+  );
   assert(
     graph.relationships.every(
-      (relationship) => nodeIds.has(relationship.from) && nodeIds.has(relationship.to),
+      (relationship) =>
+        nodeIds.has(relationship.from) && nodeIds.has(relationship.to),
     ),
     "The graph contains a relationship with a missing node",
   );
 }
 
+function validateRelationshipExtraction(): void {
+  const sources: Record<string, string> = {
+    "dep.ts": `
+      export interface Contract {}
+      export class Base {}
+      export function helper() {}
+    `,
+    "main.ts": `
+      import { Base, Contract, helper } from "./dep";
+      import "external-package";
+      class Child extends Base implements Contract {
+        run() { helper(); }
+      }
+      function callbackHolder() {
+        const callback = helper;
+        return callback;
+      }
+    `,
+  };
+  const graph: CodeGraph = { nodes: [], relationships: [] };
+  const files = Object.entries(sources).map(([relativePath, source]) => {
+    const tree = parseTypeScript(source);
+    const fileGraph = extractFile(tree, relativePath);
+    graph.nodes.push(...fileGraph.nodes);
+    graph.relationships.push(...fileGraph.relationships);
+    return { relativePath, tree };
+  });
+
+  extractRelationships(graph, files);
+  validateGraph(graph);
+  for (const type of [
+    "IMPORTS",
+    "CALLS",
+    "EXTENDS",
+    "IMPLEMENTS",
+    "USES",
+  ] as const) {
+    assert(
+      graph.relationships.some((relationship) => relationship.type === type),
+      `The relationship fixture did not produce ${type}`,
+    );
+  }
+  assert(
+    graph.nodes.some(
+      (node) =>
+        node.type === "ExternalModule" &&
+        node.properties.name === "external-package",
+    ),
+    "The relationship fixture did not produce an external module node",
+  );
+}
+
 async function main() {
+  validateRelationshipExtraction();
+  console.log("Relationship extraction fixture passed");
   // A dedicated queue prevents a separately running `pnpm dev` worker from
   // consuming this test job.
   const queueName = `code-index-smoke-${process.pid}`;
@@ -44,8 +105,7 @@ async function main() {
     path.resolve(process.env.LORICA_ROOT ?? process.cwd()),
   ).href;
   const repositoryUrl =
-    process.env.INDEX_TEST_REPOSITORY_URL ??
-    localRepositoryUrl;
+    process.env.INDEX_TEST_REPOSITORY_URL ?? localRepositoryUrl;
   const branch = process.env.INDEX_TEST_BRANCH ?? "main";
   const queue = new Queue<CloneRepoJob>(queueName, { connection });
   const events = new QueueEvents(queueName, { connection });
@@ -63,7 +123,10 @@ async function main() {
     });
     console.log(`Created index job: ${job.id}`);
 
-    const result = (await job.waitUntilFinished(events, 120_000)) as IndexResult;
+    const result = (await job.waitUntilFinished(
+      events,
+      120_000,
+    )) as IndexResult;
     assert(result.success, "The index worker did not report success");
     validateGraph(result.graph);
 

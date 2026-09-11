@@ -2,14 +2,28 @@ import "dotenv/config";
 import { connection } from "@lorica/queue";
 import { prisma, PullRequestStatus, ReviewJobStatus } from "@lorica/db";
 import { callLLM, REVIEW_PROMPT } from "@lorica/llm";
+import { assembleReviewContext } from "@lorica/context";
 import { renderReview } from "@lorica/vcs";
 import {
   fetchPrFiles,
+  fetchPullRequestDetails,
+  getInstallationAccessToken,
   getInstallationOctokit,
   postPRComment,
 } from "@lorica/vcs";
 import {Worker , Job} from "bullmq";
 import { ReviewJobPayload } from "@lorica/types";
+import { refreshCodeGraph } from "./codeIndex.worker";
+import { getReviewGraphContext } from "./neo4j";
+
+function toCloneUrl(owner: string, repo: string, token: string): string {
+  return `https://x-access-token:${encodeURIComponent(token)}@github.com/${owner}/${repo}.git`;
+}
+
+function graphBranch(prNumber: number): string {
+  // A PR graph must not overwrite the repository's default-branch graph.
+  return `pull/${prNumber}`;
+}
 
 const worker = new Worker<ReviewJobPayload>(
   "review",
@@ -42,24 +56,61 @@ const worker = new Worker<ReviewJobPayload>(
 
     const octokit = await getInstallationOctokit(installationId);
 
-    // fetching files from the github api
-    const files = await fetchPrFiles(
+    const [files, metadata] = await Promise.all([
+      fetchPrFiles(
       installationId,
       repoOwner,
       repoName,
       prNumber,
-    );
+      ),
+      fetchPullRequestDetails(installationId, repoOwner, repoName, prNumber),
+    ]);
 
-    // generating diff text
-    const diffText = files
-      .filter((f) => f.patch)
-      .map((f) => {
-        return `diff --git a/${f.filePath} b/${f.filePath}
-${f.patch}`;
-      })
-      .join("\n\n");
+    const repositoryUrl = `https://github.com/${repoOwner}/${repoName}.git`;
+    const branch = graphBranch(prNumber);
 
-    const resultObject = await callLLM(diffText, REVIEW_PROMPT);
+    // A synchronize event always replaces the PR graph before context is read.
+    // Fresh PRs take the same initialization path, so both cases have a graph
+    // snapshot at precisely the SHA presented to the model.
+    const token = await getInstallationAccessToken(installationId);
+    await refreshCodeGraph({
+      repositoryUrl,
+      cloneRepositoryUrl: toCloneUrl(repoOwner, repoName, token),
+      branch,
+      commit: metadata.headSha,
+    });
+
+    const changedFiles = files
+      .filter((file) => Boolean(file.patch))
+      .map((file) => ({
+        filePath: file.filePath,
+        status: ["added", "modified", "removed", "renamed"].includes(file.status)
+          ? file.status as "added" | "modified" | "removed" | "renamed"
+          : "changed" as const,
+        patch: file.patch!,
+      }));
+    const graph = await getReviewGraphContext({
+      repositoryUrl,
+      branch,
+      changedFiles: changedFiles.map((file) => file.filePath),
+    });
+    const context = assembleReviewContext({
+      pullRequest: {
+        repository: `${repoOwner}/${repoName}`,
+        number: prNumber,
+        title: metadata.title,
+        description: metadata.description,
+        author: metadata.author,
+        baseSha: metadata.baseSha,
+        headSha: metadata.headSha,
+        event: pullRequest.action === "synchronize" ? "synchronize" : "fresh",
+      },
+      changedFiles,
+      indexedCommit: graph.indexedCommit,
+      traces: graph.traces,
+    });
+
+    const resultObject = await callLLM(context, REVIEW_PROMPT);
 
     console.log(resultObject);
 

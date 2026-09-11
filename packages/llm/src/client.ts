@@ -1,14 +1,20 @@
 import {z} from "zod";
-import { ReviewResult, ReviewResultSchema } from "../../types/src/types";
+import {
+  ReviewContextSchema,
+  ReviewResult,
+  ReviewResultSchema,
+  type ReviewContext,
+} from "../../types/src/types";
 
 const reviewResultJsonSchema = z.toJSONSchema(ReviewResultSchema);
 
 // console.dir(reviewResultJsonSchema, { depth: null });
 
 export async function callLLM(
-  diffText: string,
+  reviewContext: ReviewContext,
   promptTemplate: string,
 ): Promise<ReviewResult> {
+  const validatedContext = ReviewContextSchema.parse(reviewContext);
   const response = await fetch("http://localhost:11434/api/chat", {
     method: "POST",
     headers: {
@@ -24,13 +30,7 @@ export async function callLLM(
         },
         {
           role: "user",
-          content: `Here is the complete Git diff of the pull request.
-
-Review ONLY the changes shown in this diff  
-
-\`\`\`diff
-${diffText}
-\`\`\``,
+          content: `Review input contract (JSON). Treat graph traces as evidence for behavior that cannot be established from the diff alone.\n\n${JSON.stringify(validatedContext)}`,
         },
       ],
 
