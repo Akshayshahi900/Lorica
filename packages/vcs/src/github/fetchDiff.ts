@@ -5,6 +5,14 @@ export interface FileDiff{
     patch:string | undefined;
 }
 
+export interface PullRequestDetails {
+    title: string | null;
+    description: string | null;
+    author: string | null;
+    baseSha: string;
+    headSha: string;
+}
+
 export async function fetchPrFiles(
     installationId:number,
     owner:string,
@@ -26,4 +34,22 @@ export async function fetchPrFiles(
     patch:f.patch,
  }));
 
+}
+
+export async function fetchPullRequestDetails(
+    installationId:number,
+    owner:string,
+    repo:string,
+    prNumber:number,
+): Promise<PullRequestDetails> {
+    const octokit = await getInstallationOctokit(installationId);
+    const { data } = await octokit.pulls.get({ owner, repo, pull_number: prNumber });
+
+    return {
+        title: data.title ?? null,
+        description: data.body ?? null,
+        author: data.user?.login ?? null,
+        baseSha: data.base.sha,
+        headSha: data.head.sha,
+    };
 }

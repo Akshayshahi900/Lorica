@@ -167,12 +167,18 @@ importers:
 
   packages/context:
     dependencies:
+      '@lorica/types':
+        specifier: workspace:*
+        version: link:../types
       '@xberg-io/tree-sitter-language-pack':
         specifier: ^1.14.3
         version: 1.14.3
       parse-diff:
         specifier: ^0.12.0
         version: 0.12.0
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
 
   packages/db:
     dependencies:
@@ -214,6 +220,12 @@ importers:
 
   packages/vcs:
     dependencies:
+      '@lorica/llm':
+        specifier: workspace:*
+        version: link:../llm
+      '@lorica/types':
+        specifier: workspace:*
+        version: link:../types
       '@octokit/auth-app':
         specifier: ^8.2.0
         version: 8.3.0

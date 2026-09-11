@@ -1,8 +1,7 @@
-import { callLLM } from "../../llm/client"
-import { REVIEW_PROMPT } from "../../llm/prompt"
-import {ReviewResult} from "../../types/types";
-export async function reviewDiff(diffText :string):Promise<ReviewResult>{
-    const raw = await callLLM(diffText , REVIEW_PROMPT);
+import { callLLM, REVIEW_PROMPT } from "@lorica/llm";
+import {ReviewResult, ReviewContext} from "../../../types/src/types";
+export async function reviewDiff(reviewContext: ReviewContext):Promise<ReviewResult>{
+    const raw = await callLLM(reviewContext , REVIEW_PROMPT);
     let result:ReviewResult;
     
     try{

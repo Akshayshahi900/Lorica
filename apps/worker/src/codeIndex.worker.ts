@@ -19,51 +19,7 @@ export const indexWorker = new Worker(
   indexQueueName,
   async (job: Job<CloneRepoJob>) => {
     const { repositoryUrl, branch, commit } = job.data;
-
-    // creating a isolated temp directory
-    const repoDir = await mkdtemp(path.join(tmpdir(), "lorica-"));
-
-    try {
-      console.log(`Cloning ${repositoryUrl}`);
-      console.log(`Working directory: ${repoDir}`);
-
-      // clone repo
-      const cloneArgs = ["clone", "--depth", "1"];
-      if (branch) {
-        cloneArgs.push("--branch", branch);
-      }
-      cloneArgs.push(repositoryUrl, repoDir);
-      await execFileAsync("git", cloneArgs);
-
-      console.log(`Repository cloned successfully`);
-
-      // index repo ast
-
-      const graph = await indexRepository(
-        repoDir,
-        repositoryUrl,
-        branch,
-        commit,
-      );
-      await persistCodeGraph(graph, { repositoryUrl, branch, commit });
-      console.log(`Graph saved to Neo4j`);
-      console.log(`Repository indexed successfully`);
-
-      return {
-        success: true,
-        graph,
-      };
-    } catch (error) {
-      console.error(`Failed to process ${repositoryUrl}`, error);
-      throw error;
-    } finally {
-      await rm(repoDir, {
-        recursive: true,
-        force: true,
-      });
-
-      console.log(`Cleaned up ${repoDir}`);
-    }
+    return refreshCodeGraph({ repositoryUrl, branch, commit });
   },
   {
     connection,
@@ -74,6 +30,34 @@ export const indexWorker = new Worker(
     },
   },
 );
+
+/** Refreshes a branch graph at the exact SHA supplied by a webhook. */
+export async function refreshCodeGraph(input: {
+  repositoryUrl: string;
+  cloneRepositoryUrl?: string;
+  branch: string;
+  commit: string;
+}): Promise<CodeGraph> {
+  const repoDir = await mkdtemp(path.join(tmpdir(), "lorica-"));
+  try {
+    // Do not log repositoryUrl: for private PRs it can contain an installation token.
+    console.log(`Cloning repository at ${input.commit}`);
+    await execFileAsync("git", ["clone", "--no-checkout", "--depth", "1", input.cloneRepositoryUrl ?? input.repositoryUrl, repoDir]);
+    await execFileAsync("git", ["fetch", "--depth", "1", "origin", input.commit], { cwd: repoDir });
+    await execFileAsync("git", ["checkout", "--detach", "FETCH_HEAD"], { cwd: repoDir });
+
+    const graph = await indexRepository(repoDir, input.repositoryUrl, input.branch, input.commit);
+    await persistCodeGraph(graph, {
+      repositoryUrl: input.repositoryUrl,
+      branch: input.branch,
+      commit: input.commit,
+    });
+    console.log(`Graph saved to Neo4j at ${input.commit}`);
+    return graph;
+  } finally {
+    await rm(repoDir, { recursive: true, force: true });
+  }
+}
 
 export async function indexRepository(
   repoDir: string,
