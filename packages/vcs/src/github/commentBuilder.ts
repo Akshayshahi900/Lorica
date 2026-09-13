@@ -48,7 +48,7 @@ ${review.suggestion}`
 
   return `<!-- lorica-review -->
 
-## 🤖 Lorica AI Code Review
+## 🤖 Lorica
 
 ${result.summary}
 
