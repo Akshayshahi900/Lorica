@@ -28,7 +28,7 @@ export function Sidebar({ session }: { session: Session }) {
     <aside className="hidden lg:flex w-56 flex-shrink-0 bg-bg-panel border-r border-bg-border flex-col h-screen sticky top-0">
       {/* Logo */}
       <div className="px-4 py-4 border-b border-bg-border flex items-center gap-2.5">
-        <span className="text-lg">🐇</span>
+        <span className="text-lg">🤖</span>
         <span className="font-mono font-semibold text-text-primary text-sm tracking-tight">
           lorica
         </span>
