@@ -28,9 +28,9 @@ export function Sidebar({ session }: { session: Session }) {
     <aside className="hidden lg:flex w-56 flex-shrink-0 bg-bg-panel border-r border-bg-border flex-col h-screen sticky top-0">
       {/* Logo */}
       <div className="px-4 py-4 border-b border-bg-border flex items-center gap-2.5">
-        <span className="text-lg">🐇</span>
+        <span className="text-lg">🤖</span>
         <span className="font-mono font-semibold text-text-primary text-sm tracking-tight">
-          lorica
+          Lorica
         </span>
         <span className="ml-auto w-2 h-2 rounded-full bg-status-green animate-pulse_slow flex-shrink-0" title="Bot online" />
       </div>
