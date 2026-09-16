@@ -139,12 +139,18 @@ importers:
       '@lorica/vcs':
         specifier: workspace:*
         version: link:../../packages/vcs
+      '@types/express':
+        specifier: ^5.0.6
+        version: 5.0.6
       bullmq:
         specifier: ^6.0.7
         version: 6.0.7(ioredis@5.11.1)(pg@8.22.0)
       dotenv:
         specifier: ^17.4.2
         version: 17.4.2
+      express:
+        specifier: ^5.2.1
+        version: 5.2.1
       neo4j-driver:
         specifier: ^6.2.0
         version: 6.2.0
