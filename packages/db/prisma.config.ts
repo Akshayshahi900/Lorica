@@ -2,7 +2,7 @@ import { defineConfig, env } from "prisma/config";
 import dotenv from "dotenv";
 
 dotenv.config({
-  path: "../../apps/api/.env",
+  path: "../../.env",
 });
 
 export default defineConfig({
