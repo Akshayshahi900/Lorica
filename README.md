@@ -104,7 +104,7 @@ OPENROUTER_API_KEY="replace-with-your-openrouter-api-key"
 
 Keep the GitHub App private key outside version control; `*.pem` is already ignored. `GITHUB_PRIVATE_KEY_PATH` may be absolute or relative to the repository root when using `pnpm dev`.
 
-Create `apps/web/.env.local` for the dashboard:
+Create the repository-root `.env` for the dashboard:
 
 ```dotenv
 GITHUB_ID="replace-with-the-github-oauth-client-id"

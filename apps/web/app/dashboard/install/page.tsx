@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Github, ArrowRight, CheckCircle2, Terminal, Puzzle, Key } from "lucide-react";
 import { fetchPullRequests, PullRequestRecord } from "@/lib/pull-requests";
 
-const APP_NAME = process.env.NEXT_PUBLIC_GITHUB_APP_NAME ?? "Lorica-Akshay";
+const APP_NAME = process.env.NEXT_PUBLIC_GITHUB_APP_NAME!;
 
 const STEPS = [
   {

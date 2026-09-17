@@ -1,15 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-
-// NEXT_PUBLIC_API_URL is kept as a backwards-compatible local-development
-// setting. LORICA_API_URL is preferred because this value is only needed on
-// the server.
-const apiBaseUrl =
-  process.env.LORICA_API_URL ??
-  process.env.NEXT_PUBLIC_API_URL ??
-  "http://localhost:5000";
-const apiAccessToken = process.env.LORICA_API_TOKEN;
+import { serverEnv } from "@/lib/env";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -21,13 +13,11 @@ export async function GET() {
 
   try {
     const response = await fetch(
-      `${apiBaseUrl.replace(/\/$/, "")}/api/pulls?owner=${encodeURIComponent(login)}`,
+      `${serverEnv.apiUrl}/api/pulls?owner=${encodeURIComponent(login)}`,
       {
         cache: "no-store",
-        // Local development can run without API_ACCESS_TOKEN. Production
-        // validates that configuration in the API service.
-        headers: apiAccessToken
-          ? { "x-lorica-api-token": apiAccessToken }
+        headers: serverEnv.apiToken
+          ? { "x-lorica-api-token": serverEnv.apiToken }
           : undefined,
       },
     );

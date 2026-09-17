@@ -1,11 +1,12 @@
 import { NextAuthOptions } from "next-auth";
 import GitHubProvider from "next-auth/providers/github";
+import { serverEnv } from "@/lib/env";
 
 export const authOptions: NextAuthOptions = {
   providers: [
     GitHubProvider({
-      clientId: process.env.GITHUB_ID!,
-      clientSecret: process.env.GITHUB_SECRET!,
+      clientId: serverEnv.githubId,
+      clientSecret: serverEnv.githubSecret,
       // Request read:org so we can later list org repos
       authorization: {
         params: {
