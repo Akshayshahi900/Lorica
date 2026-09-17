@@ -192,11 +192,15 @@ importers:
         specifier: ^7.9.1
         version: 7.9.1
       '@prisma/client':
-        specifier: ^7.8.0
+        specifier: ^7.9.1
         version: 7.9.1(prisma@7.9.1(@types/react-dom@18.3.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@5.9.2))(typescript@5.9.2)
       dotenv:
         specifier: ^17.4.2
         version: 17.4.2
+    devDependencies:
+      prisma:
+        specifier: ^7.9.1
+        version: 7.9.1(@types/react-dom@18.3.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@5.9.2)
 
   packages/llm:
     dependencies:
@@ -2687,7 +2691,6 @@ snapshots:
       zeptomatch: 2.1.0
     transitivePeerDependencies:
       - typescript
-    optional: true
 
   '@prisma/dev@0.24.17(typescript@7.0.2)':
     dependencies:
@@ -3996,7 +3999,6 @@ snapshots:
       - magicast
       - react
       - react-dom
-    optional: true
 
   prisma@7.9.1(@types/react-dom@18.3.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@7.0.2):
     dependencies:
@@ -4377,7 +4379,6 @@ snapshots:
   valibot@1.4.2(typescript@5.9.2):
     optionalDependencies:
       typescript: 5.9.2
-    optional: true
 
   valibot@1.4.2(typescript@7.0.2):
     optionalDependencies:

@@ -1,16 +1,22 @@
 {
   "name": "@lorica/db",
-  "private":true,
+  "private": true,
   "version": "0.0.0",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
-  "scripts":{
-    "db:generate" :"prisma generate",
-    "db:push" :"prisma db push"
+
+  "scripts": {
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push"
   },
+
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",
-    "@prisma/client": "^7.8.0",
+    "@prisma/client": "^7.9.1",
     "dotenv": "^17.4.2"
+  },
+
+  "devDependencies": {
+    "prisma": "^7.9.1"
   }
 }
