@@ -5,24 +5,38 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**"]
+      "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**"],
+      "env": [
+        "GITHUB_ID",
+        "GITHUB_SECRET",
+        "NEXTAUTH_URL",
+        "NEXTAUTH_SECRET",
+        "LORICA_API_URL",
+        "LORICA_API_TOKEN",
+        "NEXT_PUBLIC_GITHUB_APP_NAME"
+      ]
     },
+
     "lint": {
       "dependsOn": ["^lint"]
     },
+
     "check-types": {
       "dependsOn": ["^check-types"]
     },
+
     "dev": {
       "cache": false,
       "persistent": true,
       "env": ["*"]
     },
-    "dev:worker" : {
+
+    "dev:worker": {
       "cache": false,
-      "persistent" :true,
+      "persistent": true,
       "env": ["*"]
     },
+
     "test:index": {
       "cache": false,
       "env": ["*"]
