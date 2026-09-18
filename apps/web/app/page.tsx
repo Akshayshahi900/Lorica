@@ -2,7 +2,13 @@
 import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { Github, Zap, GitPullRequest, MessageSquare, Shield } from "lucide-react";
+import {
+  Github,
+  Zap,
+  GitPullRequest,
+  MessageSquare,
+  Shield,
+} from "lucide-react";
 
 export default function LandingPage() {
   const { data: session, status } = useSession();
@@ -31,18 +37,21 @@ export default function LandingPage() {
           backgroundSize: "48px 48px",
         }}
       />
-
+      
       {/* Header */}
       <header className="relative z-10 border-b border-bg-border px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <span className="text-xl"></span>
+          <img
+            src="../assets/logo.png"
+            alt="Lorica"
+            className="w-10 h-10 object-contain"
+          />
+
           <span className="font-mono font-semibold text-text-primary tracking-tight">
-            Lorica 
-          </span>
-          <span className="text-text-muted font-mono text-xs px-1.5 py-0.5 rounded border border-bg-border">
-            v1
+            Lorica
           </span>
         </div>
+
         <a
           href="https://github.com"
           target="_blank"
