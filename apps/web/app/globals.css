@@ -7,6 +7,15 @@
     box-sizing: border-box;
   }
 
+  html,
+  body {
+    font-family: "Inter", sans-serif;
+  }
+
+  body {
+    min-height: 100vh;
+  }
+
   ::selection {
     background: rgba(124, 106, 247, 0.3);
     color: #f0f2f8;
@@ -22,19 +31,26 @@
     width: 6px;
     height: 6px;
   }
+
   ::-webkit-scrollbar-track {
     background: #141720;
   }
+
   ::-webkit-scrollbar-thumb {
     background: #1e2330;
     border-radius: 3px;
   }
+
   ::-webkit-scrollbar-thumb:hover {
     background: #2a3045;
   }
 }
 
 @layer utilities {
+  .font-mono {
+    font-family: "Inter", sans-serif;
+  }
+
   .glow-violet {
     box-shadow: 0 0 20px rgba(124, 106, 247, 0.2);
   }

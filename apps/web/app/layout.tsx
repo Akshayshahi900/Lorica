@@ -3,7 +3,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "Lorica· AI Code Reviewer",
+  title: "Lorica · AI Code Reviewer",
   description: "Automated PR reviews powered by Lorica",
 };
 
@@ -22,10 +22,11 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
         <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
           rel="stylesheet"
         />
       </head>
+
       <body className="bg-bg-base text-text-primary font-sans antialiased">
         <Providers>{children}</Providers>
       </body>
