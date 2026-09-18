@@ -6,40 +6,76 @@ const config: Config = {
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
+
   theme: {
     extend: {
       colors: {
+        // ─────────────────────────────────────────
+        // SURFACES
+        // ─────────────────────────────────────────
         bg: {
-          base: "#0D0F14",
-          panel: "#141720",
-          hover: "#1A1F2E",
-          border: "#1E2330",
+          base: "#08090A",
+          panel: "#101113",
+          hover: "#181A1D",
+          border: "#26282C",
         },
+
+        // ─────────────────────────────────────────
+        // LORICA ACCENT
+        // Existing names kept so components
+        // don't need to be changed.
+        // ─────────────────────────────────────────
         accent: {
-          violet: "#7C6AF7",
-          "violet-dim": "#5A4ED1",
-          "violet-glow": "rgba(124,106,247,0.15)",
+          violet: "#5E6AD2",
+          "violet-dim": "#4F5AB8",
+          "violet-glow": "rgba(94, 106, 210, 0.16)",
         },
+
+        // ─────────────────────────────────────────
+        // TYPOGRAPHY
+        // ─────────────────────────────────────────
         text: {
-          primary: "#F0F2F8",
-          secondary: "#9AA3B2",
-          muted: "#4E5668",
+          primary: "#F7F8F8",
+          secondary: "#B8BBC2",
+          muted: "#8A8F98",
         },
+
+        // ─────────────────────────────────────────
+        // SYSTEM STATES
+        // ─────────────────────────────────────────
         status: {
-          green: "#2DD4A0",
+          green: "#35D6A5",
           red: "#F87171",
-          yellow: "#FBBF24",
+          yellow: "#F2C94C",
         },
       },
+
+      // ─────────────────────────────────────────
+      // TYPOGRAPHY
+      // ─────────────────────────────────────────
       fontFamily: {
-        mono: ["JetBrains Mono", "Fira Code", "monospace"],
         sans: ["Inter", "system-ui", "sans-serif"],
+        mono: ["JetBrains Mono", "Fira Code", "monospace"],
       },
+
+      // ─────────────────────────────────────────
+      // ANIMATION
+      // ─────────────────────────────────────────
       animation: {
-        pulse_slow: "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        pulse_slow:
+          "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+      },
+
+      // ─────────────────────────────────────────
+      // SUBTLE ACCENT GLOWS
+      // ─────────────────────────────────────────
+      boxShadow: {
+        "violet-sm": "0 0 20px rgba(94, 106, 210, 0.10)",
+        "violet-md": "0 0 32px rgba(94, 106, 210, 0.14)",
       },
     },
   },
+
   plugins: [],
 };
 
