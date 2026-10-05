@@ -1,13 +1,49 @@
 # Lorica
 
-**AI-assisted GitHub pull-request reviews with repository-aware context.**
+**An autonomous code review agent for GitHub that analyzes pull requests and surfaces actionable issues before they reach production. GitHub pull-request reviews with repository-aware context.**
 
 Lorica is a self-hosted GitHub App that reviews pull requests asynchronously. It verifies GitHub webhooks, records review work in PostgreSQL, builds a code graph for the pull request head in Neo4j, asks an LLM for structured findings, and posts a single review summary back to the pull request. A Next.js dashboard gives signed-in GitHub users visibility into the reviews recorded for repositories they own.
 
+## Demo
+
+**Status:** live GitHub App with 4 active users and 10+ pull-request reviews. [Install Lorica](https://github.com/apps/lorica-akshay) · [Open the dashboard](https://lorica-web-sigma.vercel.app/)
+
+### Landing page
+
+![Lorica landing page hero](docs/images/landing1.png)
+
+![Lorica review preview on the landing page](docs/images/landing2.png)
+
+![How Lorica works](docs/images/landing3.png)
+
+### Review comments
+
+Lorica posts one structured summary comment on the PR once the review job completes — with severity, category, code context, and a suggested fix.
+
+![Lorica review comment with typed findings](docs/images/review_1.png)
+
+![Lorica review comment catching broken image paths](docs/images/review_2.png)
+
+### Dashboard
+
+Signed-in GitHub users get an overview of review activity, pull-request history, connected repositories, and account settings.
+
+![Dashboard overview — recent reviews](docs/images/dashboard_overview1.png)
+
+![Dashboard overview — metrics and activity](docs/images/dashboard_overview2.png)
+
+![Pull request review history](docs/images/dashboard_pr1.png)
+
+![Connected repositories](docs/images/dashboard_repo1.png)
+
+![Account and bot settings](docs/images/dashboard_settings1.png)
+
 ## Contents
 
+- [Demo](#demo)
 - [How it works](#how-it-works)
 - [Architecture](#architecture)
+- [Design decisions](#design-decisions)
 - [Prerequisites](#prerequisites)
 - [Quick start](#quick-start)
 - [GitHub setup](#github-setup)
@@ -55,6 +91,15 @@ Jobs retry up to three times with exponential backoff. A terminal failure marks 
                                                                │ code graph│ │ LLM API   │
                                                                └───────────┘ └───────────┘
 ```
+
+## Design decisions
+
+- **Asynchronous pipeline (BullMQ).** The webhook handler only verifies, records, and enqueues, so GitHub gets a fast response. Cloning, indexing, and the LLM call run in workers with three retries and exponential backoff, and queued jobs survive a worker restart.
+- **PR-scoped, commit-pinned graph.** Each graph is keyed by repository URL and `pull/<PR number>` and built from the PR head SHA. A refresh replaces only that PR's graph, so reviews never see stale data from other PRs.
+- **Graph context instead of the diff alone.** A patch does not show who calls a changed function. One-hop relationships from changed files give the model supporting evidence without sending the whole repository.
+- **Bounded context (one hop).** Keeping the graph evidence small keeps prompts and latency predictable. Deeper traversal is a known limitation, listed below.
+- **Validated LLM output.** The model must return JSON that passes a Zod schema before anything is posted, so a malformed response fails the job instead of producing a broken comment.
+- **Server-side API token.** The dashboard reaches the Express API through an authenticated Next.js route, so the shared API token never reaches browser code.
 
 ## Prerequisites
 
