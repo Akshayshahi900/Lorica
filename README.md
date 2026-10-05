@@ -159,6 +159,7 @@ NEXTAUTH_URL="http://localhost:3001"
 
 # Server-only connection from Next.js to the Express API
 LORICA_API_URL="http://localhost:5000"
+LORICA_WORKER_URL="http://localhost:10000"
 LORICA_API_TOKEN="replace-with-the-same-api-access-token"
 
 # Used to form the GitHub App installation URL in the dashboard
@@ -225,6 +226,7 @@ The dashboard requests `read:user`, `user:email`, `repo`, and `read:org` scopes.
 | `OPENROUTER_API_KEY`                                   | Yes         | Worker              | API key for structured LLM reviews.                                                      |
 | `API_ACCESS_TOKEN`                                     | Production  | API                 | Shared token required for `/api/*` routes in production.                                 |
 | `LORICA_API_URL`                                       | Yes         | Web                 | Server-only base URL for the Express API.                                                |
+| `LORICA_WORKER_URL`                                    | No          | Web                 | Server-only worker service URL; dashboard visits request its `/health` endpoint to wake it. |
 | `LORICA_API_TOKEN`                                     | Production  | Web                 | Must equal `API_ACCESS_TOKEN`.                                                           |
 | `WEB_ORIGIN`                                           | Recommended | API                 | Comma-separated CORS allowlist; defaults to `http://localhost:3001`.                     |
 | `PORT`                                                 | No          | API                 | API listener port; defaults to `5000`.                                                   |

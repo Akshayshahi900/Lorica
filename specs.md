@@ -28,7 +28,7 @@ Interactive controls display a violet keyboard-focus ring. External PR links are
 ### Header
 
 - Uses a bordered panel with a soft violet glow, page context, date, and a bot-health indicator.
-- The health indicator is informational; it does not currently perform a service-health request.
+- When an authenticated user enters the dashboard, the web app requests its server-side `/api/wake` route. That route pings the API and, when `LORICA_WORKER_URL` is configured, the worker `/health` endpoint to wake services that may be sleeping.
 
 ### Metrics
 

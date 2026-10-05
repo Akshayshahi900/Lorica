@@ -16,6 +16,14 @@ export default function DashboardLayout({
     if (status === "unauthenticated") router.push("/");
   }, [status, router]);
 
+  useEffect(() => {
+    if (status !== "authenticated") return;
+
+    void fetch("/api/wake", { cache: "no-store" }).catch((error) => {
+      console.warn("Dashboard wake request could not reach the app", error);
+    });
+  }, [status]);
+
   if (status === "loading") {
     return (
       <div className="min-h-screen bg-bg-base flex items-center justify-center">
