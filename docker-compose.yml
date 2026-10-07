@@ -26,23 +26,114 @@ services:
     volumes:
       - redis-data:/data
     command: redis-server --appendonly yes
-  
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   neo4j:
     image: neo4j:5
     container_name: lorica-neo4j
     restart: unless-stopped
-
     ports:
       - "7474:7474"   # Neo4j Browser
       - "7687:7687"   # Bolt
-
     environment:
       NEO4J_AUTH: neo4j/password123
-
     volumes:
       - neo4j_data:/data
       - neo4j_logs:/logs
       - neo4j_plugins:/plugins
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:7474 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: lorica-api
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/app?schema=public
+      REDIS_URL: redis://redis:6379
+      NEO4J_URI: bolt://neo4j:7687
+      NEO4J_USER: neo4j
+      NEO4J_PASSWORD: password123
+      WEB_ORIGIN: http://localhost:3001
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    container_name: lorica-worker
+    restart: unless-stopped
+    ports:
+      - "10000:10000"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: 10000
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/app?schema=public
+      REDIS_URL: redis://redis:6379
+      NEO4J_URI: bolt://neo4j:7687
+      NEO4J_USER: neo4j
+      NEO4J_PASSWORD: password123
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        GITHUB_ID: ${GITHUB_ID:-build}
+        GITHUB_SECRET: ${GITHUB_SECRET:-build}
+        NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3001}
+        NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-build-secret}
+        LORICA_API_URL: http://api:5000
+        LORICA_API_TOKEN: ${LORICA_API_TOKEN:-${API_ACCESS_TOKEN:-build-token}}
+        NEXT_PUBLIC_GITHUB_APP_NAME: ${NEXT_PUBLIC_GITHUB_APP_NAME:-lorica}
+    container_name: lorica-web
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      NEXTAUTH_URL: http://localhost:3001
+      LORICA_API_URL: http://api:5000
+      LORICA_API_TOKEN: ${LORICA_API_TOKEN:-${API_ACCESS_TOKEN}}
+      LORICA_WORKER_URL: http://worker:10000
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/app?schema=public
+    depends_on:
+      - api
+      - worker
 
 volumes:
   pgdata:
