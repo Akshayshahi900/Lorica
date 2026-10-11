@@ -5,6 +5,7 @@
     "build": "turbo run build",
     "dev": "LORICA_ROOT=\"$PWD\" node --env-file=.env ./node_modules/turbo/bin/turbo run dev dev:worker --parallel",
     "test:index": "LORICA_ROOT=\"$PWD\" node --env-file=.env ./node_modules/turbo/bin/turbo run test:index --filter=@lorica/worker",
+    "test": "pnpm --filter @lorica/worker test:unit",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",

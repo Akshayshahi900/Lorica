@@ -1,30 +1,11 @@
 import { Request, Response } from "express";
-import crypto from "crypto";
 import { reviewQueue } from "@lorica/queue";
 import {
   prisma,
   PullRequestStatus,
   ReviewJobStatus,
 } from "@lorica/db";
-
-function verifySignature(
-  payload: Buffer,
-  signature: string,
-  secret: string,
-): boolean {
-  const expected =
-    "sha256=" +
-    crypto.createHmac("sha256", secret).update(payload).digest("hex");
-
-  const sigBuffer = Buffer.from(signature);
-  const expectedBuffer = Buffer.from(expected);
-
-  if (sigBuffer.length !== expectedBuffer.length) {
-    return false;
-  }
-
-  return crypto.timingSafeEqual(sigBuffer, expectedBuffer);
-}
+import { verifySignature } from "./webhookSignature";
 
 async function insertIntoDatabase(payload: any) {
   // Repository
