@@ -68,7 +68,10 @@ export const getPullRequests = async (req: Request, res: Response) => {
       count: data.length,
     });
   } catch (error) {
-    console.error("Failed to fetch pull requests:", error);
+    const errorType = error instanceof Error ? error.name : "unknown";
+    console.error(
+      `[api] stage=pull_requests.fetch.failed error_type=${errorType}`,
+    );
 
     return res.status(500).json({
       error: "Failed to fetch pull requests",

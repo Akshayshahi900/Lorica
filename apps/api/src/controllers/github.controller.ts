@@ -1,33 +1,14 @@
 import { Request, Response } from "express";
-import crypto from "crypto";
 import { reviewQueue } from "@lorica/queue";
-import {
-  prisma,
-  PullRequestStatus,
-  ReviewJobStatus,
-} from "@lorica/db";
+import { prisma, PullRequestStatus, ReviewJobStatus } from "@lorica/db";
+import { verifySignature } from "./webhookSignature";
 
-function verifySignature(
-  payload: Buffer,
-  signature: string,
-  secret: string,
-): boolean {
-  const expected =
-    "sha256=" +
-    crypto.createHmac("sha256", secret).update(payload).digest("hex");
-
-  const sigBuffer = Buffer.from(signature);
-  const expectedBuffer = Buffer.from(expected);
-
-  if (sigBuffer.length !== expectedBuffer.length) {
-    return false;
-  }
-
-  return crypto.timingSafeEqual(sigBuffer, expectedBuffer);
-}
-
-async function insertIntoDatabase(payload: any) {
+async function insertIntoDatabase(
+  payload: any,
+  setStage: (stage: string) => void,
+) {
   // Repository
+  setStage("repository_persist");
   const repository = await prisma.repository.upsert({
     where: {
       githubId: BigInt(payload.repository.id),
@@ -44,8 +25,12 @@ async function insertIntoDatabase(payload: any) {
       owner: payload.repository.owner.login,
     },
   });
+  console.info(
+    `[api] stage=webhook.repository.persisted repository=${payload.repository.full_name}`,
+  );
 
   // Pull Request
+  setStage("pull_request_persist");
   const pullRequest = await prisma.pullRequest.upsert({
     where: {
       githubPrId: BigInt(payload.pull_request.id),
@@ -72,45 +57,65 @@ async function insertIntoDatabase(payload: any) {
       repositoryId: repository.id,
     },
   });
+  console.info(
+    `[api] stage=webhook.pull_request.persisted repository=${payload.repository.full_name} pr=${payload.pull_request.number}`,
+  );
 
   // Review Job
+  setStage("review_job_persist");
   const reviewJob = await prisma.reviewJob.create({
     data: {
       pullRequestId: pullRequest.id,
       status: ReviewJobStatus.queued,
     },
   });
+  console.info(`[api] stage=webhook.review_job.persisted job=${reviewJob.id}`);
 
+  setStage("review_job_enqueue");
   await reviewQueue.add("review", { reviewJobId: reviewJob.id });
-
-  console.log("Inserted successfully!");
+  console.info(`[api] stage=webhook.review_job.queued job=${reviewJob.id}`);
 }
 
 export const handleWebhook = async (req: Request, res: Response) => {
+  let stage = "signature_validation";
   try {
     const signature = req.headers["x-hub-signature-256"];
 
     if (typeof signature !== "string") {
+      console.warn(
+        "[api] stage=webhook.signature_rejected reason=missing_signature",
+      );
       return res.status(401).send("Unauthorized: No signature provided");
     }
 
     const secret = process.env.WEBHOOK_SECRET;
 
     if (!secret) {
+      console.error(
+        "[api] stage=webhook.configuration_failed reason=missing_secret",
+      );
       return res.status(500).send("Webhook secret not configured");
     }
 
     const isValid = verifySignature(req.body, signature, secret);
 
     if (!isValid) {
+      console.warn(
+        "[api] stage=webhook.signature_rejected reason=invalid_signature",
+      );
       return res.status(401).send("Invalid signature");
     }
+    console.info("[api] stage=webhook.signature_verified");
 
+    stage = "payload_parse";
     const payload = JSON.parse(req.body.toString("utf8"));
 
     const event = req.header("X-Github-Event");
 
     if (event !== "pull_request") {
+      console.info(
+        `[api] stage=webhook.ignored reason=unsupported_event event=${event ?? "unknown"}`,
+      );
       return res.status(200).send("Ignoring non pull_request event");
     }
 
@@ -121,19 +126,30 @@ export const handleWebhook = async (req: Request, res: Response) => {
       action !== "reopened" &&
       action !== "synchronize"
     ) {
+      console.info(
+        `[api] stage=webhook.ignored reason=unsupported_action action=${action ?? "unknown"}`,
+      );
       return res
         .status(200)
         .send("Ignoring non opened/reopened/synchronize action");
     }
 
-    console.log(`Processing PR ${action}`);
-    console.log(payload.pull_request.title);
+    console.info(
+      `[api] stage=webhook.accepted action=${action} repository=${payload.repository.full_name} pr=${payload.pull_request.number}`,
+    );
+    await insertIntoDatabase(payload, (currentStage) => {
+      stage = currentStage;
+    });
 
-    await insertIntoDatabase(payload);
-
+    console.info(
+      `[api] stage=webhook.completed repository=${payload.repository.full_name} pr=${payload.pull_request.number}`,
+    );
     return res.status(200).send("Webhook received");
   } catch (error) {
-    console.error(error);
+    const errorType = error instanceof Error ? error.name : "unknown";
+    console.error(
+      `[api] stage=webhook.${stage}.failed error_type=${errorType}`,
+    );
     return res.status(500).send("Internal Server Error");
   }
 };

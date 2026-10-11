@@ -3,13 +3,10 @@ import { Worker, Job } from "bullmq";
 import { connection } from "@lorica/queue";
 import { execFile } from "child_process";
 import { promisify } from "util";
-import { mkdtemp, readFile, rm } from "fs/promises";
+import { mkdtemp, rm } from "fs/promises";
 import { tmpdir } from "os";
 import path from "path";
-import { discoverSourceFiles } from "./indexer/discoverFiles";
-import { parseTypeScript } from "./indexer/parser";
-import { extractFile } from "./indexer/extractFile";
-import { extractRelationships, type ParsedFile } from "./indexer/relationships";
+import { indexRepository } from "./indexer/indexRepository";
 import { persistCodeGraph } from "./neo4j";
 
 const execFileAsync = promisify(execFile);
@@ -39,79 +36,57 @@ export async function refreshCodeGraph(input: {
   commit: string;
 }): Promise<CodeGraph> {
   const repoDir = await mkdtemp(path.join(tmpdir(), "lorica-"));
+  let stage = "clone";
   try {
     // Do not log repositoryUrl: for private PRs it can contain an installation token.
-    console.log(`Cloning repository at ${input.commit}`);
-    await execFileAsync("git", ["clone", "--no-checkout", "--depth", "1", input.cloneRepositoryUrl ?? input.repositoryUrl, repoDir]);
-    await execFileAsync("git", ["fetch", "--depth", "1", "origin", input.commit], { cwd: repoDir });
-    await execFileAsync("git", ["checkout", "--detach", "FETCH_HEAD"], { cwd: repoDir });
+    console.info(`[worker] stage=index.clone.started commit=${input.commit}`);
+    await execFileAsync("git", [
+      "clone",
+      "--no-checkout",
+      "--depth",
+      "1",
+      input.cloneRepositoryUrl ?? input.repositoryUrl,
+      repoDir,
+    ]);
+    await execFileAsync(
+      "git",
+      ["fetch", "--depth", "1", "origin", input.commit],
+      { cwd: repoDir },
+    );
+    await execFileAsync("git", ["checkout", "--detach", "FETCH_HEAD"], {
+      cwd: repoDir,
+    });
 
-    const graph = await indexRepository(repoDir, input.repositoryUrl, input.branch, input.commit);
+    stage = "index";
+    console.info(`[worker] stage=index.checkout.ready commit=${input.commit}`);
+    const graph = await indexRepository(
+      repoDir,
+      input.repositoryUrl,
+      input.branch,
+      input.commit,
+    );
+    stage = "neo4j_persist";
+    console.info(
+      `[worker] stage=neo4j.persist.started nodes=${graph.nodes.length} relationships=${graph.relationships.length} commit=${input.commit}`,
+    );
     await persistCodeGraph(graph, {
       repositoryUrl: input.repositoryUrl,
       branch: input.branch,
       commit: input.commit,
     });
-    console.log(`Graph saved to Neo4j at ${input.commit}`);
+    console.info(
+      `[worker] stage=neo4j.persist.completed nodes=${graph.nodes.length} relationships=${graph.relationships.length} commit=${input.commit}`,
+    );
     return graph;
+  } catch (error) {
+    const errorType = error instanceof Error ? error.name : "unknown";
+    console.error(
+      `[worker] stage=index.${stage}.failed commit=${input.commit} error_type=${errorType}`,
+    );
+    throw error;
   } finally {
     await rm(repoDir, { recursive: true, force: true });
   }
 }
 
-export async function indexRepository(
-  repoDir: string,
-  repositoryUrl: string,
-  branch: string,
-  commit: string,
-): Promise<CodeGraph> {
-  // discover all files
-  const files = await discoverSourceFiles(repoDir);
-
-  const graph: CodeGraph = {
-    nodes: [],
-    relationships: [],
-  };
-  const logDetails = process.env.LOG_INDEX_DETAILS === "true";
-  const logAst = process.env.LOG_INDEX_AST === "true";
-  const parsedFiles: ParsedFile[] = [];
-  console.log(`Found ${files.length} source files`);
-  for (const filePath of files) {
-    const source = await readFile(filePath, "utf-8");
-
-    const tree = parseTypeScript(source);
-    const relativePath = path.relative(repoDir, filePath);
-    parsedFiles.push({ relativePath, tree });
-
-    if (logAst) {
-      console.log(`\n[ast] ${relativePath}\n${tree.rootNode.toString()}`);
-    }
-
-    const fileGraph = extractFile(tree, relativePath);
-
-    if (logDetails) {
-      const symbols = fileGraph.nodes
-        .filter((node) => node.type !== "File")
-        .map((node) => `${node.type}:${node.properties.name ?? node.id}`);
-      console.log(
-        `[index] ${relativePath} | read + parsed | ` +
-          `${fileGraph.nodes.length} nodes, ${fileGraph.relationships.length} relationships` +
-          (symbols.length ? ` | ${symbols.join(", ")}` : ""),
-      );
-    }
-
-    graph.nodes.push(...fileGraph.nodes);
-    graph.relationships.push(...fileGraph.relationships);
-  }
-
-  extractRelationships(graph, parsedFiles);
-
-  console.log(`Nodes: ${graph.nodes.length}`);
-  console.log(`Relationships: ${graph.relationships.length}`);
-
-  if (process.env.LOG_CODE_GRAPH === "true") {
-    console.dir(graph, { depth: null });
-  }
-
-  return graph;
-}
+export { indexRepository };

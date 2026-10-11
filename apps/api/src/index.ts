@@ -31,7 +31,9 @@ const isProduction = process.env.NODE_ENV === "production";
 app.use("/api", (req, res, next) => {
   if (!apiAccessToken) {
     if (isProduction) {
-      return res.status(503).json({ error: "API_ACCESS_TOKEN is not configured" });
+      return res
+        .status(503)
+        .json({ error: "API_ACCESS_TOKEN is not configured" });
     }
 
     // The dashboard proxy is the only local consumer. Requiring an unconfigured
@@ -44,20 +46,18 @@ app.use("/api", (req, res, next) => {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  const isValid = crypto.timingSafeEqual(Buffer.from(token), Buffer.from(apiAccessToken));
+  const isValid = crypto.timingSafeEqual(
+    Buffer.from(token),
+    Buffer.from(apiAccessToken),
+  );
   if (!isValid) return res.status(401).json({ error: "Unauthorized" });
 
   next();
 });
 
 app.use("/api/pulls", pullRequestRoutes);
-app.use((req, res, next) => {
-  console.log(">>>", req.method, req.url);
-  next();
-});
-
 const port = Number(process.env.PORT ?? 5000);
 
 app.listen(port, () => {
-  console.log(`Listening on ${port}`);
+  console.info(`[api] stage=server.ready port=${port}`);
 });
