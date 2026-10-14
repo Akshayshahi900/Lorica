@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { resolveReviewSettings, type ReviewSettings } from "../../types/src/reviewSettings";
+import type { ReviewFinding } from "../../types/src/types";
 import {
   excludeConfiguredPaths,
+  mergeVerdict,
   pathInstructionsFor,
   reviewLimits,
   reviewSkipReason,
@@ -84,10 +86,49 @@ describe("review limits", () => {
       minSeverity: "high",
       maxFindings: 5,
       label: "Quiet",
+      keepStandards: true,
     });
     assert.deepEqual(
       reviewLimits(resolveReviewSettings([{ profile: "quiet", style: { minSeverity: "medium" } }])),
-      { minSeverity: "medium", maxFindings: 5, label: "Quiet" },
+      { minSeverity: "medium", maxFindings: 5, label: "Quiet", keepStandards: true },
     );
+  });
+});
+
+describe("the merge gate", () => {
+  const at = (severity: ReviewFinding["severity"], category: ReviewFinding["category"] = "bug"): ReviewFinding => ({
+    filePath: "src/a.ts",
+    lineNumber: 1,
+    code: "x",
+    severity,
+    category,
+    comment: "c",
+  });
+  const gate = resolveReviewSettings([]).mergeGate;
+
+  it("blocks on findings at or above the threshold and on guideline violations", () => {
+    assert.deepEqual(mergeVerdict(gate, [at("critical"), at("high"), at("medium"), at("low", "standards")]), {
+      blocked: true,
+      reasons: ["2 findings of high severity or worse", "1 coding-guideline violation"],
+      rule: "blocks on findings of high severity or worse and coding-guideline violations",
+    });
+  });
+
+  it("passes when nothing reaches the threshold", () => {
+    const verdict = mergeVerdict(gate, [at("medium"), at("low")]);
+    assert.equal(verdict.blocked, false);
+    assert.deepEqual(verdict.reasons, []);
+  });
+
+  it("counts guideline violations by severity when they are not enforced, and can block on nothing", () => {
+    const relaxed = { enabled: true, blockOn: "critical" as const, enforceGuidelines: false };
+    assert.equal(mergeVerdict(relaxed, [at("high", "standards")]).blocked, false);
+    assert.deepEqual(mergeVerdict(relaxed, [at("critical", "standards")]).reasons, ["1 finding of critical severity"]);
+    const off = { enabled: true, blockOn: "none" as const, enforceGuidelines: false };
+    assert.deepEqual(mergeVerdict(off, [at("critical")]), {
+      blocked: false,
+      reasons: [],
+      rule: "nothing is configured to block",
+    });
   });
 });

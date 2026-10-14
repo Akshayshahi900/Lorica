@@ -1,6 +1,7 @@
 import {
   type ChangedFile,
   type GraphTrace,
+  type PostMergeAction,
   type PrMetadata,
   type ReviewContext,
   type ReviewFinding,
@@ -366,14 +367,22 @@ export type ReviewLimits = {
   minSeverity: ReviewFinding["severity"];
   maxFindings: number;
   label: string;
+  /** Guideline violations the merge gate enforces are shown whatever the limits. */
+  keepStandards?: boolean;
 };
+
+/** Post-merge actions a review lists at most; more is a checklist nobody reads. */
+const MAX_POST_MERGE_ACTIONS = 10;
 
 /**
  * Combines the per-chunk results into the single review a PR receives.
  * Findings on files a chunk was not shown are dropped as hallucinated, and a
  * line reported twice (a file split across chunks) keeps its most severe
  * finding. Findings below `limits.minSeverity`, or past `limits.maxFindings`,
- * are dropped. The summary says how much of the PR was actually reviewed.
+ * are dropped, except enforced guideline violations (`limits.keepStandards`):
+ * the merge gate blocks on them, so the review must show them. Post-merge
+ * actions suggested by several chunks are listed once. The summary says how
+ * much of the PR was actually reviewed.
  */
 export function mergeReviewResults(
   chunks: { context: ReviewContext; result: ReviewResult }[],
@@ -382,7 +391,12 @@ export function mergeReviewResults(
 ): ReviewResult {
   const byLine = new Map<string, ReviewFinding>();
   const reviewedFiles = new Set<string>();
+  const actions = new Map<string, PostMergeAction>();
   for (const { context, result } of chunks) {
+    for (const action of result.postMergeActions ?? []) {
+      const key = action.action.trim().toLowerCase().replace(/\s+/g, " ");
+      if (key && !actions.has(key)) actions.set(key, action);
+    }
     const shown = new Set(context.changedFiles.map((file) => file.filePath));
     shown.forEach((path) => reviewedFiles.add(path));
     for (const finding of result.reviews) {
@@ -402,10 +416,19 @@ export function mergeReviewResults(
       a.lineNumber - b.lineNumber,
   );
   // The model is asked to respect these too; enforcing them here makes them hold.
+  const enforced = (finding: ReviewFinding) =>
+    Boolean(limits?.keepStandards) && finding.category === "standards";
   const atSeverity = limits
-    ? sorted.filter((finding) => SEVERITY_RANK[finding.severity] <= SEVERITY_RANK[limits.minSeverity])
+    ? sorted.filter(
+        (finding) =>
+          enforced(finding) ||
+          SEVERITY_RANK[finding.severity] <= SEVERITY_RANK[limits.minSeverity],
+      )
     : sorted;
-  const reviews = limits ? atSeverity.slice(0, limits.maxFindings) : atSeverity;
+  const capped = new Set(
+    atSeverity.filter((finding) => !enforced(finding)).slice(0, limits?.maxFindings),
+  );
+  const reviews = atSeverity.filter((finding) => enforced(finding) || capped.has(finding));
   const belowSeverity = sorted.length - atSeverity.length;
   const overLimit = atSeverity.length - reviews.length;
 
@@ -441,5 +464,10 @@ export function mergeReviewResults(
       `This PR exceeds the review size budget; changes in ${shown}${more} were not fully reviewed.`,
     );
   }
-  return { summary: sentences.join(" "), reviews };
+  const postMergeActions = [...actions.values()].slice(0, MAX_POST_MERGE_ACTIONS);
+  return {
+    summary: sentences.join(" "),
+    reviews,
+    ...(postMergeActions.length > 0 && { postMergeActions }),
+  };
 }

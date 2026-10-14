@@ -63,7 +63,7 @@ Signed-in GitHub users get an overview of review activity, pull-request history,
 3. The worker obtains a GitHub App installation token, retrieves the pull-request files and metadata, and checks out the PR head SHA in a temporary directory.
 4. The worker indexes supported JavaScript and TypeScript sources (`.js`, `.jsx`, `.ts`, `.tsx`) into Neo4j, scoped to that PR and commit.
 5. Changed-file patches plus one-hop graph evidence are sent to the configured OpenRouter model. The returned JSON is validated against a Zod schema.
-6. Lorica renders the validated findings as the PR's Lorica comment — creating it on the first review and updating it on later commits — and records the terminal job status.
+6. Lorica renders the validated findings as the PR's Lorica comment — creating it on the first review and updating it on later commits — with the merge gate's verdict and a checklist of post-merge actions, sets the `Lorica` commit status, and records the terminal job status.
 
 Jobs retry up to three times with exponential backoff. A terminal failure marks both the review job and its pull request as failed.
 
@@ -200,9 +200,9 @@ Create a GitHub App and configure:
 - **Webhook URL:** `https://<your-api-domain>/webhooks/github`
 - **Webhook secret:** the exact value of `WEBHOOK_SECRET`
 - **Subscribe to events:** Pull requests
-- **Repository permissions:** Contents: Read; Pull requests: Read; Issues: Write
+- **Repository permissions:** Contents: Read; Pull requests: Read; Issues: Write; Commit statuses: Read and write
 
-The worker uses the installation token to list PR files, read pull-request details and the repository's `.lorica.yaml`, clone the repository at the head SHA, and create or update its pull-request comment. Install the app only on repositories Lorica is authorized to review.
+The worker uses the installation token to list PR files, read pull-request details and the repository's `.lorica.yaml`, clone the repository at the head SHA, create or update its pull-request comment, and set the `Lorica` merge-gate commit status. Without the commit-status permission, reviews still run and the comment says the gate could not be set. Install the app only on repositories Lorica is authorized to review.
 
 For local webhook testing, expose the API through an HTTPS tunnel and use the tunnel URL as the webhook URL. Do not use an unauthenticated public tunnel for a long-lived deployment.
 
@@ -286,12 +286,19 @@ style:
   minSeverity: medium         # defaults to the profile's
   maxFindings: 10             # defaults to the profile's
   fixPrompt: true             # the copyable "fix with your AI assistant" prompt
+  postMergeActions: true      # the "After merging" checklist
+mergeGate:
+  enabled: true               # set the "Lorica" commit status
+  blockOn: high               # critical | high | medium | low | none
+  enforceGuidelines: true     # any guideline violation blocks merging
 ```
 
 - **Layering:** the repository file is applied over the account's dashboard settings. `guidelines`, `pathInstructions`, `excludePaths`, `ignoreTitleKeywords` and `ignoreAuthors` add up, so a repository extends its organization's standards; every other value is overridden. The dashboard shows the saved settings as a `.lorica.yaml` to commit.
 - **Read from the base commit:** the file is read at the pull request's base SHA, so a change to `.lorica.yaml` applies after it merges, and a pull request cannot loosen or switch off its own review.
 - **Errors don't block reviews:** an invalid file (bad YAML, unknown key, wrong value) is ignored and the review comment says why.
 - **Skipped pull requests** complete without a comment; the dashboard shows them as `skipped` with the reason. A draft skipped by `reviewDrafts: false` is reviewed when it is marked ready for review.
+- **Merge gate:** each reviewed head commit gets a `Lorica` commit status: `pending` while the review runs, `failure` when the review shows a finding at or above `blockOn` or (with `enforceGuidelines`) a coding-guideline violation, and `success` otherwise. Add `Lorica` as a required status check in the branch protection rules to block merging until it passes; pushing a fix triggers a new review. Pull requests the workflow settings skip get `success`, and a review that fails for good gets `error`, so a required check never stays pending. Enforced guideline violations (category `standards`) are always shown, whatever the profile's severity floor or finding cap.
+- **Post-merge actions:** the model lists what the change makes necessary once merged (migrations to run, environment variables to set, services to redeploy, metrics to watch, docs to update, temporary code to remove), shown as an "After merging" checklist in the comment.
 - **Organizations:** only active admins of an organization (checked with GitHub when the dashboard reads or saves) can change its settings. The GitHub OAuth app needs access to the organization for it to be listed.
 
 ## Operations

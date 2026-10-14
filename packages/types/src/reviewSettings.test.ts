@@ -10,7 +10,13 @@ describe("resolving review settings", () => {
   it("defaults to the Chill profile with every workflow switch on", () => {
     const settings = resolveReviewSettings([]);
     assert.equal(settings.profile, "chill");
-    assert.deepEqual(settings.style, { minSeverity: "low", maxFindings: 20, fixPrompt: true });
+    assert.deepEqual(settings.style, {
+      minSeverity: "low",
+      maxFindings: 20,
+      fixPrompt: true,
+      postMergeActions: true,
+    });
+    assert.deepEqual(settings.mergeGate, { enabled: true, blockOn: "high", enforceGuidelines: true });
     assert.equal(settings.workflow.autoReview, true);
     assert.equal(settings.workflow.reviewDrafts, true);
     assert.equal(settings.workflow.reviewOnPush, true);
@@ -45,6 +51,21 @@ describe("resolving review settings", () => {
     // The final profile's preset fills in limits nobody set.
     assert.equal(settings.style.minSeverity, "high");
     assert.equal(settings.style.maxFindings, 5);
+  });
+});
+
+describe("the merge gate settings", () => {
+  it("lets the repository override the owner's gate", () => {
+    const settings = resolveReviewSettings([
+      { mergeGate: { blockOn: "medium", enforceGuidelines: false } },
+      { mergeGate: { blockOn: "critical" }, style: { postMergeActions: false } },
+    ]);
+    assert.deepEqual(settings.mergeGate, { enabled: true, blockOn: "critical", enforceGuidelines: false });
+    assert.equal(settings.style.postMergeActions, false);
+  });
+
+  it("rejects an unknown block level in a config file", () => {
+    assert.ok("error" in parseRepoReviewConfig("mergeGate:\n  blockOn: severe\n"));
   });
 });
 

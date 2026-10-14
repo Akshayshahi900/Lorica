@@ -138,6 +138,7 @@ security
 performance
 correctness
 maintainability
+standards (only for violations of the team's coding guidelines, when given)
 
 ==================================================
 IMPORTANT EXAMPLES
@@ -213,7 +214,28 @@ export type ReviewPromptOptions = {
   guidelines: string[];
   pathInstructions: PathInstruction[];
   tone: string | null;
+  /** Guideline violations block the merge, so none may be left out. */
+  enforceGuidelines?: boolean;
+  /** Ask for the actions to take once the PR is merged. */
+  postMergeActions?: boolean;
 };
+
+const POST_MERGE_INSTRUCTIONS = `Also list what someone must do once this pull request is merged, in a
+"postMergeActions" array next to "reviews". Only include actions the changed
+files make necessary, for example:
+
+- deployment: services to redeploy or restart, deploy order, feature flags to flip
+- database: migrations or backfills to run
+- configuration: new or changed environment variables, secrets, permissions
+- monitoring: metrics, logs or alerts to watch for the changed behavior
+- documentation: docs, changelogs or API consumers to update
+- follow_up: cleanup the change leaves behind, e.g. removing a temporary flag
+
+Each entry is {"category": one of the categories above, "action": a short
+imperative instruction naming the concrete file, variable or service,
+"reason": the changed file or line that makes it necessary}. Return an empty
+array when nothing beyond merging is needed; do not list routine steps such as
+"run the tests" or "review the code".`;
 
 /**
  * The review prompt for one set of review settings. The team's text is
@@ -224,6 +246,8 @@ export function buildReviewPrompt({
   guidelines,
   pathInstructions,
   tone,
+  enforceGuidelines = false,
+  postMergeActions = false,
 }: ReviewPromptOptions): string {
   const sections = [REVIEW_PROMPT.trim(), section("REVIEW PROFILE", PROFILE_INSTRUCTIONS[profile])];
 
@@ -233,8 +257,15 @@ export function buildReviewPrompt({
         "TEAM CODING GUIDELINES",
         `The repository's maintainers set these guidelines. A changed line that
 violates one is a reportable finding, even when it would otherwise fall under
-the "Do NOT report" list; use category "maintainability" and severity "low"
-unless the violation causes a defect. Quote the guideline in the comment.
+the "Do NOT report" list; use category "standards" and severity "low"
+unless the violation causes a defect. Quote the guideline in the comment.${
+          enforceGuidelines
+            ? `
+
+These guidelines are enforced before merging: report every violation in the
+changed lines, whatever the review profile says about severity or volume.`
+            : ""
+        }
 
 <guidelines>
 ${guidelines.join("\n\n")}
@@ -260,6 +291,10 @@ ${pathInstructions
     sections.push(
       section("TONE", `Write each "comment" and "suggestion" in this tone:\n\n${tone}`),
     );
+  }
+
+  if (postMergeActions) {
+    sections.push(section("POST-MERGE ACTIONS", POST_MERGE_INSTRUCTIONS));
   }
 
   sections.push(

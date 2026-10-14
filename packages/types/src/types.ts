@@ -14,6 +14,8 @@ export const ReviewFindingSchema = z.object({
     "performance",
     "correctness",
     "maintainability",
+    // A violation of the team's coding guidelines.
+    "standards",
   ]),
 
   comment: z.string(),
@@ -21,12 +23,28 @@ export const ReviewFindingSchema = z.object({
   suggestion: z.string().optional(),
 });
 
+/** Something to do once the PR is merged, such as running a migration. */
+export const PostMergeActionSchema = z.object({
+  category: z.enum([
+    "deployment",
+    "database",
+    "configuration",
+    "monitoring",
+    "documentation",
+    "follow_up",
+  ]),
+  action: z.string(),
+  reason: z.string(),
+});
+
 export const ReviewResultSchema = z.object({
   summary: z.string(),
   reviews: z.array(ReviewFindingSchema),
+  postMergeActions: z.array(PostMergeActionSchema).optional(),
 });
 
 export type ReviewFinding = z.infer<typeof ReviewFindingSchema>;
+export type PostMergeAction = z.infer<typeof PostMergeActionSchema>;
 export type ReviewResult = z.infer<typeof ReviewResultSchema>;
 
 /** The versioned, evidence-only request sent to the review model. */

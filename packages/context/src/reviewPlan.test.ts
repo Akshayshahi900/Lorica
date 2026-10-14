@@ -230,6 +230,31 @@ describe("merging chunk results", () => {
     assert.match(merged.summary, /^No high-severity or worse issues found in 2 reviewed files\./);
   });
 
+  it("always shows enforced guideline violations, and lists each post-merge action once", () => {
+    const action = { category: "database" as const, action: "Run the migration.", reason: "New column." };
+    const merged = mergeReviewResults(
+      [
+        {
+          context,
+          result: {
+            summary: "",
+            reviews: [
+              finding({ lineNumber: 1, severity: "high" }),
+              finding({ lineNumber: 2, severity: "high" }),
+              finding({ lineNumber: 3, severity: "low", category: "standards" }),
+            ],
+            postMergeActions: [action],
+          },
+        },
+        { context, result: { summary: "", reviews: [], postMergeActions: [{ ...action, action: " run the  MIGRATION." }] } },
+      ],
+      { excluded: [], truncatedFiles: [] },
+      { minSeverity: "high", maxFindings: 1, label: "Quiet", keepStandards: true },
+    );
+    assert.deepEqual(merged.reviews.map((r) => r.lineNumber), [1, 3]);
+    assert.deepEqual(merged.postMergeActions, [action]);
+  });
+
   it("says so when nothing was reviewable", () => {
     const merged = mergeReviewResults([], { excluded: [], truncatedFiles: [] });
     assert.deepEqual(merged, { summary: "No reviewable code changes in this PR.", reviews: [] });

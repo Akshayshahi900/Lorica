@@ -7,6 +7,10 @@ export type ReviewProfile = (typeof REVIEW_PROFILES)[number];
 export const REVIEW_SEVERITIES = ["critical", "high", "medium", "low"] as const;
 export type ReviewSeverity = (typeof REVIEW_SEVERITIES)[number];
 
+/** The merge gate's severity threshold; "none" blocks on no severity. */
+export const MERGE_BLOCK_LEVELS = [...REVIEW_SEVERITIES, "none"] as const;
+export type MergeBlockLevel = (typeof MERGE_BLOCK_LEVELS)[number];
+
 /** What each profile means when nothing more specific is configured. */
 export const PROFILE_PRESETS: Record<
   ReviewProfile,
@@ -84,6 +88,22 @@ export const ReviewSettingsSchema = z
         maxFindings: z.number().int().min(1).max(100).optional(),
         /** Include the copyable "fix with your AI assistant" prompt. */
         fixPrompt: z.boolean().optional(),
+        /** Suggest what to do once the PR is merged (migrations, config, ...). */
+        postMergeActions: z.boolean().optional(),
+      })
+      .strict()
+      .optional(),
+    /**
+     * The "Lorica" commit status, which branch protection can require before
+     * merging. It fails while the review shows a blocking finding.
+     */
+    mergeGate: z
+      .object({
+        enabled: z.boolean().optional(),
+        /** Findings at or above this severity block the merge. */
+        blockOn: z.enum(MERGE_BLOCK_LEVELS).optional(),
+        /** Any coding-guideline violation blocks the merge, whatever its severity. */
+        enforceGuidelines: z.boolean().optional(),
       })
       .strict()
       .optional(),
@@ -112,6 +132,12 @@ export type EffectiveReviewSettings = {
     minSeverity: ReviewSeverity;
     maxFindings: number;
     fixPrompt: boolean;
+    postMergeActions: boolean;
+  };
+  mergeGate: {
+    enabled: boolean;
+    blockOn: MergeBlockLevel;
+    enforceGuidelines: boolean;
   };
 };
 
@@ -132,16 +158,25 @@ export function resolveReviewSettings(
   let baseBranches: string[] = [];
   let minSeverity: ReviewSeverity | undefined;
   let maxFindings: number | undefined;
+  let blockOn: MergeBlockLevel = "high";
   const guidelines: string[] = [];
   const pathInstructions: PathInstruction[] = [];
   const excludePaths: string[] = [];
   const ignoreTitleKeywords: string[] = [];
   const ignoreAuthors: string[] = [];
-  const flags = { autoReview: true, reviewDrafts: true, reviewOnPush: true, fixPrompt: true };
+  const flags = {
+    autoReview: true,
+    reviewDrafts: true,
+    reviewOnPush: true,
+    fixPrompt: true,
+    postMergeActions: true,
+    mergeGate: true,
+    enforceGuidelines: true,
+  };
 
   for (const layer of layers) {
     if (!layer) continue;
-    const { workflow = {}, style = {} } = layer;
+    const { workflow = {}, style = {}, mergeGate = {} } = layer;
     if (layer.profile) profile = layer.profile;
     if (layer.guidelines) guidelines.push(layer.guidelines);
     if (layer.tone) tone = layer.tone;
@@ -154,6 +189,10 @@ export function resolveReviewSettings(
     if (workflow.reviewDrafts !== undefined) flags.reviewDrafts = workflow.reviewDrafts;
     if (workflow.reviewOnPush !== undefined) flags.reviewOnPush = workflow.reviewOnPush;
     if (style.fixPrompt !== undefined) flags.fixPrompt = style.fixPrompt;
+    if (style.postMergeActions !== undefined) flags.postMergeActions = style.postMergeActions;
+    if (mergeGate.enabled !== undefined) flags.mergeGate = mergeGate.enabled;
+    if (mergeGate.enforceGuidelines !== undefined) flags.enforceGuidelines = mergeGate.enforceGuidelines;
+    if (mergeGate.blockOn) blockOn = mergeGate.blockOn;
     if (style.minSeverity) minSeverity = style.minSeverity;
     if (style.maxFindings) maxFindings = style.maxFindings;
   }
@@ -177,6 +216,12 @@ export function resolveReviewSettings(
       minSeverity: minSeverity ?? preset.minSeverity,
       maxFindings: maxFindings ?? preset.maxFindings,
       fixPrompt: flags.fixPrompt,
+      postMergeActions: flags.postMergeActions,
+    },
+    mergeGate: {
+      enabled: flags.mergeGate,
+      blockOn,
+      enforceGuidelines: flags.enforceGuidelines,
     },
   };
 }

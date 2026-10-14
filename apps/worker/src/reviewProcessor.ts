@@ -11,6 +11,7 @@ import {
   filterReviewableFiles,
   fitBudgetToContextWindow,
   mergeReviewResults,
+  mergeVerdict,
   pathInstructionsFor,
   planReview,
   reviewBudgetFromEnv,
@@ -35,7 +36,9 @@ import {
   postPRComment,
   renderReview,
   reviewCommentMarker,
+  setCommitStatus,
   updatePRComment,
+  type MergeGateState,
   type PRComment,
 } from "@lorica/vcs";
 import { refreshCodeGraph } from "./indexer/refreshCodeGraph";
@@ -79,6 +82,13 @@ export type ReviewDependencies = {
     pr: PullRequestRef,
     commentId: number,
     body: string,
+  ) => Promise<void>;
+  /** Sets the merge gate's commit status on `sha`. */
+  setCommitStatus: (
+    pr: PullRequestRef,
+    sha: string,
+    state: MergeGateState,
+    description: string,
   ) => Promise<void>;
 };
 
@@ -174,6 +184,15 @@ export const githubDependencies: ReviewDependencies = {
       body,
     });
   },
+  setCommitStatus: async (pr, sha, state, description) => {
+    await setCommitStatus(await getInstallationOctokit(pr.installationId), {
+      owner: pr.owner,
+      repo: pr.repo,
+      sha,
+      state,
+      description,
+    });
+  },
 };
 
 export type ReviewOutcome =
@@ -250,6 +269,10 @@ export function createReviewProcessor(deps: ReviewDependencies) {
     let stage = "claim";
     let lease: Awaited<ReturnType<typeof claimReviewJob>> = null;
     let stopHeartbeat: (() => void) | undefined;
+    // Set once the review settings say the merge gate is on.
+    let reportGate:
+      | ((state: MergeGateState, description: string) => Promise<void>)
+      | null = null;
     try {
       lease = await claimReviewJob(reviewJobId);
       if (!lease) {
@@ -300,8 +323,25 @@ export function createReviewProcessor(deps: ReviewDependencies) {
         metadata.baseSha,
       );
       console.info(
-        `[worker] stage=review.settings.loaded job=${reviewJobId} profile=${settings.profile} ${sources} notices=${notices.length}`,
+        `[worker] stage=review.settings.loaded job=${reviewJobId} profile=${settings.profile} ${sources} notices=${notices.length} merge_gate=${settings.mergeGate.enabled}`,
       );
+      if (settings.mergeGate.enabled) {
+        let gateDenied = false;
+        reportGate = async (state, description) => {
+          if (gateDenied) return;
+          try {
+            await deps.setCommitStatus(pr, lease!.headSha, state, description);
+          } catch (error) {
+            // 403: the app may not write commit statuses. That will not change
+            // on retry, so review anyway and tell the team on the PR.
+            if ((error as { status?: unknown } | null)?.status !== 403) throw error;
+            gateDenied = true;
+            notices.push(
+              'Lorica could not set its merge-gate commit status (GitHub denied access). Grant the app "Commit statuses: Read and write", or turn the merge gate off.',
+            );
+          }
+        };
+      }
       const skipReason = reviewSkipReason(settings, {
         title: metadata.title,
         author: metadata.author,
@@ -310,6 +350,9 @@ export function createReviewProcessor(deps: ReviewDependencies) {
         action: pullRequest.action,
       });
       if (skipReason) {
+        // A required status that never arrives would block the merge forever.
+        stage = "merge_gate";
+        await reportGate?.("success", `Not reviewed: ${skipReason}`);
         stage = "database_complete";
         if (!(await markCompleted(lease, 0, skipReason))) return "lost";
         console.info(
@@ -317,6 +360,10 @@ export function createReviewProcessor(deps: ReviewDependencies) {
         );
         return "not_reviewed";
       }
+
+      // Branch protection holds the merge until the review below finishes.
+      stage = "merge_gate";
+      await reportGate?.("pending", "Reviewing this commit…");
 
       // A synchronize event always replaces the PR graph before context is
       // read. Fresh PRs take the same initialization path, so both cases have
@@ -365,6 +412,9 @@ export function createReviewProcessor(deps: ReviewDependencies) {
           guidelines: settings.guidelines,
           pathInstructions: pathInstructionsFor(settings.pathInstructions, filePaths),
           tone: settings.tone,
+          enforceGuidelines:
+            settings.mergeGate.enabled && settings.mergeGate.enforceGuidelines,
+          postMergeActions: settings.style.postMergeActions,
         });
 
       stage = "context_validation";
@@ -433,6 +483,22 @@ export function createReviewProcessor(deps: ReviewDependencies) {
         return await supersede(latest.headSha);
       }
 
+      stage = "merge_gate";
+      const verdict = settings.mergeGate.enabled
+        ? mergeVerdict(settings.mergeGate, resultObject.reviews)
+        : undefined;
+      if (verdict) {
+        await reportGate?.(
+          verdict.blocked ? "failure" : "success",
+          verdict.blocked
+            ? `Merge blocked: ${verdict.reasons.join(", ")}`
+            : "No blocking findings",
+        );
+        console.info(
+          `[worker] stage=review.merge_gate job=${reviewJobId} pr=${pr.prNumber} blocked=${verdict.blocked}`,
+        );
+      }
+
       stage = "github_comment";
       // A PR has one Lorica comment; each newer commit's review replaces it.
       const marker = reviewCommentMarker(lease.id);
@@ -440,6 +506,8 @@ export function createReviewProcessor(deps: ReviewDependencies) {
         fixPrompt: settings.style.fixPrompt,
         profile: PROFILE_PRESETS[settings.profile].label,
         notices,
+        mergeGate: verdict,
+        postMergeActions: settings.style.postMergeActions,
       })}\n\n${marker}`;
       const existing = await deps.findComment(pr);
       if (existing?.body.includes(marker)) {
@@ -491,6 +559,17 @@ export function createReviewProcessor(deps: ReviewDependencies) {
         console.info(
           `[worker] stage=review.status_updated job=${reviewJobId} status=${outcome} attempt=${lease.attempts}`,
         );
+        if (outcome === "failed" && reportGate) {
+          // Leaving it pending would hold the merge with no review coming.
+          await reportGate(
+            "error",
+            "Lorica could not review this commit; push again to retry.",
+          ).catch(() => {
+            console.warn(
+              `[worker] stage=review.merge_gate.error_status.failed job=${reviewJobId}`,
+            );
+          });
+        }
         return outcome;
       } catch (recordError) {
         const recordErrorType =

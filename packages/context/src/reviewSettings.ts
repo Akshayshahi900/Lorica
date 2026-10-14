@@ -1,9 +1,11 @@
 import picomatch from "picomatch";
 import {
   PROFILE_PRESETS,
+  REVIEW_SEVERITIES,
   type EffectiveReviewSettings,
   type PathInstruction,
 } from "../../types/src/reviewSettings";
+import { type ReviewFinding } from "../../types/src/types";
 import { type ExcludedFile, type ReviewLimits } from "./reviewPlan";
 
 /**
@@ -94,5 +96,53 @@ export function reviewLimits(settings: EffectiveReviewSettings): ReviewLimits {
     minSeverity: settings.style.minSeverity,
     maxFindings: settings.style.maxFindings,
     label: PROFILE_PRESETS[settings.profile].label,
+    keepStandards: settings.mergeGate.enabled && settings.mergeGate.enforceGuidelines,
+  };
+}
+
+/** Whether a review lets its pull request merge, and what stops it if not. */
+export type MergeVerdict = {
+  blocked: boolean;
+  /** What blocks the merge, e.g. "2 findings of high severity or worse". */
+  reasons: string[];
+  /** What the gate blocks on, e.g. "blocks on findings of high severity or worse". */
+  rule: string;
+};
+
+function plural(count: number, noun: string): string {
+  return `${count} ${noun}${count === 1 ? "" : "s"}`;
+}
+
+/**
+ * Applies the merge gate to a review's published findings. Guideline
+ * violations count on their own when enforced, so a finding is never counted
+ * twice.
+ */
+export function mergeVerdict(
+  gate: EffectiveReviewSettings["mergeGate"],
+  reviews: ReviewFinding[],
+): MergeVerdict {
+  const isStandard = (finding: ReviewFinding) =>
+    gate.enforceGuidelines && finding.category === "standards";
+  const threshold =
+    gate.blockOn === "none" ? -1 : REVIEW_SEVERITIES.indexOf(gate.blockOn);
+  const severe = reviews.filter(
+    (finding) => !isStandard(finding) && REVIEW_SEVERITIES.indexOf(finding.severity) <= threshold,
+  ).length;
+  const standards = reviews.filter(isStandard).length;
+
+  const level = `${gate.blockOn} severity${gate.blockOn === "critical" ? "" : " or worse"}`;
+  const rules = [
+    gate.blockOn !== "none" && `findings of ${level}`,
+    gate.enforceGuidelines && "coding-guideline violations",
+  ].filter((rule): rule is string => Boolean(rule));
+
+  const reasons: string[] = [];
+  if (severe > 0) reasons.push(`${plural(severe, "finding")} of ${level}`);
+  if (standards > 0) reasons.push(plural(standards, "coding-guideline violation"));
+  return {
+    blocked: reasons.length > 0,
+    reasons,
+    rule: rules.length > 0 ? `blocks on ${rules.join(" and ")}` : "nothing is configured to block",
   };
 }

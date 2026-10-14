@@ -18,6 +18,16 @@ describe("LLM review result parsing", () => {
     assert.equal(result.reviews[0]?.severity, "high");
   });
 
+  it("accepts post-merge actions, and a null list from strict structured output", () => {
+    const action = { category: "database", action: "Run the new migration.", reason: "Adds a column." };
+    const withActions = parseReviewResult(
+      JSON.stringify({ summary: "x", reviews: [], postMergeActions: [action] }),
+    );
+    assert.deepEqual(withActions.postMergeActions, [action]);
+    const withNull = parseReviewResult(JSON.stringify({ summary: "x", reviews: [], postMergeActions: null }));
+    assert.equal("postMergeActions" in withNull, false);
+  });
+
   it("rejects empty and non-JSON content", () => {
     assert.throws(() => parseReviewResult(""), /empty response/);
     assert.throws(() => parseReviewResult(undefined), /empty response/);

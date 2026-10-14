@@ -10,6 +10,7 @@ import {
 import { dispatchDueReviews } from "./dispatcher";
 import { MAX_ATTEMPTS } from "./reviewJobs";
 import { REVIEW_COMMENT_MARKER } from "@lorica/vcs";
+import type { ReviewResult } from "@lorica/types";
 
 const HEAD = "sha-head";
 
@@ -28,6 +29,9 @@ function fakeGitHub(overrides: Partial<ReviewDependencies> = {}) {
     ownerSettings: null as unknown,
     repoConfig: null as string | null,
     repoConfigRef: null as string | null,
+    statuses: [] as { sha: string; state: string; description: string }[],
+    /** What the model returns; null for one low-severity finding. */
+    result: null as ReviewResult | null,
   };
   const deps: ReviewDependencies = {
     fetchFiles: async () => [
@@ -55,6 +59,7 @@ function fakeGitHub(overrides: Partial<ReviewDependencies> = {}) {
     review: async (_context, prompt) => {
       state.llmCalls++;
       state.prompts.push(prompt);
+      if (state.result) return state.result;
       return {
         summary: "One issue.",
         reviews: [
@@ -79,6 +84,9 @@ function fakeGitHub(overrides: Partial<ReviewDependencies> = {}) {
     updateComment: async (_pr, commentId, body) => {
       state.comments.find((comment) => comment.id === commentId)!.body = body;
       state.edits++;
+    },
+    setCommitStatus: async (_pr, sha, status, description) => {
+      state.statuses.push({ sha, state: status, description });
     },
     ...overrides,
   };
@@ -244,6 +252,123 @@ describe("review processing: review settings", () => {
     assert.match(body, /`\.lorica\.yaml` was ignored: .*profil/);
     assert.match(body, /1 issue found/);
     assert.match(body, /Chill profile/);
+  });
+});
+
+describe("review processing: merge gate", () => {
+  const blocking: ReviewResult = {
+    summary: "Two issues.",
+    reviews: [
+      {
+        filePath: "src/a.ts",
+        lineNumber: 1,
+        code: "b",
+        severity: "high" as const,
+        category: "security" as const,
+        comment: "Leaks a token.",
+      },
+      {
+        filePath: "src/a.ts",
+        lineNumber: 1,
+        code: "b",
+        severity: "low" as const,
+        category: "standards" as const,
+        comment: "Guideline: use the shared logger.",
+      },
+    ],
+    postMergeActions: [
+      { category: "configuration" as const, action: "Set `TOKEN_TTL` in production.", reason: "Read by src/a.ts." },
+    ],
+  };
+
+  it("marks the head commit pending, then passes a review without blocking findings", async () => {
+    const { id } = await seedJob();
+    const { state, deps } = fakeGitHub();
+
+    assert.equal(await createReviewProcessor(deps)(id), "completed");
+
+    assert.deepEqual(
+      state.statuses.map(({ sha, state }) => `${sha}:${state}`),
+      [`${HEAD}:pending`, `${HEAD}:success`],
+    );
+    assert.match(state.comments[0]!.body, /✅ Ready to merge/);
+  });
+
+  it("blocks the merge on severe findings and guideline violations, and lists post-merge actions", async () => {
+    const { id } = await seedJob();
+    const { state, deps } = fakeGitHub();
+    state.result = blocking;
+    state.ownerSettings = { profile: "quiet", guidelines: "Use the shared logger." };
+
+    assert.equal(await createReviewProcessor(deps)(id), "completed");
+
+    assert.match(state.prompts[0]!, /enforced before merging/);
+    assert.match(state.prompts[0]!, /POST-MERGE ACTIONS/);
+    assert.deepEqual(state.statuses.at(-1), {
+      sha: HEAD,
+      state: "failure",
+      description: "Merge blocked: 1 finding of high severity or worse, 1 coding-guideline violation",
+    });
+    const body = state.comments[0]!.body;
+    // Quiet hides low findings, but not a guideline violation the gate enforces.
+    assert.match(body, /2 issues found/);
+    assert.match(body, /⛔ Merge blocked/);
+    assert.match(body, /After merging[\s\S]*Set `TOKEN_TTL` in production\./);
+  });
+
+  it("follows the repository's gate settings and can be turned off", async () => {
+    const { id } = await seedJob();
+    const { state, deps } = fakeGitHub();
+    state.result = blocking;
+    state.repoConfig = "mergeGate:\n  enabled: false\nstyle:\n  postMergeActions: false\n";
+
+    assert.equal(await createReviewProcessor(deps)(id), "completed");
+
+    assert.deepEqual(state.statuses, []);
+    assert.doesNotMatch(state.prompts[0]!, /POST-MERGE ACTIONS/);
+    assert.doesNotMatch(state.comments[0]!.body, /Merge blocked|Ready to merge|After merging/);
+  });
+
+  it("passes a pull request the workflow rules out, so a required status never hangs", async () => {
+    const { id } = await seedJob();
+    const { state, deps } = fakeGitHub();
+    state.ownerSettings = { workflow: { autoReview: false } };
+
+    assert.equal(await createReviewProcessor(deps)(id), "not_reviewed");
+
+    assert.deepEqual(state.statuses, [
+      { sha: HEAD, state: "success", description: "Not reviewed: automatic reviews are turned off" },
+    ]);
+  });
+
+  it("reviews anyway and says so when GitHub denies setting the status", async () => {
+    const { id } = await seedJob();
+    let calls = 0;
+    const { state, deps } = fakeGitHub({
+      setCommitStatus: async () => {
+        calls++;
+        throw Object.assign(new Error("Resource not accessible"), { status: 403 });
+      },
+    });
+
+    assert.equal(await createReviewProcessor(deps)(id), "completed");
+
+    assert.equal(calls, 1);
+    assert.match(state.comments[0]!.body, /could not set its merge-gate commit status/);
+  });
+
+  it("reports an error instead of leaving the status pending when the review fails for good", async () => {
+    const { id } = await seedJob();
+    await prisma.reviewJob.update({ where: { id }, data: { attempts: MAX_ATTEMPTS - 1 } });
+    const { state, deps } = fakeGitHub({
+      review: async () => {
+        throw new Error("still down");
+      },
+    });
+
+    assert.equal(await createReviewProcessor(deps)(id), "failed");
+
+    assert.deepEqual(state.statuses.map((status) => status.state), ["pending", "error"]);
   });
 });
 

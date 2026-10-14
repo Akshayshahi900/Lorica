@@ -6,6 +6,7 @@ import clsx from "clsx";
 
 type Profile = "quiet" | "chill" | "assertive";
 type Severity = "critical" | "high" | "medium" | "low";
+type BlockLevel = Severity | "none";
 
 type Settings = {
   profile?: Profile;
@@ -21,7 +22,8 @@ type Settings = {
     ignoreTitleKeywords?: string[];
     ignoreAuthors?: string[];
   };
-  style?: { minSeverity?: Severity; maxFindings?: number; fixPrompt?: boolean };
+  style?: { minSeverity?: Severity; maxFindings?: number; fixPrompt?: boolean; postMergeActions?: boolean };
+  mergeGate?: { enabled?: boolean; blockOn?: BlockLevel; enforceGuidelines?: boolean };
 };
 
 type Preset = { label: string; description: string; minSeverity: Severity; maxFindings: number };
@@ -53,6 +55,10 @@ type Form = {
   minSeverity: Severity | "";
   maxFindings: string;
   fixPrompt: boolean;
+  postMergeActions: boolean;
+  mergeGate: boolean;
+  blockOn: BlockLevel;
+  enforceGuidelines: boolean;
 };
 
 const inputClass =
@@ -74,6 +80,7 @@ function entries(value: string): string[] {
 function formFor(settings: Settings | null, defaultProfile: Profile): Form {
   const workflow = settings?.workflow ?? {};
   const style = settings?.style ?? {};
+  const mergeGate = settings?.mergeGate ?? {};
   return {
     profile: settings?.profile ?? defaultProfile,
     guidelines: settings?.guidelines ?? "",
@@ -89,6 +96,10 @@ function formFor(settings: Settings | null, defaultProfile: Profile): Form {
     minSeverity: style.minSeverity ?? "",
     maxFindings: style.maxFindings ? String(style.maxFindings) : "",
     fixPrompt: style.fixPrompt ?? true,
+    postMergeActions: style.postMergeActions ?? true,
+    mergeGate: mergeGate.enabled ?? true,
+    blockOn: mergeGate.blockOn ?? "high",
+    enforceGuidelines: mergeGate.enforceGuidelines ?? true,
   };
 }
 
@@ -101,7 +112,12 @@ function settingsFor(form: Form): Settings {
       reviewDrafts: form.reviewDrafts,
       reviewOnPush: form.reviewOnPush,
     },
-    style: { fixPrompt: form.fixPrompt },
+    style: { fixPrompt: form.fixPrompt, postMergeActions: form.postMergeActions },
+    mergeGate: {
+      enabled: form.mergeGate,
+      blockOn: form.blockOn,
+      enforceGuidelines: form.enforceGuidelines,
+    },
   };
   if (form.guidelines.trim()) settings.guidelines = form.guidelines.trim();
   if (form.tone.trim()) settings.tone = form.tone.trim();
@@ -454,6 +470,49 @@ export default function ReviewSettings() {
           label="Include the “Fix with your AI coding assistant” prompt"
           hint="A copyable prompt at the end of each review that lists every finding."
         />
+        <Toggle
+          checked={form.postMergeActions}
+          onChange={(postMergeActions) => update({ postMergeActions })}
+          label="Suggest post-merge actions"
+          hint="A checklist of what to do once merged: migrations, environment variables, deploys, monitoring, docs."
+        />
+      </Section>
+
+      <Section
+        title="Merge gate"
+        hint="Sets a “Lorica” commit status on each pull request's head commit. Make it a required status check in your branch protection rules to block merging until the review passes."
+      >
+        <Toggle
+          checked={form.mergeGate}
+          onChange={(mergeGate) => update({ mergeGate })}
+          label="Set the Lorica commit status"
+          hint="Needs the GitHub App's “Commit statuses: Read and write” permission."
+        />
+        <div className={clsx("grid gap-3 sm:grid-cols-2", !form.mergeGate && "opacity-50")}>
+          <div className="flex flex-col gap-1.5">
+            <label className={labelClass} htmlFor="review-block-on">Block merging on</label>
+            <select
+              id="review-block-on"
+              value={form.blockOn}
+              disabled={!form.mergeGate}
+              onChange={(event) => update({ blockOn: event.target.value as BlockLevel })}
+              className={clsx(inputClass, "appearance-none")}
+            >
+              {SEVERITIES.map((severity) => (
+                <option key={severity} value={severity}>
+                  {severity === "critical" ? "critical findings" : `${severity} severity or worse`}
+                </option>
+              ))}
+              <option value="none">no severity (guidelines only)</option>
+            </select>
+          </div>
+          <Toggle
+            checked={form.enforceGuidelines}
+            onChange={(enforceGuidelines) => update({ enforceGuidelines })}
+            label="Enforce coding guidelines"
+            hint="Any guideline violation blocks merging, and is always shown whatever the profile's limits."
+          />
+        </div>
       </Section>
 
       <Section title="Workflow" hint="Which pull requests get reviewed, and which files.">

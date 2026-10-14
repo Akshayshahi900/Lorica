@@ -110,6 +110,15 @@ export function parseReviewResult(content: string | null | undefined): ReviewRes
     );
   }
 
+  // Strict structured output sends absent optional fields as null.
+  if (
+    parsedContent &&
+    typeof parsedContent === "object" &&
+    (parsedContent as { postMergeActions?: unknown }).postMergeActions === null
+  ) {
+    delete (parsedContent as { postMergeActions?: unknown }).postMergeActions;
+  }
+
   const reviews = (parsedContent as { reviews?: unknown } | null)?.reviews;
   if (Array.isArray(reviews)) {
     for (const review of reviews) {

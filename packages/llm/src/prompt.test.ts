@@ -27,5 +27,20 @@ describe("building the review prompt", () => {
     assert.match(prompt, /<guidelines>\nUse the shared logger\.\n\nNo default exports\.\n<\/guidelines>/);
     assert.match(prompt, /<instructions path="src\/api\/\*\*">\nValidate input\.\n<\/instructions>/);
     assert.match(prompt, /TONE[\s\S]*Brief\./);
+    assert.match(prompt, /category "standards"/);
+    assert.doesNotMatch(prompt, /enforced before merging|POST-MERGE ACTIONS/);
+  });
+
+  it("asks for every guideline violation when they block merging, and for post-merge actions", () => {
+    const prompt = buildReviewPrompt({
+      ...base,
+      guidelines: ["No default exports."],
+      enforceGuidelines: true,
+      postMergeActions: true,
+    });
+    assert.match(prompt, /enforced before merging: report every violation/);
+    assert.match(prompt, /POST-MERGE ACTIONS[\s\S]*"postMergeActions" array/);
+    // The output contract still comes last.
+    assert.match(prompt, /return ONLY JSON in the structure defined under OUTPUT\.$/);
   });
 });

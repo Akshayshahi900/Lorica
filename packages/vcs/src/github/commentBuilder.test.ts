@@ -35,6 +35,39 @@ describe("GitHub review comment rendering", () => {
     assert.doesNotMatch(clean, /WARNING/);
   });
 
+  it("shows the merge gate's verdict and the post-merge checklist", () => {
+    const blocked = renderReview(
+      {
+        summary: "One issue.",
+        reviews: [finding],
+        postMergeActions: [
+          { category: "database", action: "Run migration\n`0042_users`.", reason: "Adds `users.email`." },
+        ],
+      },
+      {
+        mergeGate: {
+          blocked: true,
+          reasons: ["1 finding of high severity or worse"],
+          rule: "blocks on findings of high severity or worse",
+        },
+      },
+    );
+    assert.match(blocked, /> \[!CAUTION\]\n> \*\*⛔ Merge blocked:\*\* 1 finding of high severity or worse\./);
+    assert.match(blocked, /### 📋 After merging\n\n- \[ \] \*\*🗄️ Database:\*\* Run migration `0042_users`\.<br><sub>Adds `users\.email`\.<\/sub>/);
+
+    const ready = renderReview(
+      { summary: "None.", reviews: [], postMergeActions: [{ category: "monitoring", action: "Watch errors.", reason: "New path." }] },
+      {
+        mergeGate: { blocked: false, reasons: [], rule: "blocks on coding-guideline violations" },
+        postMergeActions: false,
+      },
+    );
+    assert.match(ready, /✅ Ready to merge:\*\* no blocking findings\. The merge gate blocks on coding-guideline violations\./);
+    assert.doesNotMatch(ready, /After merging/);
+
+    assert.doesNotMatch(renderReview({ summary: "None.", reviews: [] }), /Merge blocked|Ready to merge|After merging/);
+  });
+
   it("renders each finding as a collapsible section, most severe first", () => {
     const body = renderReview({
       summary: "Two issues.",
