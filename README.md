@@ -256,13 +256,35 @@ The review model is currently defined in `packages/llm/src/client.ts`. Change th
 ### Health, status, and recovery
 
 - `GET /health` is the API liveness endpoint and returns `OK`.
-- PostgreSQL, not Redis, is the source of truth for reviews: each pushed commit gets one `ReviewJob` row (`queued`, `running`, `completed`, `failed`, or `superseded`). Redis only delivers attempts to the worker.
-- Webhook handling is idempotent and returns `200` only after the job is stored, retrying a sleeping database. If Redis is unreachable the job is still stored and dispatched later.
-- The worker claims a job atomically and holds a lease renewed every minute. A job whose worker crashes, is redeployed, or is put to sleep becomes due again within three minutes, and a hidden marker in the PR comment prevents a retried job from posting twice.
-- Failed attempts retry from the database with backoff (1, 2, 5, 15, 30, 60, 120, 240 minutes; nine attempts in total). A 404/410 from GitHub fails the job at once. A new webhook for a commit whose review failed starts it over.
-- The worker's dispatcher re-sends due jobs every minute and runs them in-process when Redis is down. While reviews are owed, the worker requests its own `RENDER_EXTERNAL_URL` so Render's free tier does not put it to sleep.
-- GitHub does not retry failed webhooks. On boot and on `POST /api/internal/reconcile`, the API redelivers `pull_request` deliveries from the last three days that never got a `2xx` (up to six attempts each) and wakes the worker if any review is owed. `.github/workflows/reconcile.yml` calls it every two hours; it needs the repository secrets `LORICA_API_URL` and `LORICA_API_TOKEN`.
 - Neo4j credentials, GitHub App credentials, and the LLM key must be available to every worker replica.
+
+### Review delivery guarantees
+
+PostgreSQL, not Redis, is the source of truth for reviews. Redis only carries attempts to the worker, so losing it delays reviews but never drops them.
+
+**Deduplication**
+
+- Every webhook delivery's `X-GitHub-Delivery` id is stored in `WebhookDelivery` in the same transaction as the changes it caused. A redelivery (manual, from the reconciler, or GitHub retrying a timeout) is acknowledged with `200` and changes nothing; concurrent copies of one delivery are serialised on the primary key. A delivery that fails rolls back entirely, so its redelivery is processed normally.
+- Each commit has at most one `ReviewJob` (unique on pull request and head SHA), whichever deliveries mention it. Queue entries are keyed by job and attempt, so dispatching the same attempt twice is a no-op, and a worker must atomically claim a job before running it.
+- Comments carry a hidden `<!-- lorica-review-job:<id> -->` marker; an attempt that finds its job's marker on the PR does not post again.
+
+**Only the current head publishes**
+
+- Deliveries may arrive out of order. The PR's head is moved only by an event whose `pull_request.updated_at` is not older than the one recorded, and a stale event queues nothing.
+- A newer head supersedes every unfinished review of other commits, including one in progress.
+- A worker claims a job with a fresh lease token. Before posting it re-checks that it still holds the lease, that the job has not been superseded, that its commit is the recorded head, and that GitHub still reports that commit as the head. If GitHub reports a different head, the job is superseded and a review of the real head is queued. Results, retries and failures are written only while the token still owns the job.
+
+**Recovery**
+
+| Failure | Recovery |
+| --- | --- |
+| API asleep or failing when GitHub delivers | GitHub does not retry webhooks. On boot and on `POST /api/internal/reconcile`, the API redelivers `pull_request` deliveries from the last three days that never got a `2xx` (up to six attempts each) and wakes the worker if reviews are owed. `.github/workflows/reconcile.yml` calls it every two hours using the repository secrets `LORICA_API_URL` and `LORICA_API_TOKEN`. |
+| Database asleep | The intake transaction is retried three times before returning `500`, which the reconciler then redelivers. |
+| Redis down | The job is already stored. The worker's dispatcher re-sends due jobs every minute and runs them in-process when Redis is unreachable. |
+| Worker crashes, redeploys or sleeps mid-review | The lease (renewed every minute) lapses within three minutes and the job is claimed again. |
+| Transient failure (LLM, GitHub, Neo4j) | Retried from the database after 1, 2, 5, 15, 30, 60, 120 and 240 minutes (nine attempts). A 404/410 from GitHub fails the job at once. A new event for the commit restarts a failed review. |
+| Worker would sleep while a retry waits | While reviews are owed, the worker requests its own `RENDER_EXTERNAL_URL` to stay up on Render's free tier. |
+
 
 ## HTTP API
 
@@ -294,11 +316,23 @@ curl \
 | `pnpm check-types`                                    | Run workspace type checks where defined.                                     |
 | `pnpm lint`                                           | Run workspace lint scripts where defined.                                    |
 | `pnpm format`                                         | Format TypeScript, TSX, and Markdown files with Prettier.                    |
+| `pnpm test`                                           | Run unit tests.                                                              |
+| `pnpm test:integration`                               | Run webhook intake and review processing tests against PostgreSQL and Redis. |
 | `pnpm test:index`                                     | Run the code-indexer smoke test; requires Redis and a usable Git repository. |
 | `(cd packages/db && pnpm exec prisma migrate dev)`    | Create and apply a development migration.                                    |
 | `(cd packages/db && pnpm exec prisma migrate deploy)` | Apply existing migrations without creating a new one.                        |
 | `(cd packages/db && pnpm exec prisma generate)`       | Regenerate the Prisma client.                                                |
 | `(cd packages/db && pnpm exec prisma studio)`         | Open Prisma Studio.                                                          |
+
+`pnpm test:integration` truncates tables, so it refuses to run unless `DATABASE_URL` names a database containing `test`. Locally:
+
+```bash
+docker exec lorica-psql createdb -U postgres lorica_test
+export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/lorica_test?schema=public"
+pnpm db:migrate && pnpm test:integration
+```
+
+CI runs both suites, with PostgreSQL and Redis service containers for the integration tests.
 
 `pnpm test:index` creates `apps/worker/.artifacts/index-graph.json`, which is ignored by Git. Set `INDEX_TEST_REPOSITORY_URL` and `INDEX_TEST_BRANCH` to exercise a different repository and branch.
 

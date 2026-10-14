@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { prisma, PullRequestStatus, ReviewJobStatus } from "@lorica/db";
 
 // A review that has not renewed its lease within this window is presumed lost
@@ -46,17 +47,31 @@ export async function hasOutstandingReviews(): Promise<boolean> {
   return count > 0;
 }
 
+/** The attempt that holds a job's lease; every result it writes names it. */
+export type Lease = { id: number; pullRequestId: number; leaseToken: string };
+
+/** Matches the job only while `lease` still owns it. */
+function owned(lease: Lease) {
+  return {
+    id: lease.id,
+    status: ReviewJobStatus.running,
+    leaseToken: lease.leaseToken,
+  };
+}
+
 /**
  * Atomically takes ownership of a due job. Returns null when the job is not
  * due or another delivery (queue duplicate, dispatcher) already holds it.
  */
 export async function claimReviewJob(reviewJobId: number) {
   const now = new Date();
+  const leaseToken = randomUUID();
   const claimed = await prisma.reviewJob.updateMany({
     where: { id: reviewJobId, ...dueCondition(now) },
     data: {
       status: ReviewJobStatus.running,
       leaseUntil: new Date(now.getTime() + LEASE_MS),
+      leaseToken,
       attempts: { increment: 1 },
     },
   });
@@ -66,25 +81,41 @@ export async function claimReviewJob(reviewJobId: number) {
     where: { id: reviewJobId },
     include: { pullRequest: true },
   });
+  const lease = { ...job, leaseToken };
   if (job.attempts > MAX_ATTEMPTS) {
     // Only reachable when the final attempt's worker died without recording
     // a result: its lease lapsed and the dispatcher handed it out again.
-    await markFailed(job.id, job.pullRequestId, "Review attempts exhausted");
+    await markFailed(lease, "Review attempts exhausted");
     return null;
   }
   await prisma.pullRequest.update({
     where: { id: job.pullRequestId },
     data: { status: PullRequestStatus.processing },
   });
-  return job;
+  return lease;
+}
+
+/**
+ * Whether `lease` may publish its review: it still owns the job, nothing has
+ * superseded it, and its commit is still the PR head on record.
+ */
+export async function canPublish(
+  lease: Lease & { headSha: string },
+): Promise<boolean> {
+  const job = await prisma.reviewJob.findFirst({
+    where: owned(lease),
+    include: { pullRequest: { select: { headSha: true } } },
+  });
+  return job !== null && job.pullRequest.headSha === lease.headSha;
 }
 
 /** Keeps the lease alive for as long as the review is in progress. */
-export function startLeaseHeartbeat(reviewJobId: number): () => void {
+export function startLeaseHeartbeat(lease: Lease): () => void {
+  const reviewJobId = lease.id;
   const timer = setInterval(() => {
     prisma.reviewJob
       .updateMany({
-        where: { id: reviewJobId, status: ReviewJobStatus.running },
+        where: owned(lease),
         data: { leaseUntil: new Date(Date.now() + LEASE_MS) },
       })
       .catch((error: unknown) => {
@@ -97,110 +128,123 @@ export function startLeaseHeartbeat(reviewJobId: number): () => void {
   return () => clearInterval(timer);
 }
 
-export async function markCompleted(
-  reviewJobId: number,
-  pullRequestId: number,
-  commentsCount: number,
-) {
-  await prisma.$transaction([
-    prisma.reviewJob.update({
-      where: { id: reviewJobId },
-      data: {
-        status: ReviewJobStatus.completed,
-        commentsCount,
-        completedAt: new Date(),
-        leaseUntil: null,
-        lastError: null,
-      },
-    }),
-    prisma.pullRequest.update({
-      where: { id: pullRequestId },
-      data: { status: PullRequestStatus.completed },
-    }),
-  ]);
+/**
+ * Applies `data` to the job if `lease` still owns it, plus `andThen` in the
+ * same transaction. Returns false, changing nothing, when ownership was lost:
+ * the job was superseded, or its lease lapsed and another attempt took it.
+ */
+async function writeIfOwned(
+  lease: Lease,
+  data: Parameters<typeof prisma.reviewJob.updateMany>[0]["data"],
+  andThen?: (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => Promise<unknown>,
+): Promise<boolean> {
+  return prisma.$transaction(async (tx) => {
+    const updated = await tx.reviewJob.updateMany({ where: owned(lease), data });
+    if (updated.count === 0) return false;
+    await andThen?.(tx);
+    return true;
+  });
+}
+
+export async function markCompleted(lease: Lease, commentsCount: number) {
+  return writeIfOwned(
+    lease,
+    {
+      status: ReviewJobStatus.completed,
+      commentsCount,
+      completedAt: new Date(),
+      leaseUntil: null,
+      leaseToken: null,
+      lastError: null,
+    },
+    (tx) =>
+      tx.pullRequest.update({
+        where: { id: lease.pullRequestId },
+        data: { status: PullRequestStatus.completed },
+      }),
+  );
 }
 
 /**
  * Retires a job whose commit is no longer the PR head, and makes sure the
  * current head has a job of its own in case its webhook never arrived.
  */
-export async function markSuperseded(
-  reviewJobId: number,
-  pullRequestId: number,
-  currentHeadSha: string,
-) {
-  await prisma.$transaction([
-    prisma.reviewJob.update({
-      where: { id: reviewJobId },
-      data: { status: ReviewJobStatus.superseded, leaseUntil: null },
-    }),
-    prisma.reviewJob.upsert({
-      where: {
-        pullRequestId_headSha: { pullRequestId, headSha: currentHeadSha },
-      },
-      update: {},
-      create: {
-        pullRequestId,
-        headSha: currentHeadSha,
-        status: ReviewJobStatus.queued,
-      },
-    }),
-    prisma.pullRequest.update({
-      where: { id: pullRequestId },
-      data: { headSha: currentHeadSha },
-    }),
-  ]);
+export async function markSuperseded(lease: Lease, currentHeadSha: string) {
+  return writeIfOwned(
+    lease,
+    { status: ReviewJobStatus.superseded, leaseUntil: null, leaseToken: null },
+    async (tx) => {
+      await tx.reviewJob.upsert({
+        where: {
+          pullRequestId_headSha: {
+            pullRequestId: lease.pullRequestId,
+            headSha: currentHeadSha,
+          },
+        },
+        update: {},
+        create: {
+          pullRequestId: lease.pullRequestId,
+          headSha: currentHeadSha,
+          status: ReviewJobStatus.queued,
+        },
+      });
+      await tx.pullRequest.update({
+        where: { id: lease.pullRequestId },
+        data: { headSha: currentHeadSha, status: PullRequestStatus.pending },
+      });
+    },
+  );
 }
 
-async function markFailed(
-  reviewJobId: number,
-  pullRequestId: number,
-  lastError: string,
-) {
-  await prisma.$transaction([
-    prisma.reviewJob.update({
-      where: { id: reviewJobId },
-      data: { status: ReviewJobStatus.failed, leaseUntil: null, lastError },
-    }),
-    prisma.pullRequest.update({
-      where: { id: pullRequestId },
-      data: { status: PullRequestStatus.failed },
-    }),
-  ]);
+async function markFailed(lease: Lease, lastError: string) {
+  return writeIfOwned(
+    lease,
+    {
+      status: ReviewJobStatus.failed,
+      leaseUntil: null,
+      leaseToken: null,
+      lastError,
+    },
+    (tx) =>
+      tx.pullRequest.update({
+        where: { id: lease.pullRequestId },
+        data: { status: PullRequestStatus.failed },
+      }),
+  );
 }
 
 /**
  * Schedules the next attempt, or gives up after the last one. If this write
  * itself fails (database down), the lapsed lease reschedules the job instead.
+ * Returns "lost" when the attempt no longer owns the job, so it records nothing.
  */
 export async function recordFailure(
-  job: { id: number; pullRequestId: number; attempts: number },
+  lease: Lease & { attempts: number },
   error: unknown,
-): Promise<"retry" | "failed"> {
+): Promise<"retry" | "failed" | "lost"> {
   const message = (
     error instanceof Error ? `${error.name}: ${error.message}` : String(error)
   ).slice(0, 1_000);
 
-  if (error instanceof PermanentReviewError || job.attempts >= MAX_ATTEMPTS) {
-    await markFailed(job.id, job.pullRequestId, message);
-    return "failed";
+  if (error instanceof PermanentReviewError || lease.attempts >= MAX_ATTEMPTS) {
+    return (await markFailed(lease, message)) ? "failed" : "lost";
   }
 
-  const delay = RETRY_DELAYS_MS[job.attempts - 1] ?? RETRY_DELAYS_MS.at(-1)!;
-  await prisma.$transaction([
-    prisma.reviewJob.update({
-      where: { id: job.id },
-      data: {
-        status: ReviewJobStatus.queued,
-        nextRunAt: new Date(Date.now() + delay),
-        leaseUntil: null,
-        lastError: message,
-      },
-    }),
-    prisma.pullRequest.update({
-      where: { id: job.pullRequestId },
-      data: { status: PullRequestStatus.pending },
-    }),
-  ]);
-  return "retry";
+  const delay = RETRY_DELAYS_MS[lease.attempts - 1] ?? RETRY_DELAYS_MS.at(-1)!;
+  const rescheduled = await writeIfOwned(
+    lease,
+    {
+      status: ReviewJobStatus.queued,
+      nextRunAt: new Date(Date.now() + delay),
+      leaseUntil: null,
+      leaseToken: null,
+      lastError: message,
+    },
+    (tx) =>
+      tx.pullRequest.update({
+        where: { id: lease.pullRequestId },
+        data: { status: PullRequestStatus.pending },
+      }),
+  );
+  return rescheduled ? "retry" : "lost";
 }

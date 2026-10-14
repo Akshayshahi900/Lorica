@@ -1,5 +1,5 @@
 import { enqueueReview } from "@lorica/queue";
-import { processReview } from "./diff.worker";
+import { processReview } from "./reviewProcessor";
 import { findDueReviewJobs, hasOutstandingReviews } from "./reviewJobs";
 
 const DISPATCH_INTERVAL_MS = 60_000;
@@ -17,20 +17,26 @@ let dispatching = false;
  * retries whose backoff elapsed, and jobs whose worker died mid-review. When
  * Redis is unreachable the job runs in this process instead.
  */
-export async function dispatchDueReviews(): Promise<void> {
+export async function dispatchDueReviews({
+  enqueue = enqueueReview,
+  runInline = processReview,
+}: {
+  enqueue?: (reviewJobId: number, attempt: number) => Promise<unknown>;
+  runInline?: (reviewJobId: number) => Promise<unknown>;
+} = {}): Promise<void> {
   if (dispatching) return;
   dispatching = true;
   try {
     const due = await findDueReviewJobs(DISPATCH_BATCH);
     for (const job of due) {
       try {
-        await enqueueReview(job.id, job.attempts);
+        await enqueue(job.id, job.attempts);
       } catch (error) {
         const errorType = error instanceof Error ? error.name : "unknown";
         console.warn(
           `[worker] stage=dispatch.enqueue_failed job=${job.id} error_type=${errorType} fallback=inline`,
         );
-        await processReview(job.id);
+        await runInline(job.id);
       }
     }
     if (due.length > 0) {

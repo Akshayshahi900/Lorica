@@ -4,5 +4,6 @@ export {
   reviewQueue,
   indexQueue,
   enqueueReview,
+  closeQueues,
 } from "./queue";
 

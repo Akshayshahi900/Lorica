@@ -1,18 +1,6 @@
 import {Queue} from 'bullmq';
-import IORedis from 'ioredis';
 import type {CloneRepoJob , ReviewJobPayload} from '@lorica/types';
-
-
-export const connection = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {
-  maxRetriesPerRequest: null,
-});
-
-// ioredis keeps reconnecting on its own; this only reports the outage.
-connection.on('error', (error) => {
-  console.error(`[queue] stage=redis.connection_error error_type=${error.name}`);
-});
-
-
+import { connection } from './connection';
 
 // Retries are scheduled from the ReviewJob row, not here: Redis may be down or
 // lose data, so each queue entry is a single, disposable delivery attempt.
@@ -63,3 +51,9 @@ export const indexQueue = new Queue<CloneRepoJob>('code-index', {connection, def
     removeOnComplete:100,
     removeOnFail:500,
 }})
+
+/** Closes the queues and their Redis connection (shutdown, tests). */
+export async function closeQueues() {
+    await Promise.all([reviewQueue.close(), indexQueue.close()]);
+    await connection.quit();
+}

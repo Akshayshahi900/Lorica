@@ -44,6 +44,9 @@
     title            String?
     author           String?
     headSha       String
+    // GitHub's pull_request.updated_at for the event that set headSha. Events
+    // can arrive out of order; an older one must not move the head back.
+    headUpdatedAt DateTime?
     status        PullRequestStatus
     action        String
 
@@ -77,6 +80,9 @@
     attempts       Int               @default(0)
     nextRunAt      DateTime          @default(now())
     leaseUntil     DateTime?
+    // Identifies the attempt holding the lease. Results are written, and the
+    // review published, only while this attempt still holds it.
+    leaseToken     String?
     lastError      String?
 
     createdAt      DateTime @default(now())
@@ -85,4 +91,15 @@
 
     @@unique([pullRequestId, headSha])
     @@index([status, nextRunAt])
+  }
+
+  // One row per GitHub delivery (X-GitHub-Delivery). Written in the same
+  // transaction as the job it produced, so a delivery is recorded exactly when
+  // its effects are durable and a redelivery is recognised and skipped.
+  model WebhookDelivery {
+    id          String   @id // X-GitHub-Delivery GUID
+    event       String
+    action      String?
+    reviewJobId Int?
+    receivedAt  DateTime @default(now())
   }
