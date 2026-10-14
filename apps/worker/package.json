@@ -3,7 +3,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "test:index": "tsx src/test.ts",
-    "test:unit": "tsx --test ../../apps/api/src/controllers/github.controller.test.ts ../../packages/context/src/reviewContext.test.ts src/indexer/indexRepository.test.ts",
+    "test:unit": "tsx --test ../../apps/api/src/controllers/github.controller.test.ts ../../packages/context/src/reviewContext.test.ts ../../packages/llm/src/client.test.ts ../../packages/vcs/src/github/commentBuilder.test.ts src/indexer/indexRepository.test.ts",
     "build": "tsc",
     "start": "node dist/index.js"
   },
