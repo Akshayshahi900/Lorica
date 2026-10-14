@@ -25,35 +25,67 @@ export async function postPRComment(
   return response.data; 
 }
 
-/** A hidden tag that identifies the comment a review job posted. */
+/** Starts every Lorica review comment; identifies the PR's one review comment. */
+export const REVIEW_COMMENT_MARKER = "<!-- lorica-review -->";
+
+/** A hidden tag that identifies the review job whose result a comment shows. */
 export function reviewCommentMarker(reviewJobId: number): string {
   return `<!-- lorica-review-job:${reviewJobId} -->`;
 }
 
+export type PRComment = { id: number; body: string };
+
 /**
- * Whether a comment containing `marker` is already on the PR. A retried job
- * checks this so a crash between posting and recording success cannot
- * produce a second copy of the review.
+ * The PR's Lorica review comment, if one exists: the latest bot comment that
+ * starts with `REVIEW_COMMENT_MARKER`. Each new commit's review replaces its
+ * body rather than adding another comment.
  */
-export async function hasPRCommentWithMarker(
+export async function findReviewComment(
   octokit: Octokit,
   {
     owner,
     repo,
     prNumber,
-    marker,
   }: {
     owner: string;
     repo: string;
     prNumber: number;
-    marker: string;
   },
-): Promise<boolean> {
+): Promise<PRComment | null> {
   const comments = await octokit.paginate(octokit.issues.listComments, {
     owner,
     repo,
     issue_number: prNumber,
     per_page: 100,
   });
-  return comments.some((comment) => comment.body?.includes(marker));
+  const ours = comments.filter(
+    (comment) =>
+      comment.user?.type === "Bot" &&
+      comment.body?.startsWith(REVIEW_COMMENT_MARKER),
+  );
+  const latest = ours[ours.length - 1];
+  return latest ? { id: latest.id, body: latest.body ?? "" } : null;
+}
+
+export async function updatePRComment(
+  octokit: Octokit,
+  {
+    owner,
+    repo,
+    commentId,
+    body,
+  }: {
+    owner: string;
+    repo: string;
+    commentId: number;
+    body: string;
+  },
+) {
+  const response = await octokit.issues.updateComment({
+    owner,
+    repo,
+    comment_id: commentId,
+    body,
+  });
+  return response.data;
 }

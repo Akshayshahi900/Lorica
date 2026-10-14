@@ -18,7 +18,7 @@ Lorica is a self-hosted GitHub App that reviews pull requests asynchronously. It
 
 ### Review comments
 
-Lorica posts one structured summary comment on the PR once the review job completes — with severity, category, code context, and a suggested fix.
+Lorica keeps one structured summary comment on each PR — with severity, category, code context, and a suggested fix. The first review posts it; every later commit's review edits that same comment in place, so the PR always shows the review of its latest commit without piling up a comment per push.
 
 ![Lorica review comment with typed findings](docs/images/review_1.png)
 
@@ -62,7 +62,7 @@ Signed-in GitHub users get an overview of review activity, pull-request history,
 3. The worker obtains a GitHub App installation token, retrieves the pull-request files and metadata, and checks out the PR head SHA in a temporary directory.
 4. The worker indexes supported JavaScript and TypeScript sources (`.js`, `.jsx`, `.ts`, `.tsx`) into Neo4j, scoped to that PR and commit.
 5. Changed-file patches plus one-hop graph evidence are sent to the configured OpenRouter model. The returned JSON is validated against a Zod schema.
-6. Lorica renders the validated findings as one GitHub pull-request comment and records the terminal job status.
+6. Lorica renders the validated findings as the PR's Lorica comment — creating it on the first review and updating it on later commits — and records the terminal job status.
 
 Jobs retry up to three times with exponential backoff. A terminal failure marks both the review job and its pull request as failed.
 
@@ -199,7 +199,7 @@ Create a GitHub App and configure:
 - **Subscribe to events:** Pull requests
 - **Repository permissions:** Contents: Read; Pull requests: Read; Issues: Write
 
-The worker uses the installation token to list PR files, read pull-request details, clone the repository at the head SHA, and create a pull-request comment. Install the app only on repositories Lorica is authorized to review.
+The worker uses the installation token to list PR files, read pull-request details, clone the repository at the head SHA, and create or update its pull-request comment. Install the app only on repositories Lorica is authorized to review.
 
 For local webhook testing, expose the API through an HTTPS tunnel and use the tunnel URL as the webhook URL. Do not use an unauthenticated public tunnel for a long-lived deployment.
 
@@ -266,7 +266,8 @@ PostgreSQL, not Redis, is the source of truth for reviews. Redis only carries at
 
 - Every webhook delivery's `X-GitHub-Delivery` id is stored in `WebhookDelivery` in the same transaction as the changes it caused. A redelivery (manual, from the reconciler, or GitHub retrying a timeout) is acknowledged with `200` and changes nothing; concurrent copies of one delivery are serialised on the primary key. A delivery that fails rolls back entirely, so its redelivery is processed normally.
 - Each commit has at most one `ReviewJob` (unique on pull request and head SHA), whichever deliveries mention it. Queue entries are keyed by job and attempt, so dispatching the same attempt twice is a no-op, and a worker must atomically claim a job before running it.
-- Comments carry a hidden `<!-- lorica-review-job:<id> -->` marker; an attempt that finds its job's marker on the PR does not post again.
+- A PR has at most one Lorica comment: the latest bot comment starting with the hidden `<!-- lorica-review -->` marker. A review of a newer commit edits that comment instead of posting another.
+- The comment also carries a hidden `<!-- lorica-review-job:<id> -->` marker naming the job it shows; an attempt that finds its own job's marker there does not write it again.
 
 **Only the current head publishes**
 
@@ -363,7 +364,7 @@ packages/
 
 ## Limitations
 
-- Lorica posts one formatted summary comment per review; it does not create GitHub inline review comments for individual findings.
+- Lorica maintains one formatted summary comment per PR, replaced by each new commit's review (earlier reviews remain in the comment's GitHub edit history); it does not create GitHub inline review comments for individual findings.
 - The code graph currently indexes JavaScript and TypeScript source files only.
 - The graph evidence is intentionally limited to one-hop relationships from changed files; it is supporting evidence, not a complete-program analysis.
 - The dashboard’s ownership filter does not yet model organization membership or installation-level authorization. A signed-in user only sees stored pull requests whose repository owner login matches their GitHub login.

@@ -4,11 +4,13 @@ import {
   fetchPrFiles,
   fetchPullRequestDetails,
   getInstallationAccessToken,
+  findReviewComment,
   getInstallationOctokit,
-  hasPRCommentWithMarker,
   postPRComment,
   renderReview,
   reviewCommentMarker,
+  updatePRComment,
+  type PRComment,
 } from "@lorica/vcs";
 import { refreshCodeGraph } from "./indexer/refreshCodeGraph";
 import { getReviewGraphContext } from "./neo4j";
@@ -36,8 +38,13 @@ export type ReviewDependencies = {
   indexCommit: (pr: PullRequestRef, commit: string) => Promise<void>;
   loadGraphContext: typeof getReviewGraphContext;
   review: typeof callLLM;
-  hasComment: (pr: PullRequestRef, marker: string) => Promise<boolean>;
+  findComment: (pr: PullRequestRef) => Promise<PRComment | null>;
   postComment: (pr: PullRequestRef, body: string) => Promise<void>;
+  updateComment: (
+    pr: PullRequestRef,
+    commentId: number,
+    body: string,
+  ) => Promise<void>;
 };
 
 function graphBranch(prNumber: number): string {
@@ -65,18 +72,25 @@ export const githubDependencies: ReviewDependencies = {
   },
   loadGraphContext: getReviewGraphContext,
   review: callLLM,
-  hasComment: async (pr, marker) =>
-    hasPRCommentWithMarker(await getInstallationOctokit(pr.installationId), {
+  findComment: async (pr) =>
+    findReviewComment(await getInstallationOctokit(pr.installationId), {
       owner: pr.owner,
       repo: pr.repo,
       prNumber: pr.prNumber,
-      marker,
     }),
   postComment: async (pr, body) => {
     await postPRComment(await getInstallationOctokit(pr.installationId), {
       owner: pr.owner,
       repo: pr.repo,
       prNumber: pr.prNumber,
+      body,
+    });
+  },
+  updateComment: async (pr, commentId, body) => {
+    await updatePRComment(await getInstallationOctokit(pr.installationId), {
+      owner: pr.owner,
+      repo: pr.repo,
+      commentId,
       body,
     });
   },
@@ -217,17 +231,28 @@ export function createReviewProcessor(deps: ReviewDependencies) {
       }
 
       stage = "github_comment";
+      // A PR has one Lorica comment; each newer commit's review replaces it.
       const marker = reviewCommentMarker(lease.id);
-      if (await deps.hasComment(pr, marker)) {
-        // A previous attempt posted the review but died before recording it.
+      const body = `${renderReview(resultObject)}\n\n${marker}`;
+      const existing = await deps.findComment(pr);
+      if (existing?.body.includes(marker)) {
+        // A previous attempt published the review but died before recording it.
         console.info(
           `[worker] stage=github.comment.already_posted repository=${pr.owner}/${pr.repo} pr=${pr.prNumber}`,
+        );
+      } else if (existing) {
+        console.info(
+          `[worker] stage=github.comment.update.started repository=${pr.owner}/${pr.repo} pr=${pr.prNumber} comment=${existing.id}`,
+        );
+        await deps.updateComment(pr, existing.id, body);
+        console.info(
+          `[worker] stage=github.comment.update.completed repository=${pr.owner}/${pr.repo} pr=${pr.prNumber} comment=${existing.id}`,
         );
       } else {
         console.info(
           `[worker] stage=github.comment.post.started repository=${pr.owner}/${pr.repo} pr=${pr.prNumber}`,
         );
-        await deps.postComment(pr, `${renderReview(resultObject)}\n\n${marker}`);
+        await deps.postComment(pr, body);
         console.info(
           `[worker] stage=github.comment.post.completed repository=${pr.owner}/${pr.repo} pr=${pr.prNumber}`,
         );

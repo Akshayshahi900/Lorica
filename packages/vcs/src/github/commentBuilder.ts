@@ -1,4 +1,5 @@
 import { ReviewResult } from "../../../types/src/types";
+import { REVIEW_COMMENT_MARKER } from "./postComment";
 
 /** A code fence longer than any backtick run in the snippet, so it can't be closed early. */
 function fenceFor(code: string): string {
@@ -8,7 +9,7 @@ function fenceFor(code: string): string {
 
 export function renderReview(result: ReviewResult): string {
   if (result.reviews.length === 0) {
-    return `<!-- lorica-review -->
+    return `${REVIEW_COMMENT_MARKER}
 
 ## 🤖 Lorica AI Code Review
 
@@ -53,7 +54,7 @@ ${review.suggestion}`
     })
     .join("\n\n---\n\n");
 
-  return `<!-- lorica-review -->
+  return `${REVIEW_COMMENT_MARKER}
 
 ## 🤖 Lorica
 

@@ -9,14 +9,19 @@ import {
 } from "./reviewProcessor";
 import { dispatchDueReviews } from "./dispatcher";
 import { MAX_ATTEMPTS } from "./reviewJobs";
+import { REVIEW_COMMENT_MARKER } from "@lorica/vcs";
 
 const HEAD = "sha-head";
 
-/** In-memory GitHub/indexer/LLM; `head` is what GitHub reports as the PR head. */
+/**
+ * In-memory GitHub/indexer/LLM; `head` is what GitHub reports as the PR head
+ * and `comments` are the PR's comments.
+ */
 function fakeGitHub(overrides: Partial<ReviewDependencies> = {}) {
   const state = {
     head: HEAD,
-    posted: [] as string[],
+    comments: [] as { id: number; body: string }[],
+    edits: 0,
     llmCalls: 0,
   };
   const deps: ReviewDependencies = {
@@ -48,10 +53,16 @@ function fakeGitHub(overrides: Partial<ReviewDependencies> = {}) {
         ],
       };
     },
-    hasComment: async (_pr, marker) =>
-      state.posted.some((body) => body.includes(marker)),
+    findComment: async () =>
+      state.comments
+        .filter((comment) => comment.body.startsWith(REVIEW_COMMENT_MARKER))
+        .pop() ?? null,
     postComment: async (_pr, body) => {
-      state.posted.push(body);
+      state.comments.push({ id: state.comments.length + 1, body });
+    },
+    updateComment: async (_pr, commentId, body) => {
+      state.comments.find((comment) => comment.id === commentId)!.body = body;
+      state.edits++;
     },
     ...overrides,
   };
@@ -96,8 +107,8 @@ describe("review processing: success cases", () => {
 
     assert.equal(await createReviewProcessor(deps)(id), "completed");
 
-    assert.equal(state.posted.length, 1);
-    assert.match(state.posted[0]!, new RegExp(`lorica-review-job:${id}`));
+    assert.equal(state.comments.length, 1);
+    assert.match(state.comments[0]!.body, new RegExp(`lorica-review-job:${id}`));
     const done = await job(id);
     assert.equal(done.status, "completed");
     assert.equal(done.commentsCount, 1);
@@ -114,19 +125,47 @@ describe("review processing: success cases", () => {
     const outcomes = await Promise.all([processReview(id), processReview(id)]);
 
     assert.deepEqual(outcomes.sort(), ["completed", "skipped"]);
-    assert.equal(state.posted.length, 1);
+    assert.equal(state.comments.length, 1);
     assert.equal(state.llmCalls, 1);
   });
 
   it("does not post again when an earlier attempt already posted", async () => {
     const { id } = await seedJob();
     const { state, deps } = fakeGitHub();
-    state.posted.push(`earlier review\n<!-- lorica-review-job:${id} -->`);
+    const earlier = `${REVIEW_COMMENT_MARKER}\nearlier review\n<!-- lorica-review-job:${id} -->`;
+    state.comments.push({ id: 1, body: earlier });
 
     assert.equal(await createReviewProcessor(deps)(id), "completed");
 
-    assert.equal(state.posted.length, 1);
+    assert.equal(state.comments.length, 1);
+    assert.equal(state.comments[0]!.body, earlier);
+    assert.equal(state.edits, 0);
     assert.equal((await job(id)).status, "completed");
+  });
+
+  it("updates the PR's review comment for each new commit instead of posting another", async () => {
+    const first = await seedJob();
+    const { state, deps } = fakeGitHub();
+    const processReview = createReviewProcessor(deps);
+    state.comments.push({ id: 1, body: "LGTM, thanks!" });
+    assert.equal(await processReview(first.id), "completed");
+
+    const second = await pushCommit("sha-second");
+    state.head = "sha-second";
+    assert.equal(await processReview(second), "completed");
+    const third = await pushCommit("sha-third");
+    state.head = "sha-third";
+    assert.equal(await processReview(third), "completed");
+
+    // The human comment plus exactly one Lorica comment, showing the latest review.
+    assert.equal(state.comments.length, 2);
+    assert.equal(state.comments[0]!.body, "LGTM, thanks!");
+    const review = state.comments[1]!.body;
+    assert.ok(review.startsWith(REVIEW_COMMENT_MARKER));
+    assert.match(review, new RegExp(`lorica-review-job:${third}\\b`));
+    assert.doesNotMatch(review, new RegExp(`lorica-review-job:(${first.id}|${second})\\b`));
+    assert.equal(state.edits, 2);
+    assert.equal((await job(third)).status, "completed");
   });
 
   it("skips a job that is completed or still backing off", async () => {
@@ -151,7 +190,7 @@ describe("review processing: only the current head publishes", () => {
     assert.equal(await createReviewProcessor(deps)(id), "superseded");
 
     assert.equal(state.llmCalls, 0);
-    assert.equal(state.posted.length, 0);
+    assert.equal(state.comments.length, 0);
     assert.equal((await job(id)).status, "superseded");
     // The real head gets a review even if its webhook never arrived.
     const replacement = await prisma.reviewJob.findFirstOrThrow({
@@ -173,7 +212,7 @@ describe("review processing: only the current head publishes", () => {
 
     assert.equal(await createReviewProcessor(deps)(id), "superseded");
 
-    assert.equal(state.posted.length, 0);
+    assert.equal(state.comments.length, 0);
     assert.equal((await job(id)).status, "superseded");
     assert.equal(
       (await prisma.reviewJob.findFirstOrThrow({
@@ -198,7 +237,7 @@ describe("review processing: only the current head publishes", () => {
 
     assert.equal(await createReviewProcessor(deps)(id), "lost");
 
-    assert.equal(state.posted.length, 0);
+    assert.equal(state.comments.length, 0);
     assert.equal((await job(id)).status, "superseded");
   });
 
@@ -217,7 +256,7 @@ describe("review processing: only the current head publishes", () => {
 
     assert.equal(await createReviewProcessor(deps)(id), "lost");
 
-    assert.equal(state.posted.length, 0);
+    assert.equal(state.comments.length, 0);
     const current = await job(id);
     assert.equal(current.status, "running");
     assert.equal(current.leaseToken, "another-attempt");
@@ -259,7 +298,7 @@ describe("review processing: failure cases", () => {
     assert.equal(retried.leaseToken, null);
     assert.match(retried.lastError!, /LLM 503/);
     assert.ok(retried.nextRunAt.getTime() > Date.now() + 50_000);
-    assert.equal(state.posted.length, 0);
+    assert.equal(state.comments.length, 0);
     assert.equal((await pr()).status, "pending");
   });
 
@@ -299,7 +338,7 @@ describe("review processing: failure cases", () => {
 
     await prisma.reviewJob.update({ where: { id }, data: { ...expired, attempts: 1 } });
     assert.equal(await createReviewProcessor(deps)(id), "completed");
-    assert.equal(state.posted.length, 1);
+    assert.equal(state.comments.length, 1);
 
     const second = await seedJob2();
     await prisma.reviewJob.update({
@@ -308,7 +347,7 @@ describe("review processing: failure cases", () => {
     });
     assert.equal(await createReviewProcessor(deps)(second), "skipped");
     assert.equal((await job(second)).status, "failed");
-    assert.equal(state.posted.length, 1);
+    assert.equal(state.comments.length, 1);
   });
 
   it("runs due jobs in-process when Redis is unavailable", async () => {
@@ -332,6 +371,18 @@ async function seedJob2() {
   const pullRequest = await pr();
   const created = await prisma.reviewJob.create({
     data: { pullRequestId: pullRequest.id, headSha: "sha-other", status: "queued" },
+  });
+  return created.id;
+}
+
+/** What the webhook intake records when a new commit is pushed to the PR. */
+async function pushCommit(headSha: string) {
+  const pullRequest = await prisma.pullRequest.update({
+    where: { id: (await pr()).id },
+    data: { headSha, action: "synchronize", status: "pending" },
+  });
+  const created = await prisma.reviewJob.create({
+    data: { pullRequestId: pullRequest.id, headSha, status: "queued" },
   });
   return created.id;
 }
