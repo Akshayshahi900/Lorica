@@ -1,4 +1,11 @@
 import { ReviewResult } from "../../../types/src/types";
+
+/** A code fence longer than any backtick run in the snippet, so it can't be closed early. */
+function fenceFor(code: string): string {
+  const longestRun = Math.max(0, ...(code.match(/`+/g) ?? []).map((run) => run.length));
+  return "`".repeat(Math.max(3, longestRun + 1));
+}
+
 export function renderReview(result: ReviewResult): string {
   if (result.reviews.length === 0) {
     return `<!-- lorica-review -->
@@ -28,9 +35,9 @@ ${result.summary}
 **Severity:** \`${review.severity}\`  
 **Category:** \`${review.category}\`
 
-\`\`\`
+${fenceFor(review.code)}
 ${review.code}
-\`\`\`
+${fenceFor(review.code)}
 
 **Issue**
 

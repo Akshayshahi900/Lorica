@@ -145,6 +145,7 @@ API_ACCESS_TOKEN="replace-with-a-long-random-shared-secret"
 
 # LLM
 OPENROUTER_API_KEY="replace-with-your-openrouter-api-key"
+# LLM_MODEL="nvidia/nemotron-3-ultra-550b-a55b:free"
 ```
 
 Keep the GitHub App private key outside version control; `*.pem` is already ignored. `GITHUB_PRIVATE_KEY_PATH` may be absolute or relative to the repository root when using `pnpm dev`.
@@ -224,6 +225,7 @@ The dashboard requests `read:user`, `user:email`, `repo`, and `read:org` scopes.
 | `GITHUB_APP_ID`                                        | Yes         | Worker              | GitHub App ID.                                                                           |
 | `GITHUB_PRIVATE_KEY_PATH`                              | Yes         | Worker              | Path to the GitHub App PEM private key.                                                  |
 | `OPENROUTER_API_KEY`                                   | Yes         | Worker              | API key for structured LLM reviews.                                                      |
+| `LLM_MODEL`                                            | No          | Worker              | OpenRouter model ID; must support JSON-schema output. Defaults to `nvidia/nemotron-3-ultra-550b-a55b:free`. |
 | `API_ACCESS_TOKEN`                                     | Production  | API                 | Shared token required for `/api/*` routes in production.                                 |
 | `LORICA_API_URL`                                       | Yes         | Web                 | Server-only base URL for the Express API.                                                |
 | `LORICA_WORKER_URL`                                    | No          | Web                 | Server-only worker service URL; dashboard visits request its `/health` endpoint to wake it. |
@@ -327,7 +329,7 @@ packages/
 - The code graph currently indexes JavaScript and TypeScript source files only.
 - The graph evidence is intentionally limited to one-hop relationships from changed files; it is supporting evidence, not a complete-program analysis.
 - The dashboard’s ownership filter does not yet model organization membership or installation-level authorization. A signed-in user only sees stored pull requests whose repository owner login matches their GitHub login.
-- The model/provider choice is source-configured rather than environment-configurable.
+- The LLM provider is fixed to OpenRouter; only the model is configurable (`LLM_MODEL`).
 
 ## License
 

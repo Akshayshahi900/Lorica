@@ -9,6 +9,29 @@ import {
 
 const reviewResultJsonSchema = z.toJSONSchema(ReviewResultSchema);
 
+export const DEFAULT_LLM_MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free";
+
+/** Parses and validates the model's message content into a ReviewResult. */
+export function parseReviewResult(content: string | null | undefined): ReviewResult {
+  if (!content) {
+    throw new Error("LLM returned an empty response");
+  }
+
+  let parsedContent: unknown;
+
+  try {
+    parsedContent = JSON.parse(content);
+  } catch (error) {
+    throw new Error(
+      `LLM returned invalid JSON: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+  }
+
+  return ReviewResultSchema.parse(parsedContent);
+}
+
 export async function callLLM(
   reviewContext: ReviewContext,
   promptTemplate: string,
@@ -32,7 +55,7 @@ export async function callLLM(
       },
 
       body: JSON.stringify({
-        model: "nvidia/nemotron-3-ultra-550b-a55b:free",
+        model: process.env.LLM_MODEL || DEFAULT_LLM_MODEL,
 
         messages: [
           {
@@ -73,27 +96,5 @@ ${JSON.stringify(validatedContext)}`,
 
   const data = await response.json();
 
-  console.log("========== RAW LLM RESPONSE ==========");
-  console.log(data.choices?.[0]?.message?.content);
-  console.log("======================================");
-
-  const content = data.choices?.[0]?.message?.content;
-
-  if (!content) {
-    throw new Error("LLM returned an empty response");
-  }
-
-  let parsedContent: unknown;
-
-  try {
-    parsedContent = JSON.parse(content);
-  } catch (error) {
-    throw new Error(
-      `LLM returned invalid JSON: ${
-        error instanceof Error ? error.message : String(error)
-      }`,
-    );
-  }
-
-  return ReviewResultSchema.parse(parsedContent);
+  return parseReviewResult(data.choices?.[0]?.message?.content);
 }
