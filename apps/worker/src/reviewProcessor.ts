@@ -1,6 +1,14 @@
-import { callLLM, REVIEW_PROMPT } from "@lorica/llm";
+import {
+  callLLM,
+  configFromStoredSettings,
+  REVIEW_PROMPT,
+  reservedReviewTokens,
+  type LlmConfig,
+} from "@lorica/llm";
+import { prisma } from "@lorica/db";
 import {
   filterReviewableFiles,
+  fitBudgetToContextWindow,
   mergeReviewResults,
   planReview,
   reviewBudgetFromEnv,
@@ -42,6 +50,8 @@ export type ReviewDependencies = {
   fetchDetails: (pr: PullRequestRef) => ReturnType<typeof fetchPullRequestDetails>;
   indexCommit: (pr: PullRequestRef, commit: string) => Promise<void>;
   loadGraphContext: typeof getReviewGraphContext;
+  /** The owner's own model, or null for the deployment default. */
+  loadModelConfig: (owner: string) => Promise<LlmConfig | null>;
   review: typeof callLLM;
   findComment: (pr: PullRequestRef) => Promise<PRComment | null>;
   postComment: (pr: PullRequestRef, body: string) => Promise<void>;
@@ -76,6 +86,22 @@ export const githubDependencies: ReviewDependencies = {
     });
   },
   loadGraphContext: getReviewGraphContext,
+  loadModelConfig: async (owner) => {
+    const stored = await prisma.modelSettings.findUnique({
+      where: { owner: owner.toLowerCase() },
+    });
+    if (!stored) return null;
+    try {
+      return configFromStoredSettings(stored);
+    } catch (error) {
+      // A rotated encryption key or a bad row will not fix itself on retry.
+      throw new PermanentReviewError(
+        `The review model saved in Settings for ${owner} could not be loaded (${
+          error instanceof Error ? error.message : String(error)
+        }). Save it again or reset to the default model.`,
+      );
+    }
+  },
   review: callLLM,
   findComment: async (pr) =>
     findReviewComment(await getInstallationOctokit(pr.installationId), {
@@ -198,6 +224,12 @@ export function createReviewProcessor(deps: ReviewDependencies) {
         `[worker] stage=neo4j.context.loaded repository=${pr.owner}/${pr.repo} pr=${pr.prNumber} commit=${graph.indexedCommit} traces=${graph.traces.length}`,
       );
 
+      stage = "model_settings";
+      const modelConfig = await deps.loadModelConfig(pullRequest.repoOwner);
+      console.info(
+        `[worker] stage=review.model.selected job=${reviewJobId} provider=${modelConfig?.provider ?? "default"} model=${modelConfig?.model ?? "default"}`,
+      );
+
       stage = "context_validation";
       const plan = planReview({
         pullRequest: {
@@ -213,7 +245,11 @@ export function createReviewProcessor(deps: ReviewDependencies) {
         changedFiles,
         indexedCommit: graph.indexedCommit,
         traces: graph.traces,
-      }, reviewBudgetFromEnv());
+      }, fitBudgetToContextWindow(
+        reviewBudgetFromEnv(),
+        modelConfig?.contextWindow,
+        reservedReviewTokens(),
+      ));
       if (plan.truncatedFiles.length > 0) {
         console.warn(
           `[worker] stage=review.budget_exceeded job=${reviewJobId} chunks=${plan.contexts.length} truncated_files=${plan.truncatedFiles.length}`,
@@ -228,7 +264,7 @@ export function createReviewProcessor(deps: ReviewDependencies) {
         console.info(
           `[worker] stage=llm.request.started job=${reviewJobId} chunk=${index + 1}/${plan.contexts.length} files=${context.changedFiles.length}`,
         );
-        const result = await deps.review(context, REVIEW_PROMPT);
+        const result = await deps.review(context, REVIEW_PROMPT, modelConfig);
         console.info(
           `[worker] stage=llm.request.completed job=${reviewJobId} chunk=${index + 1}/${plan.contexts.length} findings=${result.reviews.length}`,
         );

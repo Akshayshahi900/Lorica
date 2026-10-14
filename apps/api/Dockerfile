@@ -20,4 +20,7 @@ ENV NODE_ENV=production
 EXPOSE 5000
 
 WORKDIR /app/apps/api
-CMD ["pnpm", "exec", "tsx", "src/index.ts"]
+# Bring the database schema up to this code before serving. Prisma holds an
+# advisory lock, so the API and worker can both run this safely; a failed
+# migration stops the container instead of running against a stale schema.
+CMD ["sh", "-c", "pnpm --filter @lorica/db exec prisma migrate deploy && exec pnpm exec tsx src/index.ts"]

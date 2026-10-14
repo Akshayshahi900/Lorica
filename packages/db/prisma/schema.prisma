@@ -103,3 +103,22 @@
     reviewJobId Int?
     receivedAt  DateTime @default(now())
   }
+
+  // A user's own review model. No row means the deployment's default model
+  // (OPENROUTER_API_KEY + LLM_MODEL) reviews their pull requests.
+  model ModelSettings {
+    id               Int      @id @default(autoincrement())
+    // GitHub login, lowercased; matched against PullRequest.repoOwner.
+    owner            String   @unique
+    provider         String   // see LLM_PROVIDERS in @lorica/llm
+    model            String
+    baseUrl          String?
+    // AES-256-GCM, keyed by LLM_SETTINGS_ENCRYPTION_KEY. Never returned by the API.
+    apiKeyCiphertext String?
+    // Effective context window found by the capability check (or entered).
+    contextWindow    Int?
+    verifiedAt       DateTime?
+
+    createdAt        DateTime @default(now())
+    updatedAt        DateTime @default(now()) @updatedAt
+  }

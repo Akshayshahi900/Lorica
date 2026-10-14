@@ -135,7 +135,40 @@ export function reviewBudgetFromEnv(
   };
 }
 
-const HUNK_HEADER = /^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@(.*)$/;
+/** Smallest diff budget per chunk; below it a hunk loses its surroundings. */
+const MIN_DIFF_TOKENS_PER_CHUNK = 1_000;
+
+/**
+ * Shrinks the per-chunk budgets so one chunk, plus the `reservedTokens` every
+ * request spends on the prompt, metadata and answer, fits in a model's
+ * context window. A smaller model gets more, smaller chunks rather than a
+ * request it cannot read. An unknown window leaves the budget unchanged.
+ */
+export function fitBudgetToContextWindow(
+  budget: ReviewBudget,
+  contextWindow: number | null | undefined,
+  reservedTokens: number,
+): ReviewBudget {
+  if (!contextWindow) return budget;
+  const available = contextWindow - reservedTokens;
+  if (available >= budget.diffTokensPerChunk + budget.traceTokensPerChunk) {
+    return budget;
+  }
+  const traceTokensPerChunk = Math.max(
+    0,
+    Math.min(budget.traceTokensPerChunk, Math.floor(available * 0.15)),
+  );
+  return {
+    ...budget,
+    traceTokensPerChunk,
+    diffTokensPerChunk: Math.max(
+      MIN_DIFF_TOKENS_PER_CHUNK,
+      available - traceTokensPerChunk,
+    ),
+  };
+}
+
+const HUNK_HEADER =/^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@(.*)$/;
 
 /**
  * Re-cuts one hunk into hunks of at most `maxTokens`, each with a header

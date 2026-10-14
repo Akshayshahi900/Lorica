@@ -4,6 +4,7 @@ import {
   DEFAULT_REVIEW_BUDGET,
   estimateTokens,
   filterReviewableFiles,
+  fitBudgetToContextWindow,
   mergeReviewResults,
   planReview,
   splitPatch,
@@ -202,5 +203,19 @@ describe("merging chunk results", () => {
   it("says so when nothing was reviewable", () => {
     const merged = mergeReviewResults([], { excluded: [], truncatedFiles: [] });
     assert.deepEqual(merged, { summary: "No reviewable code changes in this PR.", reviews: [] });
+  });
+});
+
+describe("fitting the budget to a context window", () => {
+  it("leaves the budget alone when the window is unknown or large enough", () => {
+    assert.equal(fitBudgetToContextWindow(DEFAULT_REVIEW_BUDGET, undefined, 10_000), DEFAULT_REVIEW_BUDGET);
+    assert.equal(fitBudgetToContextWindow(DEFAULT_REVIEW_BUDGET, 200_000, 10_000), DEFAULT_REVIEW_BUDGET);
+  });
+
+  it("shrinks chunks so a request fits a small window", () => {
+    const fitted = fitBudgetToContextWindow(DEFAULT_REVIEW_BUDGET, 16_384, 10_000);
+    assert.ok(fitted.diffTokensPerChunk + fitted.traceTokensPerChunk <= 16_384 - 10_000);
+    assert.ok(fitted.diffTokensPerChunk > fitted.traceTokensPerChunk);
+    assert.equal(fitted.maxChunks, DEFAULT_REVIEW_BUDGET.maxChunks);
   });
 });

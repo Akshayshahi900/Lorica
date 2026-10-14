@@ -5,6 +5,7 @@ import express from "express";
 import cors from "cors";
 import githubRoutes from "./routes/github.routes";
 import pullRequestRoutes from "./routes/pr.routes";
+import modelSettingsRoutes from "./routes/modelSettings.routes";
 import { reconcile } from "./reconcile";
 
 const app = express();
@@ -57,6 +58,7 @@ app.use("/api", (req, res, next) => {
 });
 
 app.use("/api/pulls", pullRequestRoutes);
+app.use("/api/settings/model", modelSettingsRoutes);
 
 // Called by the scheduled reconcile workflow so missed webhooks are recovered
 // even when nothing else wakes the API.

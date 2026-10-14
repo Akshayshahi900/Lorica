@@ -3,6 +3,7 @@ import { useSession } from "next-auth/react";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
 import { LogOut } from "lucide-react";
+import ModelSettings from "@/components/ModelSettings";
 
 export default function SettingsPage() {
   const { data: session } = useSession();
@@ -46,6 +47,8 @@ export default function SettingsPage() {
           Sign out
         </button>
       </div>
+
+      <ModelSettings />
 
       {/* Review behaviour */}
       <div className="bg-bg-panel border border-bg-border rounded-xl p-5 space-y-4">

@@ -37,6 +37,7 @@ function fakeGitHub(overrides: Partial<ReviewDependencies> = {}) {
     }),
     indexCommit: async () => {},
     loadGraphContext: async () => ({ indexedCommit: state.head, traces: [] }),
+    loadModelConfig: async () => null,
     review: async () => {
       state.llmCalls++;
       return {

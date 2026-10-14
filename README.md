@@ -146,6 +146,8 @@ API_ACCESS_TOKEN="replace-with-a-long-random-shared-secret"
 # LLM
 OPENROUTER_API_KEY="replace-with-your-openrouter-api-key"
 # LLM_MODEL="nvidia/nemotron-3-ultra-550b-a55b:free"
+# Required (API and worker) for users to save their own model API keys in Settings.
+LLM_SETTINGS_ENCRYPTION_KEY="replace-with-output-of-openssl-rand-base64-32"
 ```
 
 Keep the GitHub App private key outside version control; `*.pem` is already ignored. `GITHUB_PRIVATE_KEY_PATH` may be absolute or relative to the repository root when using `pnpm dev`.
@@ -226,6 +228,8 @@ The dashboard requests `read:user`, `user:email`, `repo`, and `read:org` scopes.
 | `GITHUB_PRIVATE_KEY_PATH`                              | Yes         | Worker              | Path to the GitHub App PEM private key.                                                  |
 | `OPENROUTER_API_KEY`                                   | Yes         | Worker              | API key for structured LLM reviews.                                                      |
 | `LLM_MODEL`                                            | No          | Worker              | OpenRouter model ID; must support JSON-schema output. Defaults to `nvidia/nemotron-3-ultra-550b-a55b:free`. |
+| `LLM_SETTINGS_ENCRYPTION_KEY` | For custom models | API, worker | Encrypts API keys users save under **Settings → Review model**. Use the same value on both services (e.g. `openssl rand -base64 32`); changing it invalidates saved keys. |
+| `LLM_ALLOW_PRIVATE_BASE_URLS` | No | API, worker | `true` lets saved models point at private or loopback addresses (Ollama, llama.cpp on your network). Allowed by default outside production; blocked in production unless set. |
 | `REVIEW_DIFF_TOKENS_PER_CHUNK` | No | Worker | Estimated diff tokens per LLM request. Larger PRs are split into several requests. Defaults to `16000`. |
 | `REVIEW_TRACE_TOKENS_PER_CHUNK` | No | Worker | Estimated graph-trace tokens per LLM request. Defaults to `3000`. |
 | `REVIEW_MAX_CHUNKS` | No | Worker | Maximum LLM requests per review; changes beyond this are listed as not fully reviewed. Defaults to `8`. |
@@ -243,7 +247,7 @@ The dashboard requests `read:user`, `user:email`, `repo`, and `read:org` scopes.
 | `INDEX_QUEUE_NAME`                                     | No          | Worker              | Code-index queue name; defaults to `code-index`. Useful for isolated smoke tests.        |
 | `LOG_INDEX_DETAILS`, `LOG_INDEX_AST`, `LOG_CODE_GRAPH` | No          | Worker              | Set to `true` to increase code-indexer diagnostics.                                      |
 
-The review model is currently defined in `packages/llm/src/client.ts`. Change that source configuration deliberately and validate the response schema compatibility before deploying a different provider or model.
+The default review model is set with `OPENROUTER_API_KEY` and `LLM_MODEL`; users can choose their own under **Settings → Review model** (see [Limitations](#limitations)). Validate response-schema compatibility before changing the default.
 
 ## Operations
 
@@ -364,7 +368,7 @@ packages/
 - Keep PostgreSQL, Redis, and Neo4j on private networks. Do not publish the local Docker Compose ports directly to the internet.
 - Restrict GitHub App installation to intended repositories. The worker clones code and sends PR patches plus limited code-graph context to OpenRouter, so ensure this data flow meets your organization’s security and data-handling requirements.
 - Run API and workers as separate processes or deployments in production, each with least-privilege network access. The worker needs outbound access to GitHub, OpenRouter, Redis, PostgreSQL, and Neo4j.
-- Use `prisma migrate deploy` during release deployment. Back up PostgreSQL and Neo4j before schema or service upgrades.
+- The API and worker images run `prisma migrate deploy` before starting, so a release brings the schema up to date; if a migration fails, the container exits and the previous release keeps serving. A database whose schema was changed outside migrations (e.g. with `prisma db push`) fails this step; check with `prisma migrate status` and resolve with `prisma migrate resolve` before deploying. Back up PostgreSQL and Neo4j before schema or service upgrades.
 
 ## Limitations
 
@@ -372,7 +376,7 @@ packages/
 - The code graph currently indexes JavaScript and TypeScript source files only.
 - The graph evidence is intentionally limited to one-hop relationships from changed files; it is supporting evidence, not a complete-program analysis.
 - The dashboard’s ownership filter does not yet model organization membership or installation-level authorization. A signed-in user only sees stored pull requests whose repository owner login matches their GitHub login.
-- The LLM provider is fixed to OpenRouter; only the model is configurable (`LLM_MODEL`).
+- Reviews use the deployment's OpenRouter model (`LLM_MODEL`) unless a user picks their own under **Settings → Review model**: OpenRouter, OpenAI, Anthropic, Hugging Face, Ollama, or any OpenAI-compatible server (llama.cpp, LM Studio, vLLM). Saving runs a test review on a small synthetic diff and refuses models that cannot return review JSON or whose context window is too small; diff chunks are then sized to the model's context window. Settings apply to pull requests whose repository owner matches the user's GitHub login, and a local model's base URL must be reachable from the worker, not from your browser.
 
 ## License
 
