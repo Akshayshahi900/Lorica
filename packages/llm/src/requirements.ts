@@ -12,10 +12,13 @@ const REVIEW_ENVELOPE_TOKENS = 2_000;
 /** Below this much diff per request, findings lose the surrounding hunk. */
 const MIN_CHUNK_TOKENS = 4_000;
 
-/** Tokens every review request spends before any patch or trace. */
-export function reservedReviewTokens(): number {
+/**
+ * Tokens every review request spends before any patch or trace; `prompt` is
+ * the review's prompt, which grows with the team's guidelines.
+ */
+export function reservedReviewTokens(prompt: string = REVIEW_PROMPT): number {
   return (
-    estimateTokens(REVIEW_PROMPT) +
+    estimateTokens(prompt) +
     REVIEW_ENVELOPE_TOKENS +
     REVIEW_OUTPUT_RESERVE_TOKENS
   );

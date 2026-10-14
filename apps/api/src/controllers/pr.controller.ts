@@ -53,6 +53,7 @@ export const getPullRequests = async (req: Request, res: Response) => {
               id: latestReviewJob.id,
               status: latestReviewJob.status,
               commentsCount: latestReviewJob.commentsCount,
+              skipReason: latestReviewJob.skipReason,
               createdAt: latestReviewJob.createdAt,
               completedAt: latestReviewJob.completedAt,
             }

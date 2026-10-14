@@ -136,10 +136,15 @@ export async function recordPullRequestEvent(
             });
           } else if (
             reviewJob.status === ReviewJobStatus.failed ||
-            reviewJob.status === ReviewJobStatus.superseded
+            reviewJob.status === ReviewJobStatus.superseded ||
+            (reviewJob.status === ReviewJobStatus.completed &&
+              reviewJob.skipReason !== null &&
+              payload.action !== "synchronize")
           ) {
             // A fresh event for this commit (e.g. reopened, or the head moved
-            // back to it) earns its review a new set of attempts.
+            // back to it) earns its review a new set of attempts. A commit the
+            // review settings ruled out is looked at again when its PR leaves
+            // draft or is reopened, since the reason may no longer hold.
             reviewJob = await tx.reviewJob.update({
               where: { id: reviewJob.id },
               data: {
@@ -149,6 +154,7 @@ export async function recordPullRequestEvent(
                 leaseUntil: null,
                 leaseToken: null,
                 lastError: null,
+                skipReason: null,
               },
             });
           }

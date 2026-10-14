@@ -19,7 +19,8 @@ export type ExclusionReason =
   | "generated"
   | "vendored"
   | "asset"
-  | "documentation";
+  | "documentation"
+  | "configured"; // matched the review settings' excludePaths
 
 export type ExcludedFile = { filePath: string; reason: ExclusionReason };
 
@@ -360,15 +361,24 @@ function plural(count: number, noun: string): string {
   return `${count} ${noun}${count === 1 ? "" : "s"}`;
 }
 
+/** The review settings' severity floor and finding cap; `label` names them in the summary. */
+export type ReviewLimits = {
+  minSeverity: ReviewFinding["severity"];
+  maxFindings: number;
+  label: string;
+};
+
 /**
  * Combines the per-chunk results into the single review a PR receives.
  * Findings on files a chunk was not shown are dropped as hallucinated, and a
  * line reported twice (a file split across chunks) keeps its most severe
- * finding. The summary says how much of the PR was actually reviewed.
+ * finding. Findings below `limits.minSeverity`, or past `limits.maxFindings`,
+ * are dropped. The summary says how much of the PR was actually reviewed.
  */
 export function mergeReviewResults(
   chunks: { context: ReviewContext; result: ReviewResult }[],
   coverage: { excluded: ExcludedFile[]; truncatedFiles: string[] },
+  limits?: ReviewLimits,
 ): ReviewResult {
   const byLine = new Map<string, ReviewFinding>();
   const reviewedFiles = new Set<string>();
@@ -385,24 +395,44 @@ export function mergeReviewResults(
     }
   }
 
-  const reviews = [...byLine.values()].sort(
+  const sorted = [...byLine.values()].sort(
     (a, b) =>
       SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity] ||
       a.filePath.localeCompare(b.filePath) ||
       a.lineNumber - b.lineNumber,
   );
+  // The model is asked to respect these too; enforcing them here makes them hold.
+  const atSeverity = limits
+    ? sorted.filter((finding) => SEVERITY_RANK[finding.severity] <= SEVERITY_RANK[limits.minSeverity])
+    : sorted;
+  const reviews = limits ? atSeverity.slice(0, limits.maxFindings) : atSeverity;
+  const belowSeverity = sorted.length - atSeverity.length;
+  const overLimit = atSeverity.length - reviews.length;
 
   const sentences = [
     reviewedFiles.size === 0
       ? "No reviewable code changes in this PR."
       : reviews.length === 0
-      ? `No concrete issues found in ${plural(reviewedFiles.size, "reviewed file")}.`
-      : `Found ${plural(reviews.length, "concrete issue")} across ${plural(reviewedFiles.size, "reviewed file")}.`,
+      ? `No ${belowSeverity > 0 ? `${limits!.minSeverity}-severity or worse ` : "concrete "}issues found in ${plural(reviewedFiles.size, "reviewed file")}.`
+      : `Found ${plural(atSeverity.length, "concrete issue")} across ${plural(reviewedFiles.size, "reviewed file")}.`,
   ];
-  if (coverage.excluded.length > 0) {
+  if (belowSeverity > 0) {
     sentences.push(
-      `Skipped ${plural(coverage.excluded.length, "file")} that cannot carry reviewable code (lockfiles, generated, vendored, binary, docs or deleted).`,
+      `${plural(belowSeverity, "lower-severity finding")} ${belowSeverity === 1 ? "was" : "were"} hidden by the ${limits!.label} review settings.`,
     );
+  }
+  if (overLimit > 0) {
+    sentences.push(`Showing the ${limits!.maxFindings} most severe; ${overLimit} more ${overLimit === 1 ? "was" : "were"} left out.`);
+  }
+  const configured = coverage.excluded.filter((file) => file.reason === "configured").length;
+  const builtIn = coverage.excluded.length - configured;
+  if (builtIn > 0) {
+    sentences.push(
+      `Skipped ${plural(builtIn, "file")} that cannot carry reviewable code (lockfiles, generated, vendored, binary, docs or deleted).`,
+    );
+  }
+  if (configured > 0) {
+    sentences.push(`Skipped ${plural(configured, "file")} excluded by the review settings.`);
   }
   if (coverage.truncatedFiles.length > 0) {
     const shown = coverage.truncatedFiles.slice(0, 5).map((path) => `\`${path}\``).join(", ");

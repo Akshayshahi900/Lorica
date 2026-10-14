@@ -5,9 +5,13 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "dependencies": {
+    "@lorica/types": "workspace:*",
     "@xberg-io/tree-sitter-language-pack": "^1.14.3",
     "parse-diff": "^0.12.0",
-    "@lorica/types": "workspace:*",
+    "picomatch": "^4.0.3",
     "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/picomatch": "^4.0.2"
   }
 }

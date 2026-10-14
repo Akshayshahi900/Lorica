@@ -4,6 +4,7 @@ import { signOut } from "next-auth/react";
 import Image from "next/image";
 import { LogOut } from "lucide-react";
 import ModelSettings from "@/components/ModelSettings";
+import ReviewSettings from "@/components/ReviewSettings";
 
 export default function SettingsPage() {
   const { data: session } = useSession();
@@ -50,50 +51,7 @@ export default function SettingsPage() {
 
       <ModelSettings />
 
-      {/* Review behaviour */}
-      <div className="bg-bg-panel border border-bg-border rounded-xl p-5 space-y-4">
-        <div>
-          <h2 className="text-sm font-semibold text-text-primary">
-            Default review behaviour
-          </h2>
-          <p className="text-xs text-text-muted mt-0.5">
-            These are defaults. Override per-repo with .lorica.yml
-          </p>
-        </div>
-
-        {[
-          { label: "Strictness", value: "standard", options: ["strict", "standard", "relaxed"] },
-          { label: "Trigger on", value: "all PRs", options: ["all PRs", "first-time contributors only"] },
-          { label: "Skip patterns", value: "**/*.test.ts, docs/**", type: "text" },
-        ].map(({ label, value, options, type }) => (
-          <div key={label} className="flex flex-col gap-1.5">
-            <label className="text-xs font-mono text-text-muted uppercase tracking-wider">
-              {label}
-            </label>
-            {type === "text" ? (
-              <input
-                defaultValue={value}
-                className="bg-bg-base border border-bg-border rounded-lg px-3 py-2 text-xs font-mono text-text-primary focus:outline-none focus:border-accent-violet/50 transition-colors w-full"
-              />
-            ) : (
-              <select
-                defaultValue={value}
-                className="bg-bg-base border border-bg-border rounded-lg px-3 py-2 text-xs font-mono text-text-primary focus:outline-none focus:border-accent-violet/50 transition-colors appearance-none w-fit"
-              >
-                {options?.map((o) => (
-                  <option key={o} value={o}>
-                    {o}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
-        ))}
-
-        <button className="px-4 py-2 bg-accent-violet text-white text-xs font-mono rounded-lg hover:bg-accent-violet-dim transition-colors">
-          Save defaults
-        </button>
-      </div>
+      <ReviewSettings />
 
       {/* Danger zone */}
       <div className="bg-bg-panel border border-status-red/20 rounded-xl p-5 space-y-3">

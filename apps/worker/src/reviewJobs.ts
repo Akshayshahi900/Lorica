@@ -146,7 +146,12 @@ async function writeIfOwned(
   });
 }
 
-export async function markCompleted(lease: Lease, commentsCount: number) {
+/** `skipReason`: the review settings ruled the commit out, so nothing was reviewed. */
+export async function markCompleted(
+  lease: Lease,
+  commentsCount: number,
+  skipReason: string | null = null,
+) {
   return writeIfOwned(
     lease,
     {
@@ -156,6 +161,7 @@ export async function markCompleted(lease: Lease, commentsCount: number) {
       leaseUntil: null,
       leaseToken: null,
       lastError: null,
+      skipReason,
     },
     (tx) =>
       tx.pullRequest.update({

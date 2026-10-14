@@ -48,6 +48,7 @@ Signed-in GitHub users get an overview of review activity, pull-request history,
 - [Quick start](#quick-start)
 - [GitHub setup](#github-setup)
 - [Configuration](#configuration)
+- [Review settings](#review-settings)
 - [Operations](#operations)
 - [HTTP API](#http-api)
 - [Development](#development)
@@ -201,7 +202,7 @@ Create a GitHub App and configure:
 - **Subscribe to events:** Pull requests
 - **Repository permissions:** Contents: Read; Pull requests: Read; Issues: Write
 
-The worker uses the installation token to list PR files, read pull-request details, clone the repository at the head SHA, and create or update its pull-request comment. Install the app only on repositories Lorica is authorized to review.
+The worker uses the installation token to list PR files, read pull-request details and the repository's `.lorica.yaml`, clone the repository at the head SHA, and create or update its pull-request comment. Install the app only on repositories Lorica is authorized to review.
 
 For local webhook testing, expose the API through an HTTPS tunnel and use the tunnel URL as the webhook URL. Do not use an unauthenticated public tunnel for a long-lived deployment.
 
@@ -248,6 +249,50 @@ The dashboard requests `read:user`, `user:email`, `repo`, and `read:org` scopes.
 | `LOG_INDEX_DETAILS`, `LOG_INDEX_AST`, `LOG_CODE_GRAPH` | No          | Worker              | Set to `true` to increase code-indexer diagnostics.                                      |
 
 The default review model is set with `OPENROUTER_API_KEY` and `LLM_MODEL`; users can choose their own under **Settings → Review model** (see [Limitations](#limitations)). Validate response-schema compatibility before changing the default.
+
+## Review settings
+
+Each account (a user, or an organization its admins manage) configures reviews under **Settings → Review settings** in the dashboard. A repository can add to them with a `.lorica.yaml` (or `.lorica.yml`) at its root.
+
+**Profiles** set the reviewer's posture:
+
+| Profile     | Reports                                                                                  | Default floor / cap |
+| ----------- | ---------------------------------------------------------------------------------------- | ------------------- |
+| `quiet`     | Only high-confidence critical and high severity bugs and security issues.                | `high` / 5          |
+| `chill`     | Concrete defects of any severity; no style or preference comments. The default.          | `low` / 20          |
+| `assertive` | Defects plus maintainability: naming, readability, duplication, missing tests, dead code. | `low` / 40          |
+
+The severity floor and finding cap are enforced after the model answers, so they hold whatever the model returns; the review summary says how many findings were hidden.
+
+```yaml
+# .lorica.yaml
+profile: assertive
+guidelines: |
+  - Use the shared logger, never console.log, in services.
+  - Every database query goes through the repository layer.
+pathInstructions:
+  - path: "src/api/**"
+    instructions: Every handler validates its input with zod and checks permissions.
+excludePaths: ["**/*.test.ts", "migrations/**"]   # on top of lockfiles, generated, vendored, binaries
+tone: Brief and friendly.
+workflow:
+  autoReview: true            # false: this repository is not reviewed
+  reviewDrafts: false         # drafts are reviewed when marked ready for review
+  reviewOnPush: true          # false: only opened, reopened and ready-for-review
+  baseBranches: ["main", "release/*"]   # empty: any base branch
+  ignoreTitleKeywords: ["WIP", "[skip review]"]
+  ignoreAuthors: ["dependabot[bot]"]
+style:
+  minSeverity: medium         # defaults to the profile's
+  maxFindings: 10             # defaults to the profile's
+  fixPrompt: true             # the copyable "fix with your AI assistant" prompt
+```
+
+- **Layering:** the repository file is applied over the account's dashboard settings. `guidelines`, `pathInstructions`, `excludePaths`, `ignoreTitleKeywords` and `ignoreAuthors` add up, so a repository extends its organization's standards; every other value is overridden. The dashboard shows the saved settings as a `.lorica.yaml` to commit.
+- **Read from the base commit:** the file is read at the pull request's base SHA, so a change to `.lorica.yaml` applies after it merges, and a pull request cannot loosen or switch off its own review.
+- **Errors don't block reviews:** an invalid file (bad YAML, unknown key, wrong value) is ignored and the review comment says why.
+- **Skipped pull requests** complete without a comment; the dashboard shows them as `skipped` with the reason. A draft skipped by `reviewDrafts: false` is reviewed when it is marked ready for review.
+- **Organizations:** only active admins of an organization (checked with GitHub when the dashboard reads or saves) can change its settings. The GitHub OAuth app needs access to the organization for it to be listed.
 
 ## Operations
 
@@ -302,6 +347,7 @@ PostgreSQL, not Redis, is the source of truth for reviews. Redis only carries at
 | `GET /health`                  | None                               | Returns `OK` when the Express process is running.                                                                     |
 | `POST /webhooks/github`        | GitHub HMAC signature              | Accepts GitHub App webhooks. Only supported `pull_request` actions enqueue work.                                      |
 | `GET /api/pulls?owner=<login>` | `x-lorica-api-token` in production | Returns recorded pull requests for the requested owner, newest first, with repository data and the latest review job. |
+| `GET/PUT/DELETE /api/settings/review?owner=<login>` | `x-lorica-api-token` in production | Reads, saves (a `.lorica.yaml`-shaped JSON body) or resets an owner's review settings. The dashboard authorizes the owner before calling it. |
 | `POST /api/internal/reconcile` | `x-lorica-api-token` in production | Redelivers failed `pull_request` webhooks and wakes the worker when reviews are owed.                                 |
 
 The dashboard calls `GET /api/pulls` through its authenticated Next.js route (`apps/web/app/api/pulls/route.ts`); do not expose the shared API token to browser code. In non-production environments the API allows `/api/*` requests without `API_ACCESS_TOKEN` to simplify local setup. Production returns `503` for those routes until the token is configured.
@@ -372,6 +418,7 @@ packages/
 
 ## Limitations
 
+- Review settings are chosen when a review runs; editing a pull request's title (e.g. removing `WIP`) does not trigger a review until the next push or reopen.
 - Lorica maintains one formatted summary comment per PR, replaced by each new commit's review (earlier reviews remain in the comment's GitHub edit history); it does not create GitHub inline review comments for individual findings.
 - The code graph currently indexes JavaScript and TypeScript source files only.
 - The graph evidence is intentionally limited to one-hop relationships from changed files; it is supporting evidence, not a complete-program analysis.

@@ -134,6 +134,25 @@ describe("webhook intake: success cases", () => {
     assert.equal(await prisma.webhookDelivery.count(), 1);
   });
 
+  it("re-queues a commit the review settings skipped once its PR leaves draft", async () => {
+    await deliver(pullRequestEvent("sha-1", { action: "opened" }));
+    const job = await prisma.reviewJob.findFirstOrThrow();
+    await prisma.reviewJob.update({
+      where: { id: job.id },
+      data: { status: "completed", skipReason: "draft pull requests are not reviewed" },
+    });
+
+    // A push to a skipped draft is not a reason to look again.
+    await deliver(pullRequestEvent("sha-1", { action: "synchronize", updatedAt: "2026-10-15T10:01:00Z" }));
+    assert.equal((await prisma.reviewJob.findFirstOrThrow()).status, "completed");
+
+    await deliver(pullRequestEvent("sha-1", { action: "ready_for_review", updatedAt: "2026-10-15T10:02:00Z" }));
+    const requeued = await prisma.reviewJob.findFirstOrThrow();
+    assert.equal(requeued.status, "queued");
+    assert.equal(requeued.skipReason, null);
+    assert.equal((await pullRequest()).status, "pending");
+  });
+
   it("does not let a redelivery revive a review that gave up", async () => {
     // Only a new event (tested below) earns a failed review more attempts;
     // replaying the event that already produced it does not.

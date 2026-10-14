@@ -8,7 +8,9 @@ export interface PRRow {
   title: string;
   number: number;
   comments: number;
-  status: "reviewed" | "pending" | "failed";
+  status: "reviewed" | "skipped" | "pending" | "failed";
+  /** Why the review settings skipped this PR, shown on hover. */
+  statusDetail?: string;
   author: string;
   reviewedAt: string;
   url: string;
@@ -16,6 +18,7 @@ export interface PRRow {
 
 const STATUS_STYLES: Record<PRRow["status"], string> = {
   reviewed: "text-status-green bg-status-green/10 border-status-green/20",
+  skipped: "text-text-muted bg-bg-base border-bg-border",
   pending: "text-status-yellow bg-status-yellow/10 border-status-yellow/20",
   failed: "text-status-red bg-status-red/10 border-status-red/20",
 };
@@ -74,6 +77,7 @@ export function PRTable({ rows }: { rows: PRRow[] }) {
                     "inline-flex items-center px-2 py-0.5 rounded border text-xs font-mono",
                     STATUS_STYLES[row.status]
                   )}
+                  title={row.statusDetail}
                 >
                   {row.status}
                 </span>

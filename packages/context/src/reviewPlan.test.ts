@@ -200,6 +200,36 @@ describe("merging chunk results", () => {
     assert.match(merged.summary, /`src\/huge.ts` were not fully reviewed/);
   });
 
+  it("enforces the settings' severity floor and finding cap, and says what it hid", () => {
+    const reviews = [
+      finding({ lineNumber: 1, severity: "low" }),
+      finding({ lineNumber: 2, severity: "high" }),
+      finding({ lineNumber: 3, severity: "critical" }),
+      finding({ lineNumber: 4, severity: "high" }),
+    ];
+    const merged = mergeReviewResults(
+      [{ context, result: { summary: "", reviews } }],
+      { excluded: [{ filePath: "e2e/a.spec.ts", reason: "configured" }], truncatedFiles: [] },
+      { minSeverity: "high", maxFindings: 2, label: "Quiet" },
+    );
+    assert.deepEqual(merged.reviews.map((r) => r.lineNumber), [3, 2]);
+    assert.match(merged.summary, /Found 3 concrete issues across 2 reviewed files\./);
+    assert.match(merged.summary, /1 lower-severity finding was hidden by the Quiet review settings/);
+    assert.match(merged.summary, /Showing the 2 most severe; 1 more was left out/);
+    assert.match(merged.summary, /Skipped 1 file excluded by the review settings/);
+    assert.doesNotMatch(merged.summary, /cannot carry reviewable code/);
+  });
+
+  it("reports a clean review when every finding is below the floor", () => {
+    const merged = mergeReviewResults(
+      [{ context, result: { summary: "", reviews: [finding({ severity: "low" })] } }],
+      { excluded: [], truncatedFiles: [] },
+      { minSeverity: "high", maxFindings: 5, label: "Quiet" },
+    );
+    assert.deepEqual(merged.reviews, []);
+    assert.match(merged.summary, /^No high-severity or worse issues found in 2 reviewed files\./);
+  });
+
   it("says so when nothing was reviewable", () => {
     const merged = mergeReviewResults([], { excluded: [], truncatedFiles: [] });
     assert.deepEqual(merged, { summary: "No reviewable code changes in this PR.", reviews: [] });

@@ -69,17 +69,19 @@ export const handleWebhook = async (req: Request, res: Response) => {
 
     const action = payload.action;
 
+    // ready_for_review: a draft the review settings skipped is now reviewable.
     if (
       action !== "opened" &&
       action !== "reopened" &&
-      action !== "synchronize"
+      action !== "synchronize" &&
+      action !== "ready_for_review"
     ) {
       console.info(
         `[api] stage=webhook.ignored reason=unsupported_action action=${action ?? "unknown"}`,
       );
       return res
         .status(200)
-        .send("Ignoring non opened/reopened/synchronize action");
+        .send("Ignoring non opened/reopened/synchronize/ready_for_review action");
     }
 
     // Fire-and-forget: the worker boots in parallel with the DB writes below.

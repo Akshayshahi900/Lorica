@@ -17,6 +17,8 @@ export interface PullRequestRecord {
     id: number;
     status: "queued" | "running" | "completed" | "failed";
     commentsCount: number;
+    /** Set when the review settings ruled the PR out; nothing was reviewed. */
+    skipReason: string | null;
     createdAt: string;
     completedAt: string | null;
   } | null;
@@ -44,6 +46,10 @@ function timeAgo(date: string): string {
   return `${Math.floor(seconds / 86_400)}d ago`;
 }
 
+function wasSkipped(pullRequest: PullRequestRecord): boolean {
+  return pullRequest.status === "completed" && Boolean(pullRequest.reviewJob?.skipReason);
+}
+
 function formatDuration(milliseconds: number): string {
   const seconds = Math.round(milliseconds / 1_000);
   if (seconds < 60) return `${seconds}s`;
@@ -57,12 +63,14 @@ export function toPRRows(pullRequests: PullRequestRecord[]): PRRow[] {
     title: pullRequest.title ?? `Pull request #${pullRequest.number}`,
     number: pullRequest.number,
     comments: pullRequest.reviewJob?.commentsCount ?? 0,
-    status:
-      pullRequest.status === "completed"
+    status: wasSkipped(pullRequest)
+      ? "skipped"
+      : pullRequest.status === "completed"
         ? "reviewed"
         : pullRequest.status === "failed"
           ? "failed"
           : "pending",
+    statusDetail: pullRequest.reviewJob?.skipReason ?? undefined,
     author: pullRequest.author ?? pullRequest.repoOwner,
     reviewedAt: timeAgo(pullRequest.reviewJob?.completedAt ?? pullRequest.updatedAt),
     url: `https://github.com/${pullRequest.repoFullName}/pull/${pullRequest.number}`,
@@ -70,7 +78,9 @@ export function toPRRows(pullRequests: PullRequestRecord[]): PRRow[] {
 }
 
 export function toDashboardStats(pullRequests: PullRequestRecord[]): DashboardStats {
-  const completed = pullRequests.filter((pullRequest) => pullRequest.status === "completed");
+  const completed = pullRequests.filter(
+    (pullRequest) => pullRequest.status === "completed" && !wasSkipped(pullRequest),
+  );
   const comments = completed.reduce(
     (total, pullRequest) => total + (pullRequest.reviewJob?.commentsCount ?? 0),
     0,
@@ -100,6 +110,7 @@ export function toDashboardStats(pullRequests: PullRequestRecord[]): DashboardSt
 
 export function toActivityItems(pullRequests: PullRequestRecord[]): ActivityItem[] {
   return pullRequests.slice(0, 6).map((pullRequest) => {
+    const skipped = wasSkipped(pullRequest);
     const completed = pullRequest.status === "completed";
     const failed = pullRequest.status === "failed";
     const findings = pullRequest.reviewJob?.commentsCount ?? 0;
@@ -109,7 +120,9 @@ export function toActivityItems(pullRequests: PullRequestRecord[]): ActivityItem
       type: failed ? "error" : completed ? "review" : "comment",
       message: failed
         ? `Review failed for PR #${pullRequest.number}`
-        : completed
+        : skipped
+          ? `Skipped PR #${pullRequest.number}: ${pullRequest.reviewJob!.skipReason}`
+          : completed
           ? `Reviewed PR #${pullRequest.number} — ${findings} finding${findings === 1 ? "" : "s"}`
           : `Review queued for PR #${pullRequest.number}`,
       repo: pullRequest.repoFullName,

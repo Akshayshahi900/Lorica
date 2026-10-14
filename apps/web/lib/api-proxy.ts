@@ -5,11 +5,17 @@ import { serverEnv } from "@/lib/env";
 
 /**
  * Forwards a dashboard request to the Lorica API on behalf of the signed-in
- * user. The owner is always the session's GitHub login, never client input.
+ * user. The owner is the session's GitHub login unless the route passes an
+ * `owner` it has already authorized (see authorizeSettingsOwner); it is never
+ * taken from client input unchecked.
  */
 export async function proxyToApi(
   path: string,
-  { method = "GET", body }: { method?: string; body?: string } = {},
+  {
+    method = "GET",
+    body,
+    owner,
+  }: { method?: string; body?: string; owner?: string } = {},
 ): Promise<NextResponse> {
   const session = await getServerSession(authOptions);
   const login = (session as { login?: string } | null)?.login;
@@ -18,9 +24,10 @@ export async function proxyToApi(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const query = new URLSearchParams({ owner: owner ?? login, actor: login });
   try {
     const response = await fetch(
-      `${serverEnv.apiUrl}${path}?owner=${encodeURIComponent(login)}`,
+      `${serverEnv.apiUrl}${path}?${query}`,
       {
         method,
         body,

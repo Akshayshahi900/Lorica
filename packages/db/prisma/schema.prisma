@@ -84,6 +84,9 @@
     // review published, only while this attempt still holds it.
     leaseToken     String?
     lastError      String?
+    // Set when the review settings' workflow ruled this commit out; the job
+    // completes without a review.
+    skipReason     String?
 
     createdAt      DateTime @default(now())
     updatedAt      DateTime @default(now()) @updatedAt
@@ -121,4 +124,20 @@
 
     createdAt        DateTime @default(now())
     updatedAt        DateTime @default(now()) @updatedAt
+  }
+
+  // An owner's review settings (profile, guidelines, workflow, style), edited
+  // in the dashboard. A repository's .lorica.yaml is applied on top. No row
+  // means the defaults (the Chill profile).
+  model ReviewSettings {
+    id        Int      @id @default(autoincrement())
+    // GitHub user or organisation login, lowercased; matched against PullRequest.repoOwner.
+    owner     String   @unique
+    // A ReviewSettingsSchema layer from @lorica/types.
+    config    Json
+    // GitHub login of whoever saved it last; for an organisation, one of its admins.
+    updatedBy String?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @default(now()) @updatedAt
   }

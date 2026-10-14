@@ -20,9 +20,14 @@ const HEAD = "sha-head";
 function fakeGitHub(overrides: Partial<ReviewDependencies> = {}) {
   const state = {
     head: HEAD,
+    draft: false,
     comments: [] as { id: number; body: string }[],
     edits: 0,
     llmCalls: 0,
+    prompts: [] as string[],
+    ownerSettings: null as unknown,
+    repoConfig: null as string | null,
+    repoConfigRef: null as string | null,
   };
   const deps: ReviewDependencies = {
     fetchFiles: async () => [
@@ -34,12 +39,22 @@ function fakeGitHub(overrides: Partial<ReviewDependencies> = {}) {
       author: "dev",
       baseSha: "sha-base",
       headSha: state.head,
+      baseRef: "main",
+      draft: state.draft,
     }),
     indexCommit: async () => {},
     loadGraphContext: async () => ({ indexedCommit: state.head, traces: [] }),
     loadModelConfig: async () => null,
-    review: async () => {
+    loadOwnerSettings: async () => state.ownerSettings,
+    fetchRepoConfig: async (_pr, ref) => {
+      state.repoConfigRef = ref;
+      return state.repoConfig === null
+        ? null
+        : { path: ".lorica.yaml", source: state.repoConfig };
+    },
+    review: async (_context, prompt) => {
       state.llmCalls++;
+      state.prompts.push(prompt);
       return {
         summary: "One issue.",
         reviews: [
@@ -179,6 +194,97 @@ describe("review processing: success cases", () => {
 
     assert.equal(await createReviewProcessor(deps)(id), "skipped");
     assert.equal(state.llmCalls, 0);
+  });
+});
+
+describe("review processing: review settings", () => {
+  it("completes without reviewing when the workflow rules the PR out", async () => {
+    const { id } = await seedJob();
+    const { state, deps } = fakeGitHub();
+    state.draft = true;
+    state.ownerSettings = { workflow: { reviewDrafts: false } };
+
+    assert.equal(await createReviewProcessor(deps)(id), "not_reviewed");
+
+    assert.equal(state.llmCalls, 0);
+    assert.equal(state.comments.length, 0);
+    const done = await job(id);
+    assert.equal(done.status, "completed");
+    assert.equal(done.skipReason, "draft pull requests are not reviewed");
+    assert.equal((await pr()).status, "completed");
+  });
+
+  it("layers the repository config from the base commit over the owner's settings", async () => {
+    const { id } = await seedJob();
+    const { state, deps } = fakeGitHub();
+    state.ownerSettings = { profile: "assertive", guidelines: "Org: use the shared logger." };
+    state.repoConfig = "profile: quiet\nguidelines: 'Repo: no default exports.'\nstyle:\n  fixPrompt: false\n";
+
+    assert.equal(await createReviewProcessor(deps)(id), "completed");
+
+    assert.equal(state.repoConfigRef, "sha-base");
+    assert.match(state.prompts[0]!, /QUIET\./);
+    assert.match(state.prompts[0]!, /Org: use the shared logger\.\n\nRepo: no default exports\./);
+    // Quiet drops the fake model's low-severity finding and the fix prompt.
+    const body = state.comments[0]!.body;
+    assert.match(body, /No actionable issues found/);
+    assert.match(body, /1 lower-severity finding was hidden by the Quiet review settings/);
+    assert.match(body, /Quiet profile/);
+    assert.equal((await job(id)).commentsCount, 0);
+  });
+
+  it("reviews with the owner's settings and says so when the repository config is broken", async () => {
+    const { id } = await seedJob();
+    const { state, deps } = fakeGitHub();
+    state.repoConfig = "profil: quiet\n";
+
+    assert.equal(await createReviewProcessor(deps)(id), "completed");
+
+    const body = state.comments[0]!.body;
+    assert.match(body, /`\.lorica\.yaml` was ignored: .*profil/);
+    assert.match(body, /1 issue found/);
+    assert.match(body, /Chill profile/);
+  });
+});
+
+describe("review processing: review settings failures", () => {
+  it("reviews with the defaults when GitHub denies reading the config file", async () => {
+    const { id } = await seedJob();
+    const { state, deps } = fakeGitHub({
+      fetchRepoConfig: async () => {
+        throw Object.assign(new Error("Resource not accessible"), { status: 403 });
+      },
+    });
+
+    assert.equal(await createReviewProcessor(deps)(id), "completed");
+
+    assert.match(state.comments[0]!.body, /could not read the repository's `\.lorica\.yaml`/);
+    assert.match(state.comments[0]!.body, /Chill profile/);
+  });
+
+  it("retries rather than guessing when the config file cannot be fetched", async () => {
+    const { id } = await seedJob();
+    const { state, deps } = fakeGitHub({
+      fetchRepoConfig: async () => {
+        throw Object.assign(new Error("Server Error"), { status: 502 });
+      },
+    });
+
+    assert.equal(await createReviewProcessor(deps)(id), "retry");
+
+    assert.equal(state.llmCalls, 0);
+    assert.equal(state.comments.length, 0);
+    assert.equal((await job(id)).status, "queued");
+  });
+
+  it("ignores dashboard settings saved under an incompatible schema", async () => {
+    const { id } = await seedJob();
+    const { state, deps } = fakeGitHub();
+    state.ownerSettings = { profile: "loud" };
+
+    assert.equal(await createReviewProcessor(deps)(id), "completed");
+
+    assert.match(state.comments[0]!.body, /dashboard could not be read and were ignored/);
   });
 });
 

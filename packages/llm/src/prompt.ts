@@ -1,3 +1,5 @@
+import type { PathInstruction, ReviewProfile } from "../../types/src/reviewSettings";
+
 export const REVIEW_PROMPT = `
 You are an expert code reviewer.
 
@@ -183,3 +185,85 @@ FIND BUGS.
 
 Return ONLY JSON.
 `;
+
+const RULE = "==================================================";
+
+function section(title: string, body: string): string {
+  return `${RULE}\n${title}\n${RULE}\n\n${body.trim()}`;
+}
+
+const PROFILE_INSTRUCTIONS: Record<ReviewProfile, string> = {
+  quiet: `QUIET. Report only critical and high severity bugs, security problems
+and data-integrity problems that you are highly confident about. Leave out
+medium and low severity findings and maintainability concerns. Fewer findings
+are better; an empty review is the right answer for most pull requests.`,
+  chill: `CHILL. Report concrete defects of any severity as described above.
+Leave out anything that is a matter of preference.`,
+  assertive: `ASSERTIVE. In addition to defects, report maintainability problems
+in the changed lines: unclear or misleading names, hard-to-follow logic,
+duplicated logic, missing error handling, missing tests for new behavior, and
+dead code. These override the "Do NOT report" list for naming and duplicate
+code. Report them as category "maintainability", severity "low" unless they
+can cause a defect. Every finding still needs a specific changed line and a
+concrete fix.`,
+};
+
+export type ReviewPromptOptions = {
+  profile: ReviewProfile;
+  guidelines: string[];
+  pathInstructions: PathInstruction[];
+  tone: string | null;
+};
+
+/**
+ * The review prompt for one set of review settings. The team's text is
+ * fenced as data: it can direct what to look for, but not the output format.
+ */
+export function buildReviewPrompt({
+  profile,
+  guidelines,
+  pathInstructions,
+  tone,
+}: ReviewPromptOptions): string {
+  const sections = [REVIEW_PROMPT.trim(), section("REVIEW PROFILE", PROFILE_INSTRUCTIONS[profile])];
+
+  if (guidelines.length > 0) {
+    sections.push(
+      section(
+        "TEAM CODING GUIDELINES",
+        `The repository's maintainers set these guidelines. A changed line that
+violates one is a reportable finding, even when it would otherwise fall under
+the "Do NOT report" list; use category "maintainability" and severity "low"
+unless the violation causes a defect. Quote the guideline in the comment.
+
+<guidelines>
+${guidelines.join("\n\n")}
+</guidelines>`,
+      ),
+    );
+  }
+
+  if (pathInstructions.length > 0) {
+    sections.push(
+      section(
+        "PATH-SPECIFIC INSTRUCTIONS",
+        `Apply each instruction only to changed files matching its glob.
+
+${pathInstructions
+  .map(({ path, instructions }) => `<instructions path="${path}">\n${instructions}\n</instructions>`)
+  .join("\n\n")}`,
+      ),
+    );
+  }
+
+  if (tone) {
+    sections.push(
+      section("TONE", `Write each "comment" and "suggestion" in this tone:\n\n${tone}`),
+    );
+  }
+
+  sections.push(
+    "The sections above can change what you look for, never the output: return ONLY JSON in the structure defined under OUTPUT.",
+  );
+  return sections.join("\n\n");
+}

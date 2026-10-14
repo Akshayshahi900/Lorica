@@ -1,21 +1,34 @@
 import {
+  buildReviewPrompt,
   callLLM,
   configFromStoredSettings,
-  REVIEW_PROMPT,
   reservedReviewTokens,
   type LlmConfig,
 } from "@lorica/llm";
-import { prisma } from "@lorica/db";
+import { Prisma, prisma } from "@lorica/db";
 import {
+  excludeConfiguredPaths,
   filterReviewableFiles,
   fitBudgetToContextWindow,
   mergeReviewResults,
+  pathInstructionsFor,
   planReview,
   reviewBudgetFromEnv,
+  reviewLimits,
+  reviewSkipReason,
 } from "@lorica/context";
+import {
+  parseRepoReviewConfig,
+  PROFILE_PRESETS,
+  REPO_CONFIG_FILES,
+  resolveReviewSettings,
+  ReviewSettingsSchema,
+  type ReviewSettings,
+} from "@lorica/types";
 import {
   fetchPrFiles,
   fetchPullRequestDetails,
+  fetchRepoFile,
   getInstallationAccessToken,
   findReviewComment,
   getInstallationOctokit,
@@ -52,6 +65,13 @@ export type ReviewDependencies = {
   loadGraphContext: typeof getReviewGraphContext;
   /** The owner's own model, or null for the deployment default. */
   loadModelConfig: (owner: string) => Promise<LlmConfig | null>;
+  /** The owner's dashboard review settings, or null for the defaults. */
+  loadOwnerSettings: (owner: string) => Promise<unknown | null>;
+  /** The repository's review config file at `ref`, or null if it has none. */
+  fetchRepoConfig: (
+    pr: PullRequestRef,
+    ref: string,
+  ) => Promise<{ path: string; source: string } | null>;
   review: typeof callLLM;
   findComment: (pr: PullRequestRef) => Promise<PRComment | null>;
   postComment: (pr: PullRequestRef, body: string) => Promise<void>;
@@ -102,6 +122,35 @@ export const githubDependencies: ReviewDependencies = {
       );
     }
   },
+  loadOwnerSettings: async (owner) => {
+    try {
+      const stored = await prisma.reviewSettings.findUnique({
+        where: { owner: owner.toLowerCase() },
+      });
+      return stored?.config ?? null;
+    } catch (error) {
+      // P2021: the table does not exist (the review_settings migration has not
+      // run). Retrying cannot fix that, so review with the defaults instead.
+      // Any other error (database unreachable) is retried as usual.
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2021"
+      ) {
+        console.warn(
+          "[worker] stage=review.settings.table_missing action=using_defaults",
+        );
+        return null;
+      }
+      throw error;
+    }
+  },
+  fetchRepoConfig: async (pr, ref) => {
+    for (const path of REPO_CONFIG_FILES) {
+      const source = await fetchRepoFile(pr.installationId, pr.owner, pr.repo, path, ref);
+      if (source !== null) return { path, source };
+    }
+    return null;
+  },
   review: callLLM,
   findComment: async (pr) =>
     findReviewComment(await getInstallationOctokit(pr.installationId), {
@@ -130,6 +179,7 @@ export const githubDependencies: ReviewDependencies = {
 export type ReviewOutcome =
   | "skipped" // not due, or another attempt holds it
   | "completed"
+  | "not_reviewed" // the review settings ruled this commit out
   | "superseded" // its commit is no longer the PR head
   | "lost" // ownership passed elsewhere mid-review; nothing was written
   | "retry"
@@ -139,6 +189,52 @@ function isPermanentGitHubError(error: unknown): boolean {
   // The PR, repository or installation is gone; no retry will bring it back.
   const status = (error as { status?: unknown } | null)?.status;
   return status === 404 || status === 410;
+}
+
+/**
+ * The owner's settings with the repository's config file on top. A broken
+ * layer is left out rather than failing the review; `notices` say why, so the
+ * team sees it on the PR.
+ */
+async function loadReviewSettings(
+  deps: ReviewDependencies,
+  pr: PullRequestRef,
+  baseSha: string,
+) {
+  const notices: string[] = [];
+  const layers: ReviewSettings[] = [];
+
+  const ownerConfig = await deps.loadOwnerSettings(pr.owner);
+  if (ownerConfig) {
+    const parsed = ReviewSettingsSchema.safeParse(ownerConfig);
+    if (parsed.success) layers.push(parsed.data);
+    else notices.push("The review settings saved in the Lorica dashboard could not be read and were ignored. Save them again.");
+  }
+
+  let repoConfig: Awaited<ReturnType<ReviewDependencies["fetchRepoConfig"]>> = null;
+  try {
+    repoConfig = await deps.fetchRepoConfig(pr, baseSha);
+  } catch (error) {
+    // 403: the installation may not read repository contents. That will not
+    // change on retry, so review without the file and say so. Anything else
+    // (rate limit, outage) is retried: reviewing with the wrong settings could
+    // review a PR the team ruled out.
+    if ((error as { status?: unknown } | null)?.status !== 403) throw error;
+    notices.push(
+      `Lorica could not read the repository's \`${REPO_CONFIG_FILES[0]}\` (GitHub denied access), so it was not applied. Grant the app "Contents: Read".`,
+    );
+  }
+  if (repoConfig) {
+    const parsed = parseRepoReviewConfig(repoConfig.source);
+    if ("settings" in parsed) layers.push(parsed.settings);
+    else notices.push(`\`${repoConfig.path}\` was ignored: ${parsed.error}`);
+  }
+
+  return {
+    settings: resolveReviewSettings(layers),
+    notices,
+    sources: `owner=${ownerConfig ? "yes" : "no"} repo=${repoConfig?.path ?? "none"}`,
+  };
 }
 
 /**
@@ -195,6 +291,33 @@ export function createReviewProcessor(deps: ReviewDependencies) {
         `[worker] stage=github.pull_request.loaded repository=${pr.owner}/${pr.repo} pr=${pr.prNumber} files=${files.length}`,
       );
 
+      // Read from the base commit: a pull request must not be able to change
+      // how it is itself reviewed (or switch its own review off).
+      stage = "review_settings";
+      const { settings, notices, sources } = await loadReviewSettings(
+        deps,
+        pr,
+        metadata.baseSha,
+      );
+      console.info(
+        `[worker] stage=review.settings.loaded job=${reviewJobId} profile=${settings.profile} ${sources} notices=${notices.length}`,
+      );
+      const skipReason = reviewSkipReason(settings, {
+        title: metadata.title,
+        author: metadata.author,
+        draft: metadata.draft,
+        baseRef: metadata.baseRef,
+        action: pullRequest.action,
+      });
+      if (skipReason) {
+        stage = "database_complete";
+        if (!(await markCompleted(lease, 0, skipReason))) return "lost";
+        console.info(
+          `[worker] stage=review.not_reviewed job=${reviewJobId} pr=${pr.prNumber} reason="${skipReason}"`,
+        );
+        return "not_reviewed";
+      }
+
       // A synchronize event always replaces the PR graph before context is
       // read. Fresh PRs take the same initialization path, so both cases have
       // a graph snapshot at precisely the SHA presented to the model.
@@ -202,7 +325,13 @@ export function createReviewProcessor(deps: ReviewDependencies) {
       await deps.indexCommit(pr, lease.headSha);
 
       // Lockfiles, generated code, binaries and the like only cost tokens.
-      const { reviewable, excluded } = filterReviewableFiles(files);
+      const builtIn = filterReviewableFiles(files);
+      const configured = excludeConfiguredPaths(
+        builtIn.reviewable,
+        settings.excludePaths,
+      );
+      const reviewable = configured.kept;
+      const excluded = [...builtIn.excluded, ...configured.excluded];
       console.info(
         `[worker] stage=review.files.filtered job=${reviewJobId} reviewable=${reviewable.length} excluded=${excluded.length}`,
       );
@@ -230,6 +359,14 @@ export function createReviewProcessor(deps: ReviewDependencies) {
         `[worker] stage=review.model.selected job=${reviewJobId} provider=${modelConfig?.provider ?? "default"} model=${modelConfig?.model ?? "default"}`,
       );
 
+      const promptFor = (filePaths: string[]) =>
+        buildReviewPrompt({
+          profile: settings.profile,
+          guidelines: settings.guidelines,
+          pathInstructions: pathInstructionsFor(settings.pathInstructions, filePaths),
+          tone: settings.tone,
+        });
+
       stage = "context_validation";
       const plan = planReview({
         pullRequest: {
@@ -248,7 +385,10 @@ export function createReviewProcessor(deps: ReviewDependencies) {
       }, fitBudgetToContextWindow(
         reviewBudgetFromEnv(),
         modelConfig?.contextWindow,
-        reservedReviewTokens(),
+        // The largest prompt any chunk can get: every matching path instruction.
+        reservedReviewTokens(
+          promptFor(changedFiles.map((file) => file.filePath)),
+        ),
       ));
       if (plan.truncatedFiles.length > 0) {
         console.warn(
@@ -264,16 +404,20 @@ export function createReviewProcessor(deps: ReviewDependencies) {
         console.info(
           `[worker] stage=llm.request.started job=${reviewJobId} chunk=${index + 1}/${plan.contexts.length} files=${context.changedFiles.length}`,
         );
-        const result = await deps.review(context, REVIEW_PROMPT, modelConfig);
+        const prompt = promptFor(
+          context.changedFiles.map((file) => file.filePath),
+        );
+        const result = await deps.review(context, prompt, modelConfig);
         console.info(
           `[worker] stage=llm.request.completed job=${reviewJobId} chunk=${index + 1}/${plan.contexts.length} findings=${result.reviews.length}`,
         );
         chunkResults.push({ context, result });
       }
-      const resultObject = mergeReviewResults(chunkResults, {
-        excluded,
-        truncatedFiles: plan.truncatedFiles,
-      });
+      const resultObject = mergeReviewResults(
+        chunkResults,
+        { excluded, truncatedFiles: plan.truncatedFiles },
+        reviewLimits(settings),
+      );
 
       // The review took a while; the PR may have moved on. Only the current
       // head's review may reach the PR, and only from the attempt that owns it.
@@ -292,7 +436,11 @@ export function createReviewProcessor(deps: ReviewDependencies) {
       stage = "github_comment";
       // A PR has one Lorica comment; each newer commit's review replaces it.
       const marker = reviewCommentMarker(lease.id);
-      const body = `${renderReview(resultObject)}\n\n${marker}`;
+      const body = `${renderReview(resultObject, {
+        fixPrompt: settings.style.fixPrompt,
+        profile: PROFILE_PRESETS[settings.profile].label,
+        notices,
+      })}\n\n${marker}`;
       const existing = await deps.findComment(pr);
       if (existing?.body.includes(marker)) {
         // A previous attempt published the review but died before recording it.

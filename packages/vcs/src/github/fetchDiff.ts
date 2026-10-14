@@ -11,6 +11,9 @@ export interface PullRequestDetails {
     author: string | null;
     baseSha: string;
     headSha: string;
+    /** The branch the pull request targets. */
+    baseRef: string;
+    draft: boolean;
 }
 
 export async function fetchPrFiles(
@@ -51,5 +54,35 @@ export async function fetchPullRequestDetails(
         author: data.user?.login ?? null,
         baseSha: data.base.sha,
         headSha: data.head.sha,
+        baseRef: data.base.ref,
+        draft: data.draft ?? false,
     };
+}
+
+/**
+ * The text of a file at `ref`, or null when the repository has no such file.
+ * Used for the repository's review config, which is read from the base commit
+ * so a pull request cannot change how it is itself reviewed.
+ */
+export async function fetchRepoFile(
+    installationId: number,
+    owner: string,
+    repo: string,
+    path: string,
+    ref: string,
+): Promise<string | null> {
+    const octokit = await getInstallationOctokit(installationId);
+    try {
+        const { data } = await octokit.repos.getContent({
+            owner,
+            repo,
+            path,
+            ref,
+            mediaType: { format: "raw" },
+        });
+        return typeof data === "string" ? data : null;
+    } catch (error) {
+        if ((error as { status?: unknown } | null)?.status === 404) return null;
+        throw error;
+    }
 }
