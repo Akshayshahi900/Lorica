@@ -49,3 +49,14 @@ export async function getInstallationAccessToken(installationId: number): Promis
   }
   return authentication.token;
 }
+
+/** Authenticates as the GitHub App itself, e.g. to manage webhook deliveries. */
+export function getAppOctokit(): Octokit {
+  return new Octokit({
+    authStrategy: createAppAuth,
+    auth: {
+      appId,
+      privateKey,
+    },
+  });
+}

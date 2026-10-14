@@ -222,7 +222,7 @@ The dashboard requests `read:user`, `user:email`, `repo`, and `read:org` scopes.
 | `NEO4J_USER`                                           | Yes         | Worker              | Neo4j username.                                                                          |
 | `NEO4J_PASSWORD`                                       | Yes         | Worker              | Neo4j password.                                                                          |
 | `WEBHOOK_SECRET`                                       | Yes         | API                 | Shared secret used to validate `X-Hub-Signature-256`.                                    |
-| `GITHUB_APP_ID`                                        | Yes         | Worker              | GitHub App ID.                                                                           |
+| `GITHUB_APP_ID`                                        | Yes         | API, worker         | GitHub App ID. The API uses it to redeliver failed webhooks.                             |
 | `GITHUB_PRIVATE_KEY_PATH`                              | Yes         | Worker              | Path to the GitHub App PEM private key.                                                  |
 | `OPENROUTER_API_KEY`                                   | Yes         | Worker              | API key for structured LLM reviews.                                                      |
 | `LLM_MODEL`                                            | No          | Worker              | OpenRouter model ID; must support JSON-schema output. Defaults to `nvidia/nemotron-3-ultra-550b-a55b:free`. |
@@ -250,15 +250,18 @@ The review model is currently defined in `packages/llm/src/client.ts`. Change th
 | API        | Verifies webhooks, persists state, and exposes dashboard data.           | Scale horizontally behind a load balancer; all instances need the same secrets.                                        |
 | Worker     | Runs review and code-index jobs.                                         | Run separately from the API in production. It has review concurrency of 2 and code-index concurrency of 2 per process. |
 | PostgreSQL | Stores repositories, pull requests, and review-job state.                | Back up regularly and use managed storage in production.                                                               |
-| Redis      | BullMQ transport and retry state.                                        | Use durable Redis appropriate for queued work.                                                                         |
+| Redis      | BullMQ transport for review and index attempts.                          | Losing review data is recoverable: the dispatcher re-sends due jobs from PostgreSQL.                                   |
 | Neo4j      | Stores a PR-scoped graph keyed by repository URL and `pull/<PR number>`. | Persist data and secure Bolt access; graph refresh replaces only the relevant PR graph.                                |
 
 ### Health, status, and recovery
 
 - `GET /health` is the API liveness endpoint and returns `OK`.
-- BullMQ retains the most recent 100 completed jobs and 500 failed jobs per queue. Review jobs retry three times with exponential backoff beginning at five seconds.
-- Review status is stored in PostgreSQL as `pending`, `processing`, `completed`, or `failed`; the latest review job is returned by the dashboard API.
-- A worker restart does not erase queued jobs, provided Redis remains available. A currently active job may be retried by BullMQ according to its job settings.
+- PostgreSQL, not Redis, is the source of truth for reviews: each pushed commit gets one `ReviewJob` row (`queued`, `running`, `completed`, `failed`, or `superseded`). Redis only delivers attempts to the worker.
+- Webhook handling is idempotent and returns `200` only after the job is stored, retrying a sleeping database. If Redis is unreachable the job is still stored and dispatched later.
+- The worker claims a job atomically and holds a lease renewed every minute. A job whose worker crashes, is redeployed, or is put to sleep becomes due again within three minutes, and a hidden marker in the PR comment prevents a retried job from posting twice.
+- Failed attempts retry from the database with backoff (1, 2, 5, 15, 30, 60, 120, 240 minutes; nine attempts in total). A 404/410 from GitHub fails the job at once. A new webhook for a commit whose review failed starts it over.
+- The worker's dispatcher re-sends due jobs every minute and runs them in-process when Redis is down. While reviews are owed, the worker requests its own `RENDER_EXTERNAL_URL` so Render's free tier does not put it to sleep.
+- GitHub does not retry failed webhooks. On boot and on `POST /api/internal/reconcile`, the API redelivers `pull_request` deliveries from the last three days that never got a `2xx` (up to six attempts each) and wakes the worker if any review is owed. `.github/workflows/reconcile.yml` calls it every two hours; it needs the repository secrets `LORICA_API_URL` and `LORICA_API_TOKEN`.
 - Neo4j credentials, GitHub App credentials, and the LLM key must be available to every worker replica.
 
 ## HTTP API
@@ -268,6 +271,7 @@ The review model is currently defined in `packages/llm/src/client.ts`. Change th
 | `GET /health`                  | None                               | Returns `OK` when the Express process is running.                                                                     |
 | `POST /webhooks/github`        | GitHub HMAC signature              | Accepts GitHub App webhooks. Only supported `pull_request` actions enqueue work.                                      |
 | `GET /api/pulls?owner=<login>` | `x-lorica-api-token` in production | Returns recorded pull requests for the requested owner, newest first, with repository data and the latest review job. |
+| `POST /api/internal/reconcile` | `x-lorica-api-token` in production | Redelivers failed `pull_request` webhooks and wakes the worker when reviews are owed.                                 |
 
 The dashboard calls `GET /api/pulls` through its authenticated Next.js route (`apps/web/app/api/pulls/route.ts`); do not expose the shared API token to browser code. In non-production environments the API allows `/api/*` requests without `API_ACCESS_TOKEN` to simplify local setup. Production returns `503` for those routes until the token is configured.
 

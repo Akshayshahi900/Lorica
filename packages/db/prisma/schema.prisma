@@ -23,6 +23,7 @@
     running
     completed
     failed
+    superseded // a newer commit was pushed before this review ran
   }
 
   model Repository {
@@ -64,8 +65,24 @@
     pullRequestId  Int
     pullRequest    PullRequest       @relation(fields: [pullRequestId], references: [id])
 
+    // One review per pushed commit: redelivered webhooks resolve to the same row.
+    headSha        String
+
     status         ReviewJobStatus
     commentsCount  Int               @default(0)
+
+    // The database, not Redis, decides when a review runs. A dispatcher hands
+    // due jobs to the worker, and a job whose lease lapses (worker crashed or
+    // slept mid-review) becomes due again.
+    attempts       Int               @default(0)
+    nextRunAt      DateTime          @default(now())
+    leaseUntil     DateTime?
+    lastError      String?
+
     createdAt      DateTime @default(now())
+    updatedAt      DateTime @default(now()) @updatedAt
     completedAt    DateTime?
+
+    @@unique([pullRequestId, headSha])
+    @@index([status, nextRunAt])
   }

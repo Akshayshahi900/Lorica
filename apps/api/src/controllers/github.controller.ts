@@ -1,13 +1,34 @@
 import { Request, Response } from "express";
-import { reviewQueue } from "@lorica/queue";
+import { enqueueReview } from "@lorica/queue";
 import { prisma, PullRequestStatus, ReviewJobStatus } from "@lorica/db";
 import { verifySignature } from "./webhookSignature";
 import { wakeWorker } from "./wakeWorker";
+
+const DB_ATTEMPTS = 3;
+
+// A free-tier Postgres that has scaled to zero refuses the first connections
+// while it resumes. Every write below is an upsert, so replaying is safe.
+async function withDatabaseRetry<T>(operation: () => Promise<T>): Promise<T> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      if (attempt >= DB_ATTEMPTS) throw error;
+      const errorType = error instanceof Error ? error.name : "unknown";
+      console.warn(
+        `[api] stage=webhook.database_retry attempt=${attempt} error_type=${errorType}`,
+      );
+      await new Promise((resolve) => setTimeout(resolve, 1_000 * attempt));
+    }
+  }
+}
 
 async function insertIntoDatabase(
   payload: any,
   setStage: (stage: string) => void,
 ) {
+  const headSha: string = payload.pull_request.head.sha;
+
   // Repository
   setStage("repository_persist");
   const repository = await prisma.repository.upsert({
@@ -30,7 +51,8 @@ async function insertIntoDatabase(
     `[api] stage=webhook.repository.persisted repository=${payload.repository.full_name}`,
   );
 
-  // Pull Request
+  // Pull Request. Status is derived from the review job below, so a
+  // redelivered event for an already reviewed commit does not reset it.
   setStage("pull_request_persist");
   const pullRequest = await prisma.pullRequest.upsert({
     where: {
@@ -38,11 +60,10 @@ async function insertIntoDatabase(
     },
     update: {
       repoName: payload.repository.name,
-      headSha: payload.pull_request.head.sha,
+      headSha,
       title: payload.pull_request.title,
       author: payload.pull_request.user?.login,
       action: payload.action,
-      status: PullRequestStatus.pending,
     },
     create: {
       githubPrId: BigInt(payload.pull_request.id),
@@ -52,7 +73,7 @@ async function insertIntoDatabase(
       repoName: payload.repository.name,
       title: payload.pull_request.title,
       author: payload.pull_request.user?.login,
-      headSha: payload.pull_request.head.sha,
+      headSha,
       action: payload.action,
       status: PullRequestStatus.pending,
       repositoryId: repository.id,
@@ -62,19 +83,51 @@ async function insertIntoDatabase(
     `[api] stage=webhook.pull_request.persisted repository=${payload.repository.full_name} pr=${payload.pull_request.number}`,
   );
 
-  // Review Job
+  // Review Job: one per commit. A redelivery finds the existing row; a new
+  // event for a commit whose review gave up earns it a fresh set of attempts.
   setStage("review_job_persist");
-  const reviewJob = await prisma.reviewJob.create({
-    data: {
+  const existingJob = await prisma.reviewJob.findUnique({
+    where: { pullRequestId_headSha: { pullRequestId: pullRequest.id, headSha } },
+  });
+  const reviewJob = await prisma.reviewJob.upsert({
+    where: { pullRequestId_headSha: { pullRequestId: pullRequest.id, headSha } },
+    update:
+      existingJob?.status === ReviewJobStatus.failed
+        ? {
+            status: ReviewJobStatus.queued,
+            attempts: 0,
+            nextRunAt: new Date(),
+            leaseUntil: null,
+            lastError: null,
+          }
+        : {},
+    create: {
       pullRequestId: pullRequest.id,
+      headSha,
       status: ReviewJobStatus.queued,
     },
   });
-  console.info(`[api] stage=webhook.review_job.persisted job=${reviewJob.id}`);
 
-  setStage("review_job_enqueue");
-  await reviewQueue.add("review", { reviewJobId: reviewJob.id });
-  console.info(`[api] stage=webhook.review_job.queued job=${reviewJob.id}`);
+  // Reviews of commits that have since been replaced would be stale.
+  await prisma.reviewJob.updateMany({
+    where: {
+      pullRequestId: pullRequest.id,
+      id: { not: reviewJob.id },
+      status: ReviewJobStatus.queued,
+    },
+    data: { status: ReviewJobStatus.superseded },
+  });
+
+  if (reviewJob.status === ReviewJobStatus.queued) {
+    await prisma.pullRequest.update({
+      where: { id: pullRequest.id },
+      data: { status: PullRequestStatus.pending },
+    });
+  }
+  console.info(
+    `[api] stage=webhook.review_job.persisted job=${reviewJob.id} status=${reviewJob.status}`,
+  );
+  return reviewJob;
 }
 
 export const handleWebhook = async (req: Request, res: Response) => {
@@ -141,9 +194,28 @@ export const handleWebhook = async (req: Request, res: Response) => {
     console.info(
       `[api] stage=webhook.accepted action=${action} repository=${payload.repository.full_name} pr=${payload.pull_request.number}`,
     );
-    await insertIntoDatabase(payload, (currentStage) => {
-      stage = currentStage;
-    });
+    const reviewJob = await withDatabaseRetry(() =>
+      insertIntoDatabase(payload, (currentStage) => {
+        stage = currentStage;
+      }),
+    );
+
+    // The job is durable now, so a Redis failure only delays it: the worker's
+    // dispatcher picks up any queued job that never reached the queue.
+    if (reviewJob.status === ReviewJobStatus.queued) {
+      stage = "review_job_enqueue";
+      try {
+        await enqueueReview(reviewJob.id, reviewJob.attempts);
+        console.info(
+          `[api] stage=webhook.review_job.queued job=${reviewJob.id}`,
+        );
+      } catch (error) {
+        const errorType = error instanceof Error ? error.name : "unknown";
+        console.warn(
+          `[api] stage=webhook.review_job.enqueue_deferred job=${reviewJob.id} error_type=${errorType}`,
+        );
+      }
+    }
 
     console.info(
       `[api] stage=webhook.completed repository=${payload.repository.full_name} pr=${payload.pull_request.number}`,

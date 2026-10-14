@@ -28,6 +28,11 @@ export const indexWorker = new Worker(
   },
 );
 
+// Without a listener, an 'error' event during a Redis outage crashes the process.
+indexWorker.on("error", (error: Error) => {
+  console.error(`[worker] stage=index.queue.error error_type=${error.name}`);
+});
+
 /** Refreshes a branch graph at the exact SHA supplied by a webhook. */
 export async function refreshCodeGraph(input: {
   repositoryUrl: string;

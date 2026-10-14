@@ -5,6 +5,7 @@ import express from "express";
 import cors from "cors";
 import githubRoutes from "./routes/github.routes";
 import pullRequestRoutes from "./routes/pr.routes";
+import { reconcile } from "./reconcile";
 
 const app = express();
 
@@ -56,8 +57,17 @@ app.use("/api", (req, res, next) => {
 });
 
 app.use("/api/pulls", pullRequestRoutes);
+
+// Called by the scheduled reconcile workflow so missed webhooks are recovered
+// even when nothing else wakes the API.
+app.post("/api/internal/reconcile", async (_req, res) => {
+  res.json(await reconcile());
+});
+
 const port = Number(process.env.PORT ?? 5000);
 
 app.listen(port, () => {
   console.info(`[api] stage=server.ready port=${port}`);
+  // A boot often means the API was asleep and may have missed deliveries.
+  setTimeout(() => void reconcile(), 30_000);
 });
