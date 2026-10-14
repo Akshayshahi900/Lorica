@@ -226,6 +226,10 @@ The dashboard requests `read:user`, `user:email`, `repo`, and `read:org` scopes.
 | `GITHUB_PRIVATE_KEY_PATH`                              | Yes         | Worker              | Path to the GitHub App PEM private key.                                                  |
 | `OPENROUTER_API_KEY`                                   | Yes         | Worker              | API key for structured LLM reviews.                                                      |
 | `LLM_MODEL`                                            | No          | Worker              | OpenRouter model ID; must support JSON-schema output. Defaults to `nvidia/nemotron-3-ultra-550b-a55b:free`. |
+| `REVIEW_DIFF_TOKENS_PER_CHUNK` | No | Worker | Estimated diff tokens per LLM request. Larger PRs are split into several requests. Defaults to `16000`. |
+| `REVIEW_TRACE_TOKENS_PER_CHUNK` | No | Worker | Estimated graph-trace tokens per LLM request. Defaults to `3000`. |
+| `REVIEW_MAX_CHUNKS` | No | Worker | Maximum LLM requests per review; changes beyond this are listed as not fully reviewed. Defaults to `8`. |
+| `REVIEW_MAX_DESCRIPTION_CHARS` | No | Worker | PR description characters sent to the model. Defaults to `2000`. |
 | `API_ACCESS_TOKEN`                                     | Production  | API                 | Shared token required for `/api/*` routes in production.                                 |
 | `LORICA_API_URL`                                       | Yes         | Web                 | Server-only base URL for the Express API.                                                |
 | `LORICA_WORKER_URL`                                    | No          | API, Web            | Worker service URL; accepted PR webhooks and dashboard visits request its `/health` endpoint to wake it. |

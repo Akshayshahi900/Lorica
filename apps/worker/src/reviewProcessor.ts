@@ -1,5 +1,10 @@
 import { callLLM, REVIEW_PROMPT } from "@lorica/llm";
-import { assembleReviewContext } from "@lorica/context";
+import {
+  filterReviewableFiles,
+  mergeReviewResults,
+  planReview,
+  reviewBudgetFromEnv,
+} from "@lorica/context";
 import {
   fetchPrFiles,
   fetchPullRequestDetails,
@@ -170,17 +175,20 @@ export function createReviewProcessor(deps: ReviewDependencies) {
       stage = "neo4j_index";
       await deps.indexCommit(pr, lease.headSha);
 
-      const changedFiles = files
-        .filter((file) => Boolean(file.patch))
-        .map((file) => ({
-          filePath: file.filePath,
-          status: ["added", "modified", "removed", "renamed"].includes(
-            file.status,
-          )
-            ? (file.status as "added" | "modified" | "removed" | "renamed")
-            : ("changed" as const),
-          patch: file.patch!,
-        }));
+      // Lockfiles, generated code, binaries and the like only cost tokens.
+      const { reviewable, excluded } = filterReviewableFiles(files);
+      console.info(
+        `[worker] stage=review.files.filtered job=${reviewJobId} reviewable=${reviewable.length} excluded=${excluded.length}`,
+      );
+      const changedFiles = reviewable.map((file) => ({
+        filePath: file.filePath,
+        status: ["added", "modified", "removed", "renamed"].includes(
+          file.status,
+        )
+          ? (file.status as "added" | "modified" | "removed" | "renamed")
+          : ("changed" as const),
+        patch: file.patch!,
+      }));
       const graph = await deps.loadGraphContext({
         repositoryUrl: repositoryUrl(pr),
         branch: graphBranch(pr.prNumber),
@@ -191,7 +199,7 @@ export function createReviewProcessor(deps: ReviewDependencies) {
       );
 
       stage = "context_validation";
-      const context = assembleReviewContext({
+      const plan = planReview({
         pullRequest: {
           repository: `${pr.owner}/${pr.repo}`,
           number: pr.prNumber,
@@ -205,16 +213,31 @@ export function createReviewProcessor(deps: ReviewDependencies) {
         changedFiles,
         indexedCommit: graph.indexedCommit,
         traces: graph.traces,
-      });
+      }, reviewBudgetFromEnv());
+      if (plan.truncatedFiles.length > 0) {
+        console.warn(
+          `[worker] stage=review.budget_exceeded job=${reviewJobId} chunks=${plan.contexts.length} truncated_files=${plan.truncatedFiles.length}`,
+        );
+      }
 
       stage = "llm_review";
-      console.info(
-        `[worker] stage=llm.request.started job=${reviewJobId} files=${changedFiles.length}`,
-      );
-      const resultObject = await deps.review(context, REVIEW_PROMPT);
-      console.info(
-        `[worker] stage=llm.request.completed job=${reviewJobId} findings=${resultObject.reviews.length}`,
-      );
+      // Chunks run one at a time: free-tier models rate-limit bursts, and the
+      // lease heartbeat keeps the job owned however long this takes.
+      const chunkResults = [];
+      for (const [index, context] of plan.contexts.entries()) {
+        console.info(
+          `[worker] stage=llm.request.started job=${reviewJobId} chunk=${index + 1}/${plan.contexts.length} files=${context.changedFiles.length}`,
+        );
+        const result = await deps.review(context, REVIEW_PROMPT);
+        console.info(
+          `[worker] stage=llm.request.completed job=${reviewJobId} chunk=${index + 1}/${plan.contexts.length} findings=${result.reviews.length}`,
+        );
+        chunkResults.push({ context, result });
+      }
+      const resultObject = mergeReviewResults(chunkResults, {
+        excluded,
+        truncatedFiles: plan.truncatedFiles,
+      });
 
       // The review took a while; the PR may have moved on. Only the current
       // head's review may reach the PR, and only from the attempt that owns it.
