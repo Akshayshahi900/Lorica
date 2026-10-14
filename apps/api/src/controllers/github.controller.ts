@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { reviewQueue } from "@lorica/queue";
 import { prisma, PullRequestStatus, ReviewJobStatus } from "@lorica/db";
 import { verifySignature } from "./webhookSignature";
+import { wakeWorker } from "./wakeWorker";
 
 async function insertIntoDatabase(
   payload: any,
@@ -133,6 +134,9 @@ export const handleWebhook = async (req: Request, res: Response) => {
         .status(200)
         .send("Ignoring non opened/reopened/synchronize action");
     }
+
+    // Fire-and-forget: the worker boots in parallel with the DB writes below.
+    wakeWorker();
 
     console.info(
       `[api] stage=webhook.accepted action=${action} repository=${payload.repository.full_name} pr=${payload.pull_request.number}`,

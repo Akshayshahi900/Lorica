@@ -228,7 +228,7 @@ The dashboard requests `read:user`, `user:email`, `repo`, and `read:org` scopes.
 | `LLM_MODEL`                                            | No          | Worker              | OpenRouter model ID; must support JSON-schema output. Defaults to `nvidia/nemotron-3-ultra-550b-a55b:free`. |
 | `API_ACCESS_TOKEN`                                     | Production  | API                 | Shared token required for `/api/*` routes in production.                                 |
 | `LORICA_API_URL`                                       | Yes         | Web                 | Server-only base URL for the Express API.                                                |
-| `LORICA_WORKER_URL`                                    | No          | Web                 | Server-only worker service URL; dashboard visits request its `/health` endpoint to wake it. |
+| `LORICA_WORKER_URL`                                    | No          | API, Web            | Worker service URL; accepted PR webhooks and dashboard visits request its `/health` endpoint to wake it. |
 | `LORICA_API_TOKEN`                                     | Production  | Web                 | Must equal `API_ACCESS_TOKEN`.                                                           |
 | `WEB_ORIGIN`                                           | Recommended | API                 | Comma-separated CORS allowlist; defaults to `http://localhost:3001`.                     |
 | `PORT`                                                 | No          | API                 | API listener port; defaults to `5000`.                                                   |

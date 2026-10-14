@@ -71,6 +71,7 @@ services:
       NEO4J_USER: neo4j
       NEO4J_PASSWORD: password123
       WEB_ORIGIN: http://localhost:3001
+      LORICA_WORKER_URL: http://worker:10000
     depends_on:
       postgres:
         condition: service_healthy
