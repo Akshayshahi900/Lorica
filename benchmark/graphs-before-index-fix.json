@@ -1,0 +1,197 @@
+{
+  "https://github.com/sveltejs/svelte/pull/18999": {
+    "indexedCommit": "86eb09b76ef9c81e8b34adf7eaaf63974a66aaa9",
+    "traces": [
+      {
+        "changedFile": "packages/svelte/src/internal/server/errors.js",
+        "symbol": null,
+        "direction": "depended_on_by",
+        "relationship": "IMPORTS",
+        "relatedFile": "packages/svelte/src/index-server.js",
+        "relatedSymbol": null,
+        "evidence": "packages/svelte/src/internal/server/errors.js is used by packages/svelte/src/index-server.js via IMPORTS"
+      },
+      {
+        "changedFile": "packages/svelte/src/internal/server/errors.js",
+        "symbol": "lifecycle_function_unavailable",
+        "direction": "depended_on_by",
+        "relationship": "CALLS",
+        "relatedFile": "packages/svelte/src/index-server.js",
+        "relatedSymbol": "mount",
+        "evidence": "packages/svelte/src/internal/server/errors.js is used by mount via CALLS"
+      },
+      {
+        "changedFile": "packages/svelte/src/internal/server/errors.js",
+        "symbol": "lifecycle_function_unavailable",
+        "direction": "depended_on_by",
+        "relationship": "CALLS",
+        "relatedFile": "packages/svelte/src/index-server.js",
+        "relatedSymbol": "hydrate",
+        "evidence": "packages/svelte/src/internal/server/errors.js is used by hydrate via CALLS"
+      },
+      {
+        "changedFile": "packages/svelte/src/internal/server/errors.js",
+        "symbol": "lifecycle_function_unavailable",
+        "direction": "depended_on_by",
+        "relationship": "CALLS",
+        "relatedFile": "packages/svelte/src/index-server.js",
+        "relatedSymbol": "unmount",
+        "evidence": "packages/svelte/src/internal/server/errors.js is used by unmount via CALLS"
+      },
+      {
+        "changedFile": "packages/svelte/src/internal/server/errors.js",
+        "symbol": "lifecycle_function_unavailable",
+        "direction": "depended_on_by",
+        "relationship": "CALLS",
+        "relatedFile": "packages/svelte/src/index-server.js",
+        "relatedSymbol": "fork",
+        "evidence": "packages/svelte/src/internal/server/errors.js is used by fork via CALLS"
+      },
+      {
+        "changedFile": "packages/svelte/src/internal/server/errors.js",
+        "symbol": null,
+        "direction": "depended_on_by",
+        "relationship": "IMPORTS",
+        "relatedFile": "packages/svelte/src/internal/server/context.js",
+        "relatedSymbol": null,
+        "evidence": "packages/svelte/src/internal/server/errors.js is used by packages/svelte/src/internal/server/context.js via IMPORTS"
+      },
+      {
+        "changedFile": "packages/svelte/src/internal/server/errors.js",
+        "symbol": null,
+        "direction": "depended_on_by",
+        "relationship": "IMPORTS",
+        "relatedFile": "packages/svelte/src/internal/server/dev.js",
+        "relatedSymbol": null,
+        "evidence": "packages/svelte/src/internal/server/errors.js is used by packages/svelte/src/internal/server/dev.js via IMPORTS"
+      },
+      {
+        "changedFile": "packages/svelte/src/internal/server/errors.js",
+        "symbol": null,
+        "direction": "depended_on_by",
+        "relationship": "IMPORTS",
+        "relatedFile": "packages/svelte/src/internal/server/hydratable.js",
+        "relatedSymbol": null,
+        "evidence": "packages/svelte/src/internal/server/errors.js is used by packages/svelte/src/internal/server/hydratable.js via IMPORTS"
+      },
+      {
+        "changedFile": "packages/svelte/src/internal/server/errors.js",
+        "symbol": "hydratable_serialization_failed",
+        "direction": "depended_on_by",
+        "relationship": "CALLS",
+        "relatedFile": "packages/svelte/src/internal/server/hydratable.js",
+        "relatedSymbol": "encode",
+        "evidence": "packages/svelte/src/internal/server/errors.js is used by encode via CALLS"
+      },
+      {
+        "changedFile": "packages/svelte/src/internal/server/errors.js",
+        "symbol": "hydratable_clobbering",
+        "direction": "depended_on_by",
+        "relationship": "CALLS",
+        "relatedFile": "packages/svelte/src/internal/server/hydratable.js",
+        "relatedSymbol": "compare",
+        "evidence": "packages/svelte/src/internal/server/errors.js is used by compare via CALLS"
+      },
+      {
+        "changedFile": "packages/svelte/src/internal/server/errors.js",
+        "symbol": null,
+        "direction": "depended_on_by",
+        "relationship": "IMPORTS",
+        "relatedFile": "packages/svelte/src/internal/server/index.js",
+        "relatedSymbol": null,
+        "evidence": "packages/svelte/src/internal/server/errors.js is used by packages/svelte/src/internal/server/index.js via IMPORTS"
+      },
+      {
+        "changedFile": "packages/svelte/src/internal/server/errors.js",
+        "symbol": "dynamic_element_invalid_tag",
+        "direction": "depended_on_by",
+        "relationship": "CALLS",
+        "relatedFile": "packages/svelte/src/internal/server/index.js",
+        "relatedSymbol": "element",
+        "evidence": "packages/svelte/src/internal/server/errors.js is used by element via CALLS"
+      },
+      {
+        "changedFile": "packages/svelte/src/internal/server/errors.js",
+        "symbol": "invalid_csp",
+        "direction": "depended_on_by",
+        "relationship": "CALLS",
+        "relatedFile": "packages/svelte/src/internal/server/index.js",
+        "relatedSymbol": "render",
+        "evidence": "packages/svelte/src/internal/server/errors.js is used by render via CALLS"
+      },
+      {
+        "changedFile": "packages/svelte/src/internal/server/errors.js",
+        "symbol": null,
+        "direction": "depended_on_by",
+        "relationship": "IMPORTS",
+        "relatedFile": "packages/svelte/src/internal/server/render-context.js",
+        "relatedSymbol": null,
+        "evidence": "packages/svelte/src/internal/server/errors.js is used by packages/svelte/src/internal/server/render-context.js via IMPORTS"
+      },
+      {
+        "changedFile": "packages/svelte/src/internal/server/errors.js",
+        "symbol": "server_context_required",
+        "direction": "depended_on_by",
+        "relationship": "CALLS",
+        "relatedFile": "packages/svelte/src/internal/server/render-context.js",
+        "relatedSymbol": "get_render_context",
+        "evidence": "packages/svelte/src/internal/server/errors.js is used by get_render_context via CALLS"
+      },
+      {
+        "changedFile": "packages/svelte/src/internal/server/errors.js",
+        "symbol": "async_local_storage_unavailable",
+        "direction": "depended_on_by",
+        "relationship": "CALLS",
+        "relatedFile": "packages/svelte/src/internal/server/render-context.js",
+        "relatedSymbol": "with_render_context",
+        "evidence": "packages/svelte/src/internal/server/errors.js is used by with_render_context via CALLS"
+      },
+      {
+        "changedFile": "packages/svelte/src/internal/server/errors.js",
+        "symbol": null,
+        "direction": "depended_on_by",
+        "relationship": "IMPORTS",
+        "relatedFile": "packages/svelte/src/internal/server/renderer.js",
+        "relatedSymbol": null,
+        "evidence": "packages/svelte/src/internal/server/errors.js is used by packages/svelte/src/internal/server/renderer.js via IMPORTS"
+      },
+      {
+        "changedFile": "packages/svelte/src/internal/server/errors.js",
+        "symbol": "html_deprecated",
+        "direction": "depended_on_by",
+        "relationship": "CALLS",
+        "relatedFile": "packages/svelte/src/internal/server/renderer.js",
+        "relatedSymbol": "then",
+        "evidence": "packages/svelte/src/internal/server/errors.js is used by then via CALLS"
+      },
+      {
+        "changedFile": "packages/svelte/src/internal/server/errors.js",
+        "symbol": "await_invalid",
+        "direction": "depended_on_by",
+        "relationship": "CALLS",
+        "relatedFile": "packages/svelte/src/internal/server/renderer.js",
+        "relatedSymbol": "child",
+        "evidence": "packages/svelte/src/internal/server/errors.js is used by child via CALLS"
+      },
+      {
+        "changedFile": "packages/svelte/src/internal/server/errors.js",
+        "symbol": "await_invalid",
+        "direction": "depended_on_by",
+        "relationship": "CALLS",
+        "relatedFile": "packages/svelte/src/internal/server/renderer.js",
+        "relatedSymbol": "boundary",
+        "evidence": "packages/svelte/src/internal/server/errors.js is used by boundary via CALLS"
+      },
+      {
+        "changedFile": "packages/svelte/src/internal/server/errors.js",
+        "symbol": "invalid_id_prefix",
+        "direction": "depended_on_by",
+        "relationship": "CALLS",
+        "relatedFile": "packages/svelte/src/internal/server/renderer.js",
+        "relatedSymbol": "#create",
+        "evidence": "packages/svelte/src/internal/server/errors.js is used by #create via CALLS"
+      }
+    ],
+    "indexSeconds": 203.334023935
+  }
+}

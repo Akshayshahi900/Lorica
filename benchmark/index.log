@@ -1,0 +1,687 @@
+
+> Lorica@ benchmark /home/akshay/Code/projects/Lorica
+> LORICA_ROOT="$PWD" pnpm --filter @lorica/worker benchmark "index"
+
+
+> @lorica/worker@ benchmark /home/akshay/Code/projects/Lorica/apps/worker
+> tsx --env-file=../../.env src/benchmark.ts "index"
+
+[worker] stage=index.clone.started commit=86eb09b76ef9c81e8b34adf7eaaf63974a66aaa9
+[worker] stage=index.checkout.ready commit=86eb09b76ef9c81e8b34adf7eaaf63974a66aaa9
+[worker] stage=index.parse.started files=3558
+[worker] stage=index.parse.completed files=3558 nodes=9161 relationships=20341
+[worker] stage=neo4j.persist.started nodes=9161 relationships=20341 commit=86eb09b76ef9c81e8b34adf7eaaf63974a66aaa9
+[worker] stage=neo4j.persist.completed nodes=9161 relationships=20341 commit=86eb09b76ef9c81e8b34adf7eaaf63974a66aaa9
+[index] 1/97 traces=21 27.9s https://github.com/sveltejs/svelte/pull/18999
+[worker] stage=index.clone.started commit=6a04898fc8ff332f444ff11553dba54e0021194c
+[worker] stage=index.checkout.ready commit=6a04898fc8ff332f444ff11553dba54e0021194c
+[worker] stage=index.parse.started files=767
+[worker] stage=index.parse.completed files=767 nodes=8203 relationships=17856
+[worker] stage=neo4j.persist.started nodes=8203 relationships=17856 commit=6a04898fc8ff332f444ff11553dba54e0021194c
+[worker] stage=neo4j.persist.completed nodes=8203 relationships=17856 commit=6a04898fc8ff332f444ff11553dba54e0021194c
+[index] 2/97 traces=75 48.2s https://github.com/vuejs/core/pull/15874
+[worker] stage=index.clone.started commit=fa152aff7ecdc6995f139a3a579f09c63b6aba22
+[worker] stage=index.checkout.ready commit=fa152aff7ecdc6995f139a3a579f09c63b6aba22
+[worker] stage=index.parse.started files=2039
+[worker] stage=index.parse.completed files=2039 nodes=10341 relationships=17449
+[worker] stage=neo4j.persist.started nodes=10341 relationships=17449 commit=fa152aff7ecdc6995f139a3a579f09c63b6aba22
+[worker] stage=neo4j.persist.completed nodes=10341 relationships=17449 commit=fa152aff7ecdc6995f139a3a579f09c63b6aba22
+[index] 3/97 traces=132 26.1s https://github.com/nestjs/nest/pull/18146
+[worker] stage=index.clone.started commit=fa152aff7ecdc6995f139a3a579f09c63b6aba22
+[worker] stage=index.checkout.ready commit=fa152aff7ecdc6995f139a3a579f09c63b6aba22
+[worker] stage=index.parse.started files=2039
+[worker] stage=index.parse.completed files=2039 nodes=10341 relationships=17449
+[worker] stage=neo4j.persist.started nodes=10341 relationships=17449 commit=fa152aff7ecdc6995f139a3a579f09c63b6aba22
+[worker] stage=neo4j.persist.completed nodes=10341 relationships=17449 commit=fa152aff7ecdc6995f139a3a579f09c63b6aba22
+[index] 4/97 traces=132 35.8s https://github.com/nestjs/nest/pull/18145
+[worker] stage=index.clone.started commit=fa152aff7ecdc6995f139a3a579f09c63b6aba22
+[worker] stage=index.checkout.ready commit=fa152aff7ecdc6995f139a3a579f09c63b6aba22
+[worker] stage=index.parse.started files=2039
+[worker] stage=index.parse.completed files=2039 nodes=10341 relationships=17449
+[worker] stage=neo4j.persist.started nodes=10341 relationships=17449 commit=fa152aff7ecdc6995f139a3a579f09c63b6aba22
+[worker] stage=neo4j.persist.completed nodes=10341 relationships=17449 commit=fa152aff7ecdc6995f139a3a579f09c63b6aba22
+[index] 5/97 traces=132 36.7s https://github.com/nestjs/nest/pull/18144
+[worker] stage=index.clone.started commit=cf80aa552cac02eac0293330ccd5fde3c7ae8d29
+[worker] stage=index.checkout.ready commit=cf80aa552cac02eac0293330ccd5fde3c7ae8d29
+[worker] stage=index.parse.started files=1551
+[worker] stage=index.parse.completed files=1551 nodes=4646 relationships=9282
+[worker] stage=neo4j.persist.started nodes=4646 relationships=9282 commit=cf80aa552cac02eac0293330ccd5fde3c7ae8d29
+[worker] stage=neo4j.persist.completed nodes=4646 relationships=9282 commit=cf80aa552cac02eac0293330ccd5fde3c7ae8d29
+[index] 6/97 traces=175 14.9s https://github.com/vitejs/vite/pull/23758
+[worker] stage=index.clone.started commit=fa152aff7ecdc6995f139a3a579f09c63b6aba22
+[worker] stage=index.checkout.ready commit=fa152aff7ecdc6995f139a3a579f09c63b6aba22
+[worker] stage=index.parse.started files=2039
+[worker] stage=index.parse.completed files=2039 nodes=10341 relationships=17449
+[worker] stage=neo4j.persist.started nodes=10341 relationships=17449 commit=fa152aff7ecdc6995f139a3a579f09c63b6aba22
+[worker] stage=neo4j.persist.completed nodes=10341 relationships=17449 commit=fa152aff7ecdc6995f139a3a579f09c63b6aba22
+[index] 7/97 traces=14 35.6s https://github.com/nestjs/nest/pull/18143
+[worker] stage=index.clone.started commit=ca2896aa5524a0b0a983e216480ec7d486f4babc
+[worker] stage=index.checkout.ready commit=ca2896aa5524a0b0a983e216480ec7d486f4babc
+[worker] stage=index.parse.started files=767
+[worker] stage=index.parse.completed files=767 nodes=8200 relationships=17848
+[worker] stage=neo4j.persist.started nodes=8200 relationships=17848 commit=ca2896aa5524a0b0a983e216480ec7d486f4babc
+[worker] stage=neo4j.persist.completed nodes=8200 relationships=17848 commit=ca2896aa5524a0b0a983e216480ec7d486f4babc
+[index] 8/97 traces=247 51.5s https://github.com/vuejs/core/pull/15867
+[worker] stage=index.clone.started commit=6af5d972f034be32c77c75940557b37751280335
+[worker] stage=index.checkout.ready commit=6af5d972f034be32c77c75940557b37751280335
+[worker] stage=index.parse.started files=767
+[worker] stage=index.parse.completed files=767 nodes=8200 relationships=17845
+[worker] stage=neo4j.persist.started nodes=8200 relationships=17845 commit=6af5d972f034be32c77c75940557b37751280335
+[worker] stage=neo4j.persist.completed nodes=8200 relationships=17845 commit=6af5d972f034be32c77c75940557b37751280335
+[index] 9/97 traces=250 50.6s https://github.com/vuejs/core/pull/15866
+[worker] stage=index.clone.started commit=67104ef6705edddb2c0d894cd1eec7ca81b75a36
+[worker] stage=index.checkout.ready commit=67104ef6705edddb2c0d894cd1eec7ca81b75a36
+[worker] stage=index.parse.started files=767
+[worker] stage=index.parse.completed files=767 nodes=8200 relationships=17845
+[worker] stage=neo4j.persist.started nodes=8200 relationships=17845 commit=67104ef6705edddb2c0d894cd1eec7ca81b75a36
+[worker] stage=neo4j.persist.completed nodes=8200 relationships=17845 commit=67104ef6705edddb2c0d894cd1eec7ca81b75a36
+[index] 10/97 traces=62 48.8s https://github.com/vuejs/core/pull/15863
+[worker] stage=index.clone.started commit=de2574ef7c91ddd220bac38f767cff5a7612fd99
+[worker] stage=index.checkout.ready commit=de2574ef7c91ddd220bac38f767cff5a7612fd99
+[worker] stage=index.parse.started files=2039
+[worker] stage=index.parse.completed files=2039 nodes=10325 relationships=17427
+[worker] stage=neo4j.persist.started nodes=10325 relationships=17427 commit=de2574ef7c91ddd220bac38f767cff5a7612fd99
+[worker] stage=neo4j.persist.completed nodes=10325 relationships=17427 commit=de2574ef7c91ddd220bac38f767cff5a7612fd99
+[index] 11/97 traces=213 35.3s https://github.com/nestjs/nest/pull/18137
+[worker] stage=index.clone.started commit=4514623279f6087808e3c8f08fbf9f37d3c17482
+[worker] stage=index.checkout.ready commit=4514623279f6087808e3c8f08fbf9f37d3c17482
+[worker] stage=index.parse.started files=2037
+[worker] stage=index.parse.completed files=2037 nodes=10297 relationships=17340
+[worker] stage=neo4j.persist.started nodes=10297 relationships=17340 commit=4514623279f6087808e3c8f08fbf9f37d3c17482
+[worker] stage=neo4j.persist.completed nodes=10297 relationships=17340 commit=4514623279f6087808e3c8f08fbf9f37d3c17482
+[index] 12/97 traces=79 37.0s https://github.com/nestjs/nest/pull/18127
+[worker] stage=index.clone.started commit=4514623279f6087808e3c8f08fbf9f37d3c17482
+[worker] stage=index.checkout.ready commit=4514623279f6087808e3c8f08fbf9f37d3c17482
+[worker] stage=index.parse.started files=2037
+[worker] stage=index.parse.completed files=2037 nodes=10297 relationships=17340
+[worker] stage=neo4j.persist.started nodes=10297 relationships=17340 commit=4514623279f6087808e3c8f08fbf9f37d3c17482
+[worker] stage=neo4j.persist.completed nodes=10297 relationships=17340 commit=4514623279f6087808e3c8f08fbf9f37d3c17482
+[index] 13/97 traces=66 35.5s https://github.com/nestjs/nest/pull/18125
+[worker] stage=index.clone.started commit=4b09f205371046ca260956c8ac2503d731f16c66
+[worker] stage=index.checkout.ready commit=4b09f205371046ca260956c8ac2503d731f16c66
+[worker] stage=index.parse.started files=1119
+[worker] stage=index.parse.completed files=1119 nodes=4205 relationships=8552
+[worker] stage=neo4j.persist.started nodes=4205 relationships=8552 commit=4b09f205371046ca260956c8ac2503d731f16c66
+[worker] stage=neo4j.persist.completed nodes=4205 relationships=8552 commit=4b09f205371046ca260956c8ac2503d731f16c66
+[index] 14/97 traces=12 37.0s https://github.com/TanStack/query/pull/11999
+[worker] stage=index.clone.started commit=b500a2ee95134f81d74da7911d7378dd2853d042
+[worker] stage=index.checkout.ready commit=b500a2ee95134f81d74da7911d7378dd2853d042
+[worker] stage=index.parse.started files=513
+[worker] stage=index.parse.completed files=513 nodes=3399 relationships=7531
+[worker] stage=neo4j.persist.started nodes=3399 relationships=7531 commit=b500a2ee95134f81d74da7911d7378dd2853d042
+[worker] stage=neo4j.persist.completed nodes=3399 relationships=7531 commit=b500a2ee95134f81d74da7911d7378dd2853d042
+[index] 15/97 traces=250 15.0s https://github.com/colinhacks/zod/pull/6662
+[worker] stage=index.clone.started commit=b500a2ee95134f81d74da7911d7378dd2853d042
+[worker] stage=index.checkout.ready commit=b500a2ee95134f81d74da7911d7378dd2853d042
+[worker] stage=index.parse.started files=513
+[worker] stage=index.parse.completed files=513 nodes=3399 relationships=7531
+[worker] stage=neo4j.persist.started nodes=3399 relationships=7531 commit=b500a2ee95134f81d74da7911d7378dd2853d042
+[worker] stage=neo4j.persist.completed nodes=3399 relationships=7531 commit=b500a2ee95134f81d74da7911d7378dd2853d042
+[index] 16/97 traces=250 15.2s https://github.com/colinhacks/zod/pull/6660
+[worker] stage=index.clone.started commit=4514623279f6087808e3c8f08fbf9f37d3c17482
+[worker] stage=index.checkout.ready commit=4514623279f6087808e3c8f08fbf9f37d3c17482
+[worker] stage=index.parse.started files=2037
+[worker] stage=index.parse.completed files=2037 nodes=10297 relationships=17340
+[worker] stage=neo4j.persist.started nodes=10297 relationships=17340 commit=4514623279f6087808e3c8f08fbf9f37d3c17482
+[worker] stage=neo4j.persist.completed nodes=10297 relationships=17340 commit=4514623279f6087808e3c8f08fbf9f37d3c17482
+[index] 17/97 traces=74 34.8s https://github.com/nestjs/nest/pull/18121
+[worker] stage=index.clone.started commit=8574e3348a1478ef60142f144caabf84dae1eb7b
+[worker] stage=index.checkout.ready commit=8574e3348a1478ef60142f144caabf84dae1eb7b
+[worker] stage=index.parse.started files=2035
+[worker] stage=index.parse.completed files=2035 nodes=10282 relationships=17310
+[worker] stage=neo4j.persist.started nodes=10282 relationships=17310 commit=8574e3348a1478ef60142f144caabf84dae1eb7b
+[worker] stage=neo4j.persist.completed nodes=10282 relationships=17310 commit=8574e3348a1478ef60142f144caabf84dae1eb7b
+[index] 18/97 traces=83 34.1s https://github.com/nestjs/nest/pull/18110
+[worker] stage=index.clone.started commit=681a775056eaf2a8b69ddc7e989cf9f6c5916ec4
+[worker] stage=index.checkout.ready commit=681a775056eaf2a8b69ddc7e989cf9f6c5916ec4
+[worker] stage=index.parse.started files=2035
+[worker] stage=index.parse.completed files=2035 nodes=10278 relationships=17306
+[worker] stage=neo4j.persist.started nodes=10278 relationships=17306 commit=681a775056eaf2a8b69ddc7e989cf9f6c5916ec4
+[worker] stage=neo4j.persist.completed nodes=10278 relationships=17306 commit=681a775056eaf2a8b69ddc7e989cf9f6c5916ec4
+[index] 19/97 traces=220 34.0s https://github.com/nestjs/nest/pull/18109
+[worker] stage=index.clone.started commit=9bac121cbaaa93a660b056adf30d67a31294007e
+[worker] stage=index.checkout.ready commit=9bac121cbaaa93a660b056adf30d67a31294007e
+[worker] stage=index.parse.started files=2035
+[worker] stage=index.parse.completed files=2035 nodes=10273 relationships=17300
+[worker] stage=neo4j.persist.started nodes=10273 relationships=17300 commit=9bac121cbaaa93a660b056adf30d67a31294007e
+[worker] stage=neo4j.persist.completed nodes=10273 relationships=17300 commit=9bac121cbaaa93a660b056adf30d67a31294007e
+[index] 20/97 traces=188 34.8s https://github.com/nestjs/nest/pull/18104
+[worker] stage=index.clone.started commit=e3843e5f80b56d69c9029154b0eb91194ad3b287
+[worker] stage=index.checkout.ready commit=e3843e5f80b56d69c9029154b0eb91194ad3b287
+[worker] stage=index.parse.started files=766
+[worker] stage=index.parse.completed files=766 nodes=8103 relationships=17652
+[worker] stage=neo4j.persist.started nodes=8103 relationships=17652 commit=e3843e5f80b56d69c9029154b0eb91194ad3b287
+[worker] stage=neo4j.persist.completed nodes=8103 relationships=17652 commit=e3843e5f80b56d69c9029154b0eb91194ad3b287
+[index] 21/97 traces=250 45.9s https://github.com/vuejs/core/pull/15850
+[worker] stage=index.clone.started commit=c5b71871140c0d639b40fa298f77d77182c38aa5
+[worker] stage=index.checkout.ready commit=c5b71871140c0d639b40fa298f77d77182c38aa5
+[worker] stage=index.parse.started files=2033
+[worker] stage=index.parse.completed files=2033 nodes=10239 relationships=17237
+[worker] stage=neo4j.persist.started nodes=10239 relationships=17237 commit=c5b71871140c0d639b40fa298f77d77182c38aa5
+[worker] stage=neo4j.persist.completed nodes=10239 relationships=17237 commit=c5b71871140c0d639b40fa298f77d77182c38aa5
+[index] 22/97 traces=220 33.9s https://github.com/nestjs/nest/pull/18101
+[worker] stage=index.clone.started commit=c5b71871140c0d639b40fa298f77d77182c38aa5
+[worker] stage=index.checkout.ready commit=c5b71871140c0d639b40fa298f77d77182c38aa5
+[worker] stage=index.parse.started files=2033
+[worker] stage=index.parse.completed files=2033 nodes=10239 relationships=17237
+[worker] stage=neo4j.persist.started nodes=10239 relationships=17237 commit=c5b71871140c0d639b40fa298f77d77182c38aa5
+[worker] stage=neo4j.persist.completed nodes=10239 relationships=17237 commit=c5b71871140c0d639b40fa298f77d77182c38aa5
+[index] 23/97 traces=10 33.1s https://github.com/nestjs/nest/pull/18100
+[worker] stage=index.clone.started commit=2731c18054fb348779311d81e4e20949e313be78
+[worker] stage=index.checkout.ready commit=2731c18054fb348779311d81e4e20949e313be78
+[worker] stage=index.parse.started files=2012
+[worker] stage=index.parse.completed files=2012 nodes=10120 relationships=17118
+[worker] stage=neo4j.persist.started nodes=10120 relationships=17118 commit=2731c18054fb348779311d81e4e20949e313be78
+[worker] stage=neo4j.persist.completed nodes=10120 relationships=17118 commit=2731c18054fb348779311d81e4e20949e313be78
+[index] 24/97 traces=84 33.4s https://github.com/nestjs/nest/pull/18095
+[worker] stage=index.clone.started commit=a1422f12598bfa74b71aae8a07a62ccbf8b09f31
+[worker] stage=index.checkout.ready commit=a1422f12598bfa74b71aae8a07a62ccbf8b09f31
+[worker] stage=index.parse.started files=696
+[worker] stage=index.parse.completed files=696 nodes=3780 relationships=8597
+[worker] stage=neo4j.persist.started nodes=3780 relationships=8597 commit=a1422f12598bfa74b71aae8a07a62ccbf8b09f31
+[worker] stage=neo4j.persist.completed nodes=3780 relationships=8597 commit=a1422f12598bfa74b71aae8a07a62ccbf8b09f31
+[index] 25/97 traces=16 22.8s https://github.com/remix-run/react-router/pull/15620
+[worker] stage=index.clone.started commit=ae683152bee03c7991b2aa43f31fe777b7e45d15
+[worker] stage=index.checkout.ready commit=ae683152bee03c7991b2aa43f31fe777b7e45d15
+[worker] stage=index.parse.started files=766
+[worker] stage=index.parse.completed files=766 nodes=8098 relationships=17640
+[worker] stage=neo4j.persist.started nodes=8098 relationships=17640 commit=ae683152bee03c7991b2aa43f31fe777b7e45d15
+[worker] stage=neo4j.persist.completed nodes=8098 relationships=17640 commit=ae683152bee03c7991b2aa43f31fe777b7e45d15
+[index] 26/97 traces=247 46.4s https://github.com/vuejs/core/pull/15846
+[worker] stage=index.clone.started commit=0434cd463c98de187bff41058aeae03366daa1da
+[worker] stage=index.checkout.ready commit=0434cd463c98de187bff41058aeae03366daa1da
+[worker] stage=index.parse.started files=766
+[worker] stage=index.parse.completed files=766 nodes=8096 relationships=17632
+[worker] stage=neo4j.persist.started nodes=8096 relationships=17632 commit=0434cd463c98de187bff41058aeae03366daa1da
+[worker] stage=neo4j.persist.completed nodes=8096 relationships=17632 commit=0434cd463c98de187bff41058aeae03366daa1da
+[index] 27/97 traces=250 45.2s https://github.com/vuejs/core/pull/15844
+[worker] stage=index.clone.started commit=bb3d572080ba5c3a34b65fcc39ca598c324cb32f
+[worker] stage=index.checkout.ready commit=bb3d572080ba5c3a34b65fcc39ca598c324cb32f
+[worker] stage=index.parse.started files=2040
+[worker] stage=index.parse.completed files=2040 nodes=10353 relationships=17465
+[worker] stage=neo4j.persist.started nodes=10353 relationships=17465 commit=bb3d572080ba5c3a34b65fcc39ca598c324cb32f
+[worker] stage=neo4j.persist.completed nodes=10353 relationships=17465 commit=bb3d572080ba5c3a34b65fcc39ca598c324cb32f
+[index] 28/97 traces=16 33.2s https://github.com/nestjs/nest/pull/18154
+[worker] stage=index.clone.started commit=3b72997d42e7dd2b31898d0e68461e3025e836b6
+[worker] stage=index.checkout.ready commit=3b72997d42e7dd2b31898d0e68461e3025e836b6
+[worker] stage=index.parse.started files=1551
+[worker] stage=index.parse.completed files=1551 nodes=4644 relationships=9278
+[worker] stage=neo4j.persist.started nodes=4644 relationships=9278 commit=3b72997d42e7dd2b31898d0e68461e3025e836b6
+[worker] stage=neo4j.persist.completed nodes=4644 relationships=9278 commit=3b72997d42e7dd2b31898d0e68461e3025e836b6
+[index] 29/97 traces=47 14.7s https://github.com/vitejs/vite/pull/23728
+[worker] stage=index.clone.started commit=b55f3b92a185e87680ca7f69252451964be08b00
+[worker] stage=index.checkout.ready commit=b55f3b92a185e87680ca7f69252451964be08b00
+[worker] stage=index.parse.started files=766
+[worker] stage=index.parse.completed files=766 nodes=8094 relationships=17626
+[worker] stage=neo4j.persist.started nodes=8094 relationships=17626 commit=b55f3b92a185e87680ca7f69252451964be08b00
+[worker] stage=neo4j.persist.completed nodes=8094 relationships=17626 commit=b55f3b92a185e87680ca7f69252451964be08b00
+[index] 30/97 traces=250 45.5s https://github.com/vuejs/core/pull/15841
+[worker] stage=index.clone.started commit=0f5ad7b6bf0c5973a1bcad2b954ede5cc7e224a2
+[worker] stage=index.checkout.ready commit=0f5ad7b6bf0c5973a1bcad2b954ede5cc7e224a2
+[worker] stage=index.parse.started files=370
+[worker] stage=index.parse.completed files=370 nodes=1020 relationships=2037
+[worker] stage=neo4j.persist.started nodes=1020 relationships=2037 commit=0f5ad7b6bf0c5973a1bcad2b954ede5cc7e224a2
+[worker] stage=neo4j.persist.completed nodes=1020 relationships=2037 commit=0f5ad7b6bf0c5973a1bcad2b954ede5cc7e224a2
+[index] 31/97 traces=15 16.3s https://github.com/honojs/hono/pull/5547
+[worker] stage=index.clone.started commit=936d1d706592b274d870ef629b26cf148b4e2203
+[worker] stage=index.checkout.ready commit=936d1d706592b274d870ef629b26cf148b4e2203
+[worker] stage=index.parse.started files=766
+[worker] stage=index.parse.completed files=766 nodes=8094 relationships=17626
+[worker] stage=neo4j.persist.started nodes=8094 relationships=17626 commit=936d1d706592b274d870ef629b26cf148b4e2203
+[worker] stage=neo4j.persist.completed nodes=8094 relationships=17626 commit=936d1d706592b274d870ef629b26cf148b4e2203
+[index] 32/97 traces=250 46.4s https://github.com/vuejs/core/pull/15839
+[worker] stage=index.clone.started commit=db5ab78a1a38db409bce31b7e3596b44878bf268
+[worker] stage=index.checkout.ready commit=db5ab78a1a38db409bce31b7e3596b44878bf268
+[worker] stage=index.parse.started files=765
+[worker] stage=index.parse.completed files=765 nodes=8086 relationships=17604
+[worker] stage=neo4j.persist.started nodes=8086 relationships=17604 commit=db5ab78a1a38db409bce31b7e3596b44878bf268
+[worker] stage=neo4j.persist.completed nodes=8086 relationships=17604 commit=db5ab78a1a38db409bce31b7e3596b44878bf268
+[index] 33/97 traces=250 45.0s https://github.com/vuejs/core/pull/15835
+[worker] stage=index.clone.started commit=98fd5936f05efcfa9d0c5d69a00bb002bbb6f00b
+[worker] stage=index.checkout.ready commit=98fd5936f05efcfa9d0c5d69a00bb002bbb6f00b
+[worker] stage=index.parse.started files=1111
+[worker] stage=index.parse.completed files=1111 nodes=4293 relationships=8627
+[worker] stage=neo4j.persist.started nodes=4293 relationships=8627 commit=98fd5936f05efcfa9d0c5d69a00bb002bbb6f00b
+[worker] stage=neo4j.persist.completed nodes=4293 relationships=8627 commit=98fd5936f05efcfa9d0c5d69a00bb002bbb6f00b
+[index] 34/97 traces=40 39.4s https://github.com/TanStack/query/pull/11945
+[worker] stage=index.clone.started commit=db5ab78a1a38db409bce31b7e3596b44878bf268
+[worker] stage=index.checkout.ready commit=db5ab78a1a38db409bce31b7e3596b44878bf268
+[worker] stage=index.parse.started files=765
+[worker] stage=index.parse.completed files=765 nodes=8086 relationships=17604
+[worker] stage=neo4j.persist.started nodes=8086 relationships=17604 commit=db5ab78a1a38db409bce31b7e3596b44878bf268
+[worker] stage=neo4j.persist.completed nodes=8086 relationships=17604 commit=db5ab78a1a38db409bce31b7e3596b44878bf268
+[index] 35/97 traces=143 45.4s https://github.com/vuejs/core/pull/15834
+[worker] stage=index.clone.started commit=dce9fe69d37e957b62f3b5df61a761f7f2f949f5
+[worker] stage=index.checkout.ready commit=dce9fe69d37e957b62f3b5df61a761f7f2f949f5
+[worker] stage=index.parse.started files=1551
+[worker] stage=index.parse.completed files=1551 nodes=4644 relationships=9278
+[worker] stage=neo4j.persist.started nodes=4644 relationships=9278 commit=dce9fe69d37e957b62f3b5df61a761f7f2f949f5
+[worker] stage=neo4j.persist.completed nodes=4644 relationships=9278 commit=dce9fe69d37e957b62f3b5df61a761f7f2f949f5
+[index] 36/97 traces=32 15.8s https://github.com/vitejs/vite/pull/23713
+[worker] stage=index.clone.started commit=c0fdcc7568843254d5c6353d499f0fa5e778c087
+[worker] stage=index.checkout.ready commit=c0fdcc7568843254d5c6353d499f0fa5e778c087
+[worker] stage=index.parse.started files=765
+[worker] stage=index.parse.completed files=765 nodes=8074 relationships=17571
+[worker] stage=neo4j.persist.started nodes=8074 relationships=17571 commit=c0fdcc7568843254d5c6353d499f0fa5e778c087
+[worker] stage=neo4j.persist.completed nodes=8074 relationships=17571 commit=c0fdcc7568843254d5c6353d499f0fa5e778c087
+[index] 37/97 traces=187 44.5s https://github.com/vuejs/core/pull/15830
+[worker] stage=index.clone.started commit=8f9323ba07422c1ef8255775b26558cc38d598ce
+[worker] stage=index.checkout.ready commit=8f9323ba07422c1ef8255775b26558cc38d598ce
+[worker] stage=index.parse.started files=765
+[worker] stage=index.parse.completed files=765 nodes=8074 relationships=17571
+[worker] stage=neo4j.persist.started nodes=8074 relationships=17571 commit=8f9323ba07422c1ef8255775b26558cc38d598ce
+[worker] stage=neo4j.persist.completed nodes=8074 relationships=17571 commit=8f9323ba07422c1ef8255775b26558cc38d598ce
+[index] 38/97 traces=143 46.0s https://github.com/vuejs/core/pull/15828
+[worker] stage=index.clone.started commit=274fd7bccd0fbeaeded9c982f69c210c82ec53a4
+[worker] stage=index.checkout.ready commit=274fd7bccd0fbeaeded9c982f69c210c82ec53a4
+[worker] stage=index.parse.started files=765
+[worker] stage=index.parse.completed files=765 nodes=8074 relationships=17571
+[worker] stage=neo4j.persist.started nodes=8074 relationships=17571 commit=274fd7bccd0fbeaeded9c982f69c210c82ec53a4
+[worker] stage=neo4j.persist.completed nodes=8074 relationships=17571 commit=274fd7bccd0fbeaeded9c982f69c210c82ec53a4
+[index] 39/97 traces=81 44.9s https://github.com/vuejs/core/pull/15826
+[worker] stage=index.clone.started commit=1ff3973c071d342b044ac923dfd753b1bf3835ea
+[worker] stage=index.checkout.ready commit=1ff3973c071d342b044ac923dfd753b1bf3835ea
+[worker] stage=index.parse.started files=765
+[worker] stage=index.parse.completed files=765 nodes=8074 relationships=17570
+[worker] stage=neo4j.persist.started nodes=8074 relationships=17570 commit=1ff3973c071d342b044ac923dfd753b1bf3835ea
+[worker] stage=neo4j.persist.completed nodes=8074 relationships=17570 commit=1ff3973c071d342b044ac923dfd753b1bf3835ea
+[index] 40/97 traces=11 44.5s https://github.com/vuejs/core/pull/15822
+[worker] stage=index.clone.started commit=a21e17b5e23b31c896c33a25f41fda4a0666fa56
+[worker] stage=index.checkout.ready commit=a21e17b5e23b31c896c33a25f41fda4a0666fa56
+[worker] stage=index.parse.started files=1148
+[worker] stage=index.parse.completed files=1148 nodes=4341 relationships=8752
+[worker] stage=neo4j.persist.started nodes=4341 relationships=8752 commit=a21e17b5e23b31c896c33a25f41fda4a0666fa56
+[worker] stage=neo4j.persist.completed nodes=4341 relationships=8752 commit=a21e17b5e23b31c896c33a25f41fda4a0666fa56
+[index] 41/97 traces=159 39.9s https://github.com/TanStack/query/pull/11935
+[worker] stage=index.clone.started commit=4fbf6076d44bd832f14bee4b4b1ccfcbc2f5aee6
+[worker] stage=index.checkout.ready commit=4fbf6076d44bd832f14bee4b4b1ccfcbc2f5aee6
+[worker] stage=index.parse.started files=694
+[worker] stage=index.parse.completed files=694 nodes=3766 relationships=8562
+[worker] stage=neo4j.persist.started nodes=3766 relationships=8562 commit=4fbf6076d44bd832f14bee4b4b1ccfcbc2f5aee6
+[worker] stage=neo4j.persist.completed nodes=3766 relationships=8562 commit=4fbf6076d44bd832f14bee4b4b1ccfcbc2f5aee6
+[index] 42/97 traces=6 23.0s https://github.com/remix-run/react-router/pull/15600
+[worker] stage=index.clone.started commit=18f9e07e85c172252c3ec27da1b33a4d728b4e16
+[worker] stage=index.checkout.ready commit=18f9e07e85c172252c3ec27da1b33a4d728b4e16
+[worker] stage=index.parse.started files=1543
+[worker] stage=index.parse.completed files=1543 nodes=4625 relationships=9233
+[worker] stage=neo4j.persist.started nodes=4625 relationships=9233 commit=18f9e07e85c172252c3ec27da1b33a4d728b4e16
+[worker] stage=neo4j.persist.completed nodes=4625 relationships=9233 commit=18f9e07e85c172252c3ec27da1b33a4d728b4e16
+[index] 43/97 traces=201 15.2s https://github.com/vitejs/vite/pull/23698
+[worker] stage=index.clone.started commit=574d5e351905fe99891364d03c2440531378f7fd
+[worker] stage=index.checkout.ready commit=574d5e351905fe99891364d03c2440531378f7fd
+[worker] stage=index.parse.started files=1542
+[worker] stage=index.parse.completed files=1542 nodes=4613 relationships=9218
+[worker] stage=neo4j.persist.started nodes=4613 relationships=9218 commit=574d5e351905fe99891364d03c2440531378f7fd
+[worker] stage=neo4j.persist.completed nodes=4613 relationships=9218 commit=574d5e351905fe99891364d03c2440531378f7fd
+[index] 44/97 traces=250 15.6s https://github.com/vitejs/vite/pull/23694
+[worker] stage=index.clone.started commit=3d674869a50a0bca84a8cc8dc55bd35d57100e37
+[worker] stage=index.checkout.ready commit=3d674869a50a0bca84a8cc8dc55bd35d57100e37
+[worker] stage=index.parse.started files=1542
+[worker] stage=index.parse.completed files=1542 nodes=4613 relationships=9218
+[worker] stage=neo4j.persist.started nodes=4613 relationships=9218 commit=3d674869a50a0bca84a8cc8dc55bd35d57100e37
+[worker] stage=neo4j.persist.completed nodes=4613 relationships=9218 commit=3d674869a50a0bca84a8cc8dc55bd35d57100e37
+[index] 45/97 traces=62 14.5s https://github.com/vitejs/vite/pull/23689
+[worker] stage=index.clone.started commit=8a4c19cfc035f2dd203f2fa6d00ab9256a5e77c9
+[worker] stage=index.checkout.ready commit=8a4c19cfc035f2dd203f2fa6d00ab9256a5e77c9
+[worker] stage=index.parse.started files=1542
+[worker] stage=index.parse.completed files=1542 nodes=4613 relationships=9218
+[worker] stage=neo4j.persist.started nodes=4613 relationships=9218 commit=8a4c19cfc035f2dd203f2fa6d00ab9256a5e77c9
+[worker] stage=neo4j.persist.completed nodes=4613 relationships=9218 commit=8a4c19cfc035f2dd203f2fa6d00ab9256a5e77c9
+[index] 46/97 traces=49 16.4s https://github.com/vitejs/vite/pull/23687
+[worker] stage=index.clone.started commit=7016c8a846f570bdce0c0fd79ab7366d074c2106
+[worker] stage=index.checkout.ready commit=7016c8a846f570bdce0c0fd79ab7366d074c2106
+[worker] stage=index.parse.started files=1550
+[worker] stage=index.parse.completed files=1550 nodes=4643 relationships=9271
+[worker] stage=neo4j.persist.started nodes=4643 relationships=9271 commit=7016c8a846f570bdce0c0fd79ab7366d074c2106
+[worker] stage=neo4j.persist.completed nodes=4643 relationships=9271 commit=7016c8a846f570bdce0c0fd79ab7366d074c2106
+[index] 47/97 traces=233 16.6s https://github.com/vitejs/vite/pull/23685
+[worker] stage=index.clone.started commit=52ba877693c8633458d163117504a8259beb3cf5
+[worker] stage=index.checkout.ready commit=52ba877693c8633458d163117504a8259beb3cf5
+[worker] stage=index.parse.started files=1550
+[worker] stage=index.parse.completed files=1550 nodes=4643 relationships=9271
+[worker] stage=neo4j.persist.started nodes=4643 relationships=9271 commit=52ba877693c8633458d163117504a8259beb3cf5
+[worker] stage=neo4j.persist.completed nodes=4643 relationships=9271 commit=52ba877693c8633458d163117504a8259beb3cf5
+[index] 48/97 traces=105 16.1s https://github.com/vitejs/vite/pull/23684
+[worker] stage=index.clone.started commit=cbc1ec674bf12bd3bc4661215fac012c83f0144e
+[worker] stage=index.checkout.ready commit=cbc1ec674bf12bd3bc4661215fac012c83f0144e
+[worker] stage=index.parse.started files=1550
+[worker] stage=index.parse.completed files=1550 nodes=4643 relationships=9270
+[worker] stage=neo4j.persist.started nodes=4643 relationships=9270 commit=cbc1ec674bf12bd3bc4661215fac012c83f0144e
+[worker] stage=neo4j.persist.completed nodes=4643 relationships=9270 commit=cbc1ec674bf12bd3bc4661215fac012c83f0144e
+[index] 49/97 traces=146 15.5s https://github.com/vitejs/vite/pull/23683
+[worker] stage=index.clone.started commit=0b216ef674e297ebe41d8bf902262e56f8755822
+[worker] stage=index.checkout.ready commit=0b216ef674e297ebe41d8bf902262e56f8755822
+[worker] stage=index.parse.started files=513
+[worker] stage=index.parse.completed files=513 nodes=3396 relationships=7514
+[worker] stage=neo4j.persist.started nodes=3396 relationships=7514 commit=0b216ef674e297ebe41d8bf902262e56f8755822
+[worker] stage=neo4j.persist.completed nodes=3396 relationships=7514 commit=0b216ef674e297ebe41d8bf902262e56f8755822
+[index] 50/97 traces=250 15.0s https://github.com/colinhacks/zod/pull/6652
+[worker] stage=index.clone.started commit=c85120fb9fb4ff500bef189368f31b680421c4ba
+[worker] stage=index.checkout.ready commit=c85120fb9fb4ff500bef189368f31b680421c4ba
+[worker] stage=index.parse.started files=3538
+[worker] stage=index.parse.completed files=3538 nodes=9120 relationships=20224
+[worker] stage=neo4j.persist.started nodes=9120 relationships=20224 commit=c85120fb9fb4ff500bef189368f31b680421c4ba
+[worker] stage=neo4j.persist.completed nodes=9120 relationships=20224 commit=c85120fb9fb4ff500bef189368f31b680421c4ba
+[index] 51/97 traces=114 26.0s https://github.com/sveltejs/svelte/pull/18949
+[worker] stage=index.clone.started commit=10fdca7d705081cae17bf7d609d46ee6eb237d17
+[worker] stage=index.checkout.ready commit=10fdca7d705081cae17bf7d609d46ee6eb237d17
+[worker] stage=index.parse.started files=3538
+[worker] stage=index.parse.completed files=3538 nodes=9120 relationships=20224
+[worker] stage=neo4j.persist.started nodes=9120 relationships=20224 commit=10fdca7d705081cae17bf7d609d46ee6eb237d17
+[worker] stage=neo4j.persist.completed nodes=9120 relationships=20224 commit=10fdca7d705081cae17bf7d609d46ee6eb237d17
+[index] 52/97 traces=114 25.6s https://github.com/sveltejs/svelte/pull/18944
+[worker] stage=index.clone.started commit=fea5b21dd9524ed7308632407b996f1fe5942c9c
+[worker] stage=index.checkout.ready commit=fea5b21dd9524ed7308632407b996f1fe5942c9c
+[worker] stage=index.parse.started files=1542
+[worker] stage=index.parse.completed files=1542 nodes=4607 relationships=9205
+[worker] stage=neo4j.persist.started nodes=4607 relationships=9205 commit=fea5b21dd9524ed7308632407b996f1fe5942c9c
+[worker] stage=neo4j.persist.completed nodes=4607 relationships=9205 commit=fea5b21dd9524ed7308632407b996f1fe5942c9c
+[index] 53/97 traces=250 14.8s https://github.com/vitejs/vite/pull/23673
+[worker] stage=index.clone.started commit=12bb28c22379c8d2fe90088fa0eefbfa2ab3fb80
+[worker] stage=index.checkout.ready commit=12bb28c22379c8d2fe90088fa0eefbfa2ab3fb80
+[worker] stage=index.parse.started files=1542
+[worker] stage=index.parse.completed files=1542 nodes=4608 relationships=9207
+[worker] stage=neo4j.persist.started nodes=4608 relationships=9207 commit=12bb28c22379c8d2fe90088fa0eefbfa2ab3fb80
+[worker] stage=neo4j.persist.completed nodes=4608 relationships=9207 commit=12bb28c22379c8d2fe90088fa0eefbfa2ab3fb80
+[index] 54/97 traces=207 15.3s https://github.com/vitejs/vite/pull/23667
+[worker] stage=index.clone.started commit=10033218d239c927cdc375970b5741cce408e81b
+[worker] stage=index.checkout.ready commit=10033218d239c927cdc375970b5741cce408e81b
+[worker] stage=index.parse.started files=1541
+[worker] stage=index.parse.completed files=1541 nodes=4601 relationships=9195
+[worker] stage=neo4j.persist.started nodes=4601 relationships=9195 commit=10033218d239c927cdc375970b5741cce408e81b
+[worker] stage=neo4j.persist.completed nodes=4601 relationships=9195 commit=10033218d239c927cdc375970b5741cce408e81b
+[index] 55/97 traces=61 19.8s https://github.com/vitejs/vite/pull/23653
+[worker] stage=index.clone.started commit=7c2fcdae6a29fb3b36855dc8e86eb7ce4c56b93a
+[worker] stage=index.checkout.ready commit=7c2fcdae6a29fb3b36855dc8e86eb7ce4c56b93a
+[worker] stage=index.parse.started files=3532
+[worker] stage=index.parse.completed files=3532 nodes=9111 relationships=20201
+[worker] stage=neo4j.persist.started nodes=9111 relationships=20201 commit=7c2fcdae6a29fb3b36855dc8e86eb7ce4c56b93a
+[worker] stage=neo4j.persist.completed nodes=9111 relationships=20201 commit=7c2fcdae6a29fb3b36855dc8e86eb7ce4c56b93a
+[index] 56/97 traces=40 26.2s https://github.com/sveltejs/svelte/pull/18933
+[worker] stage=index.clone.started commit=7c2fcdae6a29fb3b36855dc8e86eb7ce4c56b93a
+[worker] stage=index.checkout.ready commit=7c2fcdae6a29fb3b36855dc8e86eb7ce4c56b93a
+[worker] stage=index.parse.started files=3532
+[worker] stage=index.parse.completed files=3532 nodes=9111 relationships=20201
+[worker] stage=neo4j.persist.started nodes=9111 relationships=20201 commit=7c2fcdae6a29fb3b36855dc8e86eb7ce4c56b93a
+[worker] stage=neo4j.persist.completed nodes=9111 relationships=20201 commit=7c2fcdae6a29fb3b36855dc8e86eb7ce4c56b93a
+[index] 57/97 traces=100 26.9s https://github.com/sveltejs/svelte/pull/18931
+[worker] stage=index.clone.started commit=28e9b84ac59c034260c1927f4a0b7c022b6b0071
+[worker] stage=index.checkout.ready commit=28e9b84ac59c034260c1927f4a0b7c022b6b0071
+[worker] stage=index.parse.started files=242
+[worker] stage=index.parse.completed files=242 nodes=1004 relationships=1762
+[worker] stage=neo4j.persist.started nodes=1004 relationships=1762 commit=28e9b84ac59c034260c1927f4a0b7c022b6b0071
+[worker] stage=neo4j.persist.completed nodes=1004 relationships=1762 commit=28e9b84ac59c034260c1927f4a0b7c022b6b0071
+[index] 58/97 traces=12 8.0s https://github.com/axios/axios/pull/11294
+[worker] stage=index.clone.started commit=794516d50cff80e405bc9b3e5faac1c82987566c
+[worker] stage=index.checkout.ready commit=794516d50cff80e405bc9b3e5faac1c82987566c
+[worker] stage=index.parse.started files=1542
+[worker] stage=index.parse.completed files=1542 nodes=4608 relationships=9207
+[worker] stage=neo4j.persist.started nodes=4608 relationships=9207 commit=794516d50cff80e405bc9b3e5faac1c82987566c
+[worker] stage=neo4j.persist.completed nodes=4608 relationships=9207 commit=794516d50cff80e405bc9b3e5faac1c82987566c
+[index] 59/97 traces=75 16.7s https://github.com/vitejs/vite/pull/23648
+[worker] stage=index.clone.started commit=7c2fcdae6a29fb3b36855dc8e86eb7ce4c56b93a
+[worker] stage=index.checkout.ready commit=7c2fcdae6a29fb3b36855dc8e86eb7ce4c56b93a
+[worker] stage=index.parse.started files=3532
+[worker] stage=index.parse.completed files=3532 nodes=9111 relationships=20201
+[worker] stage=neo4j.persist.started nodes=9111 relationships=20201 commit=7c2fcdae6a29fb3b36855dc8e86eb7ce4c56b93a
+[worker] stage=neo4j.persist.completed nodes=9111 relationships=20201 commit=7c2fcdae6a29fb3b36855dc8e86eb7ce4c56b93a
+[index] 60/97 traces=146 25.4s https://github.com/sveltejs/svelte/pull/18925
+[worker] stage=index.clone.started commit=7c2fcdae6a29fb3b36855dc8e86eb7ce4c56b93a
+[worker] stage=index.checkout.ready commit=7c2fcdae6a29fb3b36855dc8e86eb7ce4c56b93a
+[worker] stage=index.parse.started files=3532
+[worker] stage=index.parse.completed files=3532 nodes=9111 relationships=20201
+[worker] stage=neo4j.persist.started nodes=9111 relationships=20201 commit=7c2fcdae6a29fb3b36855dc8e86eb7ce4c56b93a
+[worker] stage=neo4j.persist.completed nodes=9111 relationships=20201 commit=7c2fcdae6a29fb3b36855dc8e86eb7ce4c56b93a
+[index] 61/97 traces=2 26.5s https://github.com/sveltejs/svelte/pull/18921
+[worker] stage=index.clone.started commit=08a023cbfde55b434fb0fb30fae35d42e4bf20aa
+[worker] stage=index.checkout.ready commit=08a023cbfde55b434fb0fb30fae35d42e4bf20aa
+[worker] stage=index.parse.started files=424
+[worker] stage=index.parse.completed files=424 nodes=1156 relationships=2194
+[worker] stage=neo4j.persist.started nodes=1156 relationships=2194 commit=08a023cbfde55b434fb0fb30fae35d42e4bf20aa
+[worker] stage=neo4j.persist.completed nodes=1156 relationships=2194 commit=08a023cbfde55b434fb0fb30fae35d42e4bf20aa
+[index] 62/97 traces=12 15.3s https://github.com/honojs/hono/pull/5514
+[worker] stage=index.clone.started commit=0b1d26d37cf04f4e385542851d693514a17cb359
+[worker] stage=index.checkout.ready commit=0b1d26d37cf04f4e385542851d693514a17cb359
+[worker] stage=index.parse.started files=367
+[worker] stage=index.parse.completed files=367 nodes=995 relationships=1955
+[worker] stage=neo4j.persist.started nodes=995 relationships=1955 commit=0b1d26d37cf04f4e385542851d693514a17cb359
+[worker] stage=neo4j.persist.completed nodes=995 relationships=1955 commit=0b1d26d37cf04f4e385542851d693514a17cb359
+[index] 63/97 traces=44 14.9s https://github.com/honojs/hono/pull/5513
+[worker] stage=index.clone.started commit=3531a00c1ae13567fe907ba6687223ba97c497d3
+[worker] stage=index.checkout.ready commit=3531a00c1ae13567fe907ba6687223ba97c497d3
+[worker] stage=index.parse.started files=365
+[worker] stage=index.parse.completed files=365 nodes=994 relationships=1949
+[worker] stage=neo4j.persist.started nodes=994 relationships=1949 commit=3531a00c1ae13567fe907ba6687223ba97c497d3
+[worker] stage=neo4j.persist.completed nodes=994 relationships=1949 commit=3531a00c1ae13567fe907ba6687223ba97c497d3
+[index] 64/97 traces=15 15.1s https://github.com/honojs/hono/pull/5510
+[worker] stage=index.clone.started commit=10033218d239c927cdc375970b5741cce408e81b
+[worker] stage=index.checkout.ready commit=10033218d239c927cdc375970b5741cce408e81b
+[worker] stage=index.parse.started files=1541
+[worker] stage=index.parse.completed files=1541 nodes=4601 relationships=9195
+[worker] stage=neo4j.persist.started nodes=4601 relationships=9195 commit=10033218d239c927cdc375970b5741cce408e81b
+[worker] stage=neo4j.persist.completed nodes=4601 relationships=9195 commit=10033218d239c927cdc375970b5741cce408e81b
+[index] 65/97 traces=65 15.1s https://github.com/vitejs/vite/pull/23643
+[worker] stage=index.clone.started commit=020242d6bef059df9ae8c13dc8dbff4c9b31e0ff
+[worker] stage=index.checkout.ready commit=020242d6bef059df9ae8c13dc8dbff4c9b31e0ff
+[worker] stage=index.parse.started files=3532
+[worker] stage=index.parse.completed files=3532 nodes=9111 relationships=20201
+[worker] stage=neo4j.persist.started nodes=9111 relationships=20201 commit=020242d6bef059df9ae8c13dc8dbff4c9b31e0ff
+[worker] stage=neo4j.persist.completed nodes=9111 relationships=20201 commit=020242d6bef059df9ae8c13dc8dbff4c9b31e0ff
+[index] 66/97 traces=114 26.6s https://github.com/sveltejs/svelte/pull/18908
+[worker] stage=index.clone.started commit=004d800c9e3cd4c79930f55aa4ad080225b22efd
+[worker] stage=index.checkout.ready commit=004d800c9e3cd4c79930f55aa4ad080225b22efd
+[worker] stage=index.parse.started files=513
+[worker] stage=index.parse.completed files=513 nodes=3396 relationships=7513
+[worker] stage=neo4j.persist.started nodes=3396 relationships=7513 commit=004d800c9e3cd4c79930f55aa4ad080225b22efd
+[worker] stage=neo4j.persist.completed nodes=3396 relationships=7513 commit=004d800c9e3cd4c79930f55aa4ad080225b22efd
+[index] 67/97 traces=250 15.1s https://github.com/colinhacks/zod/pull/6645
+[worker] stage=index.clone.started commit=020242d6bef059df9ae8c13dc8dbff4c9b31e0ff
+[worker] stage=index.checkout.ready commit=020242d6bef059df9ae8c13dc8dbff4c9b31e0ff
+[worker] stage=index.parse.started files=3532
+[worker] stage=index.parse.completed files=3532 nodes=9111 relationships=20201
+[worker] stage=neo4j.persist.started nodes=9111 relationships=20201 commit=020242d6bef059df9ae8c13dc8dbff4c9b31e0ff
+[worker] stage=neo4j.persist.completed nodes=9111 relationships=20201 commit=020242d6bef059df9ae8c13dc8dbff4c9b31e0ff
+[index] 68/97 traces=78 26.6s https://github.com/sveltejs/svelte/pull/18900
+[worker] stage=index.clone.started commit=020242d6bef059df9ae8c13dc8dbff4c9b31e0ff
+[worker] stage=index.checkout.ready commit=020242d6bef059df9ae8c13dc8dbff4c9b31e0ff
+[worker] stage=index.parse.started files=3532
+[worker] stage=index.parse.completed files=3532 nodes=9111 relationships=20201
+[worker] stage=neo4j.persist.started nodes=9111 relationships=20201 commit=020242d6bef059df9ae8c13dc8dbff4c9b31e0ff
+[worker] stage=neo4j.persist.completed nodes=9111 relationships=20201 commit=020242d6bef059df9ae8c13dc8dbff4c9b31e0ff
+[index] 69/97 traces=250 26.0s https://github.com/sveltejs/svelte/pull/18899
+[worker] stage=index.clone.started commit=aab352876a01f76fd0e00b0b500a85907ec7c8b4
+[worker] stage=index.checkout.ready commit=aab352876a01f76fd0e00b0b500a85907ec7c8b4
+[worker] stage=index.parse.started files=1077
+[worker] stage=index.parse.completed files=1077 nodes=4250 relationships=8508
+[worker] stage=neo4j.persist.started nodes=4250 relationships=8508 commit=aab352876a01f76fd0e00b0b500a85907ec7c8b4
+[worker] stage=neo4j.persist.completed nodes=4250 relationships=8508 commit=aab352876a01f76fd0e00b0b500a85907ec7c8b4
+[index] 70/97 traces=22 40.0s https://github.com/TanStack/query/pull/11796
+[worker] stage=index.clone.started commit=0d71f60ddffff089e6fa3c658730e3a0a7e1e5e1
+[worker] stage=index.checkout.ready commit=0d71f60ddffff089e6fa3c658730e3a0a7e1e5e1
+[worker] stage=index.parse.started files=365
+[worker] stage=index.parse.completed files=365 nodes=994 relationships=1949
+[worker] stage=neo4j.persist.started nodes=994 relationships=1949 commit=0d71f60ddffff089e6fa3c658730e3a0a7e1e5e1
+[worker] stage=neo4j.persist.completed nodes=994 relationships=1949 commit=0d71f60ddffff089e6fa3c658730e3a0a7e1e5e1
+[index] 71/97 traces=8 15.5s https://github.com/honojs/hono/pull/5488
+[worker] stage=index.clone.started commit=c437d7569219a21e45fa81797749e8f34fe19dcc
+[worker] stage=index.checkout.ready commit=c437d7569219a21e45fa81797749e8f34fe19dcc
+[worker] stage=index.parse.started files=422
+[worker] stage=index.parse.completed files=422 nodes=1154 relationships=2186
+[worker] stage=neo4j.persist.started nodes=1154 relationships=2186 commit=c437d7569219a21e45fa81797749e8f34fe19dcc
+[worker] stage=neo4j.persist.completed nodes=1154 relationships=2186 commit=c437d7569219a21e45fa81797749e8f34fe19dcc
+[index] 72/97 traces=4 15.2s https://github.com/honojs/hono/pull/5487
+[worker] stage=index.clone.started commit=18331a905e2415f7f73038357f2eec354123f7a6
+[worker] stage=index.checkout.ready commit=18331a905e2415f7f73038357f2eec354123f7a6
+[worker] stage=index.parse.started files=422
+[worker] stage=index.parse.completed files=422 nodes=1152 relationships=2177
+[worker] stage=neo4j.persist.started nodes=1152 relationships=2177 commit=18331a905e2415f7f73038357f2eec354123f7a6
+[worker] stage=neo4j.persist.completed nodes=1152 relationships=2177 commit=18331a905e2415f7f73038357f2eec354123f7a6
+[index] 73/97 traces=64 16.1s https://github.com/honojs/hono/pull/5476
+[worker] stage=index.clone.started commit=18331a905e2415f7f73038357f2eec354123f7a6
+[worker] stage=index.checkout.ready commit=18331a905e2415f7f73038357f2eec354123f7a6
+[worker] stage=index.parse.started files=422
+[worker] stage=index.parse.completed files=422 nodes=1152 relationships=2177
+[worker] stage=neo4j.persist.started nodes=1152 relationships=2177 commit=18331a905e2415f7f73038357f2eec354123f7a6
+[worker] stage=neo4j.persist.completed nodes=1152 relationships=2177 commit=18331a905e2415f7f73038357f2eec354123f7a6
+[index] 74/97 traces=3 15.3s https://github.com/honojs/hono/pull/5475
+[worker] stage=index.clone.started commit=f90853565966bc0bab57c99fe7d669a91bef0f4c
+[worker] stage=index.checkout.ready commit=f90853565966bc0bab57c99fe7d669a91bef0f4c
+[worker] stage=index.parse.started files=3529
+[worker] stage=index.parse.completed files=3529 nodes=9104 relationships=20178
+[worker] stage=neo4j.persist.started nodes=9104 relationships=20178 commit=f90853565966bc0bab57c99fe7d669a91bef0f4c
+[worker] stage=neo4j.persist.completed nodes=9104 relationships=20178 commit=f90853565966bc0bab57c99fe7d669a91bef0f4c
+[index] 75/97 traces=137 27.5s https://github.com/sveltejs/svelte/pull/18886
+[worker] stage=index.clone.started commit=40faa3305d3c8d5341fc118f14e769a3113fe75c
+[worker] stage=index.checkout.ready commit=40faa3305d3c8d5341fc118f14e769a3113fe75c
+[worker] stage=index.parse.started files=694
+[worker] stage=index.parse.completed files=694 nodes=3766 relationships=8562
+[worker] stage=neo4j.persist.started nodes=3766 relationships=8562 commit=40faa3305d3c8d5341fc118f14e769a3113fe75c
+[worker] stage=neo4j.persist.completed nodes=3766 relationships=8562 commit=40faa3305d3c8d5341fc118f14e769a3113fe75c
+[index] 76/97 traces=112 23.2s https://github.com/remix-run/react-router/pull/15561
+[worker] stage=index.clone.started commit=4bb041f4d9ca539db405cc6f9263be5ec9b41514
+[worker] stage=index.checkout.ready commit=4bb041f4d9ca539db405cc6f9263be5ec9b41514
+[worker] stage=index.parse.started files=1078
+[worker] stage=index.parse.completed files=1078 nodes=4226 relationships=8438
+[worker] stage=neo4j.persist.started nodes=4226 relationships=8438 commit=4bb041f4d9ca539db405cc6f9263be5ec9b41514
+[worker] stage=neo4j.persist.completed nodes=4226 relationships=8438 commit=4bb041f4d9ca539db405cc6f9263be5ec9b41514
+[index] 77/97 traces=27 36.4s https://github.com/TanStack/query/pull/11679
+[worker] stage=index.clone.started commit=5f31392d724cf98c9e48a3de119a55284583ad5f
+[worker] stage=index.checkout.ready commit=5f31392d724cf98c9e48a3de119a55284583ad5f
+[worker] stage=index.parse.started files=359
+[worker] stage=index.parse.completed files=359 nodes=979 relationships=1947
+[worker] stage=neo4j.persist.started nodes=979 relationships=1947 commit=5f31392d724cf98c9e48a3de119a55284583ad5f
+[worker] stage=neo4j.persist.completed nodes=979 relationships=1947 commit=5f31392d724cf98c9e48a3de119a55284583ad5f
+[index] 78/97 traces=127 14.9s https://github.com/honojs/hono/pull/5446
+[worker] stage=index.clone.started commit=edbe7b36334b669fcc2488776f9b490db9e60e76
+[worker] stage=index.checkout.ready commit=edbe7b36334b669fcc2488776f9b490db9e60e76
+[worker] stage=index.parse.started files=1059
+[worker] stage=index.parse.completed files=1059 nodes=3994 relationships=8144
+[worker] stage=neo4j.persist.started nodes=3994 relationships=8144 commit=edbe7b36334b669fcc2488776f9b490db9e60e76
+[worker] stage=neo4j.persist.completed nodes=3994 relationships=8144 commit=edbe7b36334b669fcc2488776f9b490db9e60e76
+[index] 79/97 traces=24 34.7s https://github.com/TanStack/query/pull/11629
+[worker] stage=index.clone.started commit=edbe7b36334b669fcc2488776f9b490db9e60e76
+[worker] stage=index.checkout.ready commit=edbe7b36334b669fcc2488776f9b490db9e60e76
+[worker] stage=index.parse.started files=1059
+[worker] stage=index.parse.completed files=1059 nodes=3994 relationships=8144
+[worker] stage=neo4j.persist.started nodes=3994 relationships=8144 commit=edbe7b36334b669fcc2488776f9b490db9e60e76
+[worker] stage=neo4j.persist.completed nodes=3994 relationships=8144 commit=edbe7b36334b669fcc2488776f9b490db9e60e76
+[index] 80/97 traces=32 35.5s https://github.com/TanStack/query/pull/11628
+[worker] stage=index.clone.started commit=3ed3a14f6d47f3a000f6f0206912261fc0e4b6cd
+[worker] stage=index.checkout.ready commit=3ed3a14f6d47f3a000f6f0206912261fc0e4b6cd
+[worker] stage=index.parse.started files=358
+[worker] stage=index.parse.completed files=358 nodes=975 relationships=1944
+[worker] stage=neo4j.persist.started nodes=975 relationships=1944 commit=3ed3a14f6d47f3a000f6f0206912261fc0e4b6cd
+[worker] stage=neo4j.persist.completed nodes=975 relationships=1944 commit=3ed3a14f6d47f3a000f6f0206912261fc0e4b6cd
+[index] 81/97 traces=95 15.5s https://github.com/honojs/hono/pull/5445
+[worker] stage=index.clone.started commit=58297c5a73e6a06687c3892efbfc807eec3f23af
+[worker] stage=index.checkout.ready commit=58297c5a73e6a06687c3892efbfc807eec3f23af
+[worker] stage=index.parse.started files=3527
+[worker] stage=index.parse.completed files=3527 nodes=9101 relationships=20169
+[worker] stage=neo4j.persist.started nodes=9101 relationships=20169 commit=58297c5a73e6a06687c3892efbfc807eec3f23af
+[worker] stage=neo4j.persist.completed nodes=9101 relationships=20169 commit=58297c5a73e6a06687c3892efbfc807eec3f23af
+[index] 82/97 traces=145 28.3s https://github.com/sveltejs/svelte/pull/18879
+[worker] stage=index.clone.started commit=58297c5a73e6a06687c3892efbfc807eec3f23af
+[worker] stage=index.checkout.ready commit=58297c5a73e6a06687c3892efbfc807eec3f23af
+[worker] stage=index.parse.started files=3527
+[worker] stage=index.parse.completed files=3527 nodes=9101 relationships=20169
+[worker] stage=neo4j.persist.started nodes=9101 relationships=20169 commit=58297c5a73e6a06687c3892efbfc807eec3f23af
+[worker] stage=neo4j.persist.completed nodes=9101 relationships=20169 commit=58297c5a73e6a06687c3892efbfc807eec3f23af
+[index] 83/97 traces=250 26.3s https://github.com/sveltejs/svelte/pull/18878
+[worker] stage=index.clone.started commit=58297c5a73e6a06687c3892efbfc807eec3f23af
+[worker] stage=index.checkout.ready commit=58297c5a73e6a06687c3892efbfc807eec3f23af
+[worker] stage=index.parse.started files=3527
+[worker] stage=index.parse.completed files=3527 nodes=9101 relationships=20169
+[worker] stage=neo4j.persist.started nodes=9101 relationships=20169 commit=58297c5a73e6a06687c3892efbfc807eec3f23af
+[worker] stage=neo4j.persist.completed nodes=9101 relationships=20169 commit=58297c5a73e6a06687c3892efbfc807eec3f23af
+[index] 84/97 traces=250 26.6s https://github.com/sveltejs/svelte/pull/18873
+[worker] stage=index.clone.started commit=58297c5a73e6a06687c3892efbfc807eec3f23af
+[worker] stage=index.checkout.ready commit=58297c5a73e6a06687c3892efbfc807eec3f23af
+[worker] stage=index.parse.started files=3527
+[worker] stage=index.parse.completed files=3527 nodes=9101 relationships=20169
+[worker] stage=neo4j.persist.started nodes=9101 relationships=20169 commit=58297c5a73e6a06687c3892efbfc807eec3f23af
+[worker] stage=neo4j.persist.completed nodes=9101 relationships=20169 commit=58297c5a73e6a06687c3892efbfc807eec3f23af
+[index] 85/97 traces=115 26.1s https://github.com/sveltejs/svelte/pull/18872
+[worker] stage=index.clone.started commit=36d8ebb324a550e198d007b24ee0850ec74174d5
+[worker] stage=index.checkout.ready commit=36d8ebb324a550e198d007b24ee0850ec74174d5
+[worker] stage=index.parse.started files=1058
+[worker] stage=index.parse.completed files=1058 nodes=3991 relationships=8124
+[worker] stage=neo4j.persist.started nodes=3991 relationships=8124 commit=36d8ebb324a550e198d007b24ee0850ec74174d5
+[worker] stage=neo4j.persist.completed nodes=3991 relationships=8124 commit=36d8ebb324a550e198d007b24ee0850ec74174d5
+[index] 86/97 traces=20 34.8s https://github.com/TanStack/query/pull/11590
+[worker] stage=index.clone.started commit=006d903893e9a752e31093729b5370376023c5f1
+[worker] stage=index.checkout.ready commit=006d903893e9a752e31093729b5370376023c5f1
+[worker] stage=index.parse.started files=694
+[worker] stage=index.parse.completed files=694 nodes=3766 relationships=8562
+[worker] stage=neo4j.persist.started nodes=3766 relationships=8562 commit=006d903893e9a752e31093729b5370376023c5f1
+[worker] stage=neo4j.persist.completed nodes=3766 relationships=8562 commit=006d903893e9a752e31093729b5370376023c5f1
+[index] 87/97 traces=250 23.4s https://github.com/remix-run/react-router/pull/15537
+[worker] stage=index.clone.started commit=58c47cd0057513939b9f7605792d0aeddd231e0d
+[worker] stage=index.checkout.ready commit=58c47cd0057513939b9f7605792d0aeddd231e0d
+[worker] stage=index.parse.started files=694
+[worker] stage=index.parse.completed files=694 nodes=3766 relationships=8562
+[worker] stage=neo4j.persist.started nodes=3766 relationships=8562 commit=58c47cd0057513939b9f7605792d0aeddd231e0d
+[worker] stage=neo4j.persist.completed nodes=3766 relationships=8562 commit=58c47cd0057513939b9f7605792d0aeddd231e0d
+[index] 88/97 traces=112 23.0s https://github.com/remix-run/react-router/pull/15535
+[worker] stage=index.clone.started commit=28e8572cd265b4da1160ce6cd51919bb70516e2c
+[worker] stage=index.checkout.ready commit=28e8572cd265b4da1160ce6cd51919bb70516e2c
+[worker] stage=index.parse.started files=358
+[worker] stage=index.parse.completed files=358 nodes=975 relationships=1944
+[worker] stage=neo4j.persist.started nodes=975 relationships=1944 commit=28e8572cd265b4da1160ce6cd51919bb70516e2c
+[worker] stage=neo4j.persist.completed nodes=975 relationships=1944 commit=28e8572cd265b4da1160ce6cd51919bb70516e2c
+[index] 89/97 traces=11 15.2s https://github.com/honojs/hono/pull/5426
+[worker] stage=index.clone.started commit=52febbcc30bc509d5e4987577e63906fe08fc471
+[worker] stage=index.checkout.ready commit=52febbcc30bc509d5e4987577e63906fe08fc471
+[worker] stage=index.parse.started files=358
+[worker] stage=index.parse.completed files=358 nodes=975 relationships=1944
+[worker] stage=neo4j.persist.started nodes=975 relationships=1944 commit=52febbcc30bc509d5e4987577e63906fe08fc471
+[worker] stage=neo4j.persist.completed nodes=975 relationships=1944 commit=52febbcc30bc509d5e4987577e63906fe08fc471
+[index] 90/97 traces=47 15.0s https://github.com/honojs/hono/pull/5424
+[worker] stage=index.clone.started commit=00059b8796c15e787da1c3fb62b87f26baa904e6
+[worker] stage=index.checkout.ready commit=00059b8796c15e787da1c3fb62b87f26baa904e6
+[worker] stage=index.parse.started files=1058
+[worker] stage=index.parse.completed files=1058 nodes=3991 relationships=8122
+[worker] stage=neo4j.persist.started nodes=3991 relationships=8122 commit=00059b8796c15e787da1c3fb62b87f26baa904e6
+[worker] stage=neo4j.persist.completed nodes=3991 relationships=8122 commit=00059b8796c15e787da1c3fb62b87f26baa904e6
+[index] 91/97 traces=50 37.4s https://github.com/TanStack/query/pull/11524
+[worker] stage=index.clone.started commit=fcc6bca0ece2762e393e6d8c8527bbaa17a878d2
+[worker] stage=index.checkout.ready commit=fcc6bca0ece2762e393e6d8c8527bbaa17a878d2
+[worker] stage=index.parse.started files=990
+[worker] stage=index.parse.completed files=990 nodes=3587 relationships=7449
+[worker] stage=neo4j.persist.started nodes=3587 relationships=7449 commit=fcc6bca0ece2762e393e6d8c8527bbaa17a878d2
+[worker] stage=neo4j.persist.completed nodes=3587 relationships=7449 commit=fcc6bca0ece2762e393e6d8c8527bbaa17a878d2
+[index] 92/97 traces=109 12.4s https://github.com/trpc/trpc/pull/7604
+[worker] stage=index.clone.started commit=3212966a3681e02d14eb79e9cce0d3265b046877
+[worker] stage=index.checkout.ready commit=3212966a3681e02d14eb79e9cce0d3265b046877
+[worker] stage=index.parse.started files=1058
+[worker] stage=index.parse.completed files=1058 nodes=3991 relationships=8122
+[worker] stage=neo4j.persist.started nodes=3991 relationships=8122 commit=3212966a3681e02d14eb79e9cce0d3265b046877
+[worker] stage=neo4j.persist.completed nodes=3991 relationships=8122 commit=3212966a3681e02d14eb79e9cce0d3265b046877
+[index] 93/97 traces=95 34.3s https://github.com/TanStack/query/pull/11512
+[worker] stage=index.clone.started commit=19ccf2794b929e360234396682e64c047ab4bfda
+[worker] stage=index.checkout.ready commit=19ccf2794b929e360234396682e64c047ab4bfda
+[worker] stage=index.parse.started files=1058
+[worker] stage=index.parse.completed files=1058 nodes=3991 relationships=8122
+[worker] stage=neo4j.persist.started nodes=3991 relationships=8122 commit=19ccf2794b929e360234396682e64c047ab4bfda
+[worker] stage=neo4j.persist.completed nodes=3991 relationships=8122 commit=19ccf2794b929e360234396682e64c047ab4bfda
+[index] 94/97 traces=10 36.8s https://github.com/TanStack/query/pull/11510
+[worker] stage=index.clone.started commit=2da46cd137cf784465df1364ebf1aea12deefa4a
+[worker] stage=index.checkout.ready commit=2da46cd137cf784465df1364ebf1aea12deefa4a
+[worker] stage=index.parse.started files=1058
+[worker] stage=index.parse.completed files=1058 nodes=3991 relationships=8122
+[worker] stage=neo4j.persist.started nodes=3991 relationships=8122 commit=2da46cd137cf784465df1364ebf1aea12deefa4a
+[worker] stage=neo4j.persist.completed nodes=3991 relationships=8122 commit=2da46cd137cf784465df1364ebf1aea12deefa4a
+[index] 95/97 traces=24 35.7s https://github.com/TanStack/query/pull/11509
+[worker] stage=index.clone.started commit=f5a53463ad2ff791fc02418b645750ce75a260ad
+[worker] stage=index.checkout.ready commit=f5a53463ad2ff791fc02418b645750ce75a260ad
+[worker] stage=index.parse.started files=358
+[worker] stage=index.parse.completed files=358 nodes=975 relationships=1944
+[worker] stage=neo4j.persist.started nodes=975 relationships=1944 commit=f5a53463ad2ff791fc02418b645750ce75a260ad
+[worker] stage=neo4j.persist.completed nodes=975 relationships=1944 commit=f5a53463ad2ff791fc02418b645750ce75a260ad
+[index] 96/97 traces=6 15.3s https://github.com/honojs/hono/pull/5391
+[worker] stage=index.clone.started commit=10908b21ce247fcbcac7efe480d7d3390c6b911b
+[worker] stage=index.checkout.ready commit=10908b21ce247fcbcac7efe480d7d3390c6b911b
+[worker] stage=index.parse.started files=701
+[worker] stage=index.parse.completed files=701 nodes=3808 relationships=8751
+[worker] stage=neo4j.persist.started nodes=3808 relationships=8751 commit=10908b21ce247fcbcac7efe480d7d3390c6b911b
+[worker] stage=neo4j.persist.completed nodes=3808 relationships=8751 commit=10908b21ce247fcbcac7efe480d7d3390c6b911b
+[index] 97/97 traces=121 25.8s https://github.com/remix-run/react-router/pull/15500

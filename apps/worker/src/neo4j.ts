@@ -30,6 +30,36 @@ function getNeo4jConfig() {
   return { uri, user, password };
 }
 
+let indexesReady = false;
+
+/**
+ * Every write and lookup matches nodes by (repositoryKey, id) or by path.
+ * Without indexes each MERGE scans every node in the database, so persisting
+ * a graph grows quadratically with repository size. Idempotent.
+ */
+async function ensureIndexes(driver: ReturnType<typeof neo4j.driver>): Promise<void> {
+  if (indexesReady) return;
+  const session = driver.session();
+  try {
+    await session.run(
+      `CREATE INDEX code_graph_node_key IF NOT EXISTS
+       FOR (node:CodeGraphNode) ON (node.repositoryKey, node.id)`,
+    );
+    await session.run(
+      `CREATE INDEX code_graph_node_path IF NOT EXISTS
+       FOR (node:CodeGraphNode) ON (node.repositoryKey, node.path)`,
+    );
+    await session.run(
+      `CREATE INDEX repository_key IF NOT EXISTS
+       FOR (repository:Repository) ON (repository.key)`,
+    );
+    await session.run("CALL db.awaitIndexes(300)");
+    indexesReady = true;
+  } finally {
+    await session.close();
+  }
+}
+
 export async function persistCodeGraph(
   graph: CodeGraph,
   metadata: GraphMetadata,
@@ -41,6 +71,7 @@ export async function persistCodeGraph(
 
   try {
     await driver.verifyConnectivity();
+    await ensureIndexes(driver);
 
     await session.executeWrite(async (transaction) => {
       // Re-indexing replaces only this repository/branch's previous graph.
