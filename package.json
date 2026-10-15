@@ -7,6 +7,7 @@
     "test:index": "LORICA_ROOT=\"$PWD\" node --env-file=.env ./node_modules/turbo/bin/turbo run test:index --filter=@lorica/worker",
     "test": "pnpm --filter @lorica/worker test:unit",
     "test:integration": "pnpm --filter @lorica/worker test:integration",
+    "benchmark": "LORICA_ROOT=\"$PWD\" pnpm --filter @lorica/worker benchmark",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",

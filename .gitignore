@@ -41,3 +41,6 @@ apps/worker/.artifacts/
 
 #claude build docs
 claude.md
+
+# Benchmark run log
+benchmark/run.log

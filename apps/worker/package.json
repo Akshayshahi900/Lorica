@@ -3,6 +3,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "test:index": "tsx src/test.ts",
+    "benchmark": "tsx --env-file=../../.env src/benchmark.ts",
     "test:unit": "tsx --test ../../apps/api/src/controllers/github.controller.test.ts ../../packages/context/src/reviewContext.test.ts ../../packages/context/src/reviewPlan.test.ts ../../packages/context/src/reviewSettings.test.ts ../../packages/types/src/reviewSettings.test.ts ../../packages/llm/src/prompt.test.ts ../../packages/llm/src/client.test.ts ../../packages/llm/src/providers.test.ts ../../packages/vcs/src/github/commentBuilder.test.ts ../../packages/vcs/src/github/postComment.test.ts src/indexer/indexRepository.test.ts",
     "test:integration": "tsx --test --test-concurrency=1 src/reviewProcessor.integration.test.ts ../../apps/api/src/webhookIntake.integration.test.ts",
     "build": "tsc",
