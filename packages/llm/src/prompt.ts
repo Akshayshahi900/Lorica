@@ -1,7 +1,4 @@
-import type {
-  PathInstruction,
-  ReviewProfile,
-} from "@lorica/types";
+import type { PathInstruction, ReviewProfile } from "@lorica/types";
 
 export const REVIEW_PROMPT = `
 You are an expert code reviewer.

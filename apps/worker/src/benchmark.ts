@@ -1,15 +1,23 @@
 /**
  * Offline benchmark of the review pipeline against real GitHub pull requests.
  *
+ *   pnpm benchmark run               the whole benchmark in one command: collects and
+ *                                    indexes cases if needed, reviews them with diff +
+ *                                    graph context (production), judges the findings,
+ *                                    then does the same with the diff alone for
+ *                                    comparison, and writes benchmark/REPORT.md
+ *
+ * Single steps:
+ *
  *   pnpm benchmark collect           add bug-fix PRs and recent PRs, cache their diffs
  *   pnpm benchmark index             clone each buggy commit, build its code graph
  *                                    in Neo4j and cache the graph evidence (no LLM)
- *   pnpm benchmark run [--graph]     review the cases, diff only or with graph context
- *   pnpm benchmark judge [--graph]   confirm which flagged findings describe the real bug
- *   pnpm benchmark report            rewrite the report from saved results
+ *   pnpm benchmark judge [--diff]    only judge the reviewed cases
+ *   pnpm benchmark report            only rewrite the report from saved results
  *
- * `run` and `judge` skip cases they have already done and stop cleanly when
- * OpenRouter's free daily limit is reached, so they can be rerun each day.
+ * Every step skips work already done and the run stops cleanly when
+ * OpenRouter's free daily limit is reached, so rerun the same command each day.
+ * All output is also appended to benchmark/benchmark.log.
  *
  * Detection: each case is a merged bug-fix PR with its patch reversed, so the
  * diff reintroduces a bug the maintainers really fixed. Title, description and
@@ -29,6 +37,7 @@
  */
 import fs from "node:fs";
 import path from "node:path";
+import { format } from "node:util";
 import {
   baseUrlFor,
   buildReviewPrompt,
@@ -55,6 +64,7 @@ const OUT_DIR = path.resolve(
   "benchmark",
 );
 const CASES_FILE = path.join(OUT_DIR, "cases.json");
+const LOG_FILE = path.join(OUT_DIR, "benchmark.log");
 const GRAPHS_FILE = path.join(OUT_DIR, "graphs.json");
 
 const REPOS = [
@@ -103,7 +113,8 @@ type GraphEntry = {
 };
 
 type Mode = "diff" | "graph";
-const mode: Mode = process.argv.includes("--graph") ? "graph" : "diff";
+/** For `judge` on its own: graph context by default, as in production. */
+const flagMode: Mode = process.argv.includes("--diff") ? "diff" : "graph";
 const resultsFile = (m: Mode) =>
   path.join(OUT_DIR, m === "graph" ? "results-graph.json" : "results.json");
 
@@ -346,7 +357,7 @@ async function index() {
   console.log(
     `[index] ${eligible.length - failed}/${eligible.length} cases indexed` +
       (failed ? `, ${failed} failed (rerun to retry)` : "") +
-      ` in ${GRAPHS_FILE}. Next: pnpm benchmark run --graph`,
+      ` in ${GRAPHS_FILE}. Next: pnpm benchmark run`,
   );
 }
 
@@ -412,7 +423,11 @@ async function withRetries<T>(call: () => Promise<T>): Promise<T> {
       if (isDailyLimit(error))
         throw new DailyLimitError((error as Error).message);
       if (attempt >= 2) throw error;
-      await sleep(20_000 * (attempt + 1));
+      const wait = 20 * (attempt + 1);
+      console.log(
+        `  retry ${attempt + 1}/2 in ${wait}s: ${(error instanceof Error ? error.message : String(error)).replace(/\s+/g, " ").slice(0, 160)}`,
+      );
+      await sleep(wait * 1000);
     }
   }
 }
@@ -546,11 +561,12 @@ const loadResults = (m: Mode) => readJson<CaseResult[]>(resultsFile(m), []);
 function stopForToday(step: string, done: number, total: number) {
   console.log(
     `\n[${step}] OpenRouter's free daily limit is reached after ${done}/${total} cases. ` +
-      `Run the same command again after the daily reset (00:00 UTC) to continue.`,
+      `Run "pnpm benchmark ${process.argv.slice(2).join(" ")}" again after the daily reset (00:00 UTC) to continue.`,
   );
 }
 
-async function run() {
+/** Reviews every case not reviewed yet; false when the daily limit stopped it. */
+async function review(mode: Mode): Promise<boolean> {
   const cases = loadCases();
   const graphs =
     mode === "graph"
@@ -575,6 +591,9 @@ async function run() {
       );
       continue;
     }
+    console.log(
+      `[run:${mode}] ${index + 1}/${cases.detection.length} reviewing ${c.url} ...`,
+    );
     let result: CaseResult;
     try {
       result = await reviewCase(
@@ -585,7 +604,8 @@ async function run() {
       );
     } catch (error) {
       if (!(error instanceof DailyLimitError)) throw error;
-      return stopForToday("run", results.length, cases.detection.length);
+      stopForToday(`run:${mode}`, results.length, cases.detection.length);
+      return false;
     }
     results.push(result);
     console.log(
@@ -593,6 +613,29 @@ async function run() {
     );
     writeJson(resultsFile(mode), results);
   }
+  return true;
+}
+
+/**
+ * Collects and indexes when needed, then reviews and judges with graph context
+ * (production) and with the diff alone (comparison), and writes the report.
+ * The steps share the daily quota, so each starts only once the one before it
+ * has finished; a rerun continues from the first unfinished step.
+ */
+async function run() {
+  console.log(
+    `[run] model ${process.env.LLM_MODEL ?? DEFAULT_LLM_MODEL}; steps: review graph, judge graph, review diff, judge diff, report`,
+  );
+  if (!fs.existsSync(CASES_FILE)) await collect();
+  const graphs = readJson<Record<string, GraphEntry>>(GRAPHS_FILE, {});
+  if (loadCases().detection.some((c) => !graphs[c.url])) await index();
+  const steps = [
+    () => review("graph"),
+    () => judge("graph"),
+    () => review("diff"),
+    () => judge("diff"),
+  ];
+  for (const step of steps) if (!(await step())) break;
   report();
 }
 
@@ -602,7 +645,7 @@ async function run() {
  * (its title and patch, which the reviewer never saw) and confirms a case only
  * when a finding describes the defect that fix addresses.
  */
-async function judge() {
+async function judge(mode: Mode): Promise<boolean> {
   const cases = new Map(loadCases().detection.map((c) => [c.url, c]));
   const config = defaultLlmConfig();
   const results = loadResults(mode);
@@ -663,11 +706,12 @@ Does any reported finding identify the same defect this fix addresses (the same 
     } catch (error) {
       writeJson(resultsFile(mode), results);
       if (!(error instanceof DailyLimitError)) throw error;
-      return stopForToday(
-        "judge",
+      stopForToday(
+        `judge:${mode}`,
         results.filter((r) => r.confirmed !== undefined).length,
         results.length,
       );
+      return false;
     }
     console.log(
       `[judge:${mode}] ${index + 1}/${results.length} ${result.confirmed ? "CONFIRMED" : "not confirmed"} ${result.url}`,
@@ -675,7 +719,7 @@ Does any reported finding identify the same defect this fix addresses (the same 
     writeJson(resultsFile(mode), results);
   }
   writeJson(resultsFile(mode), results);
-  report();
+  return true;
 }
 
 // ---------------------------------------------------------------------------
@@ -689,9 +733,11 @@ function summarize(results: CaseResult[]) {
   const rate = (n: number) =>
     `${n} / ${completed.length} (${pct(completed.length ? n / completed.length : 0)})`;
   const times = completed.map((r) => r.seconds);
+  const judgedCount = completed.filter((r) => r.confirmed !== undefined).length;
   return {
     completed,
-    judged: completed.every((r) => r.confirmed !== undefined),
+    judged: judgedCount === completed.length,
+    judgedCount,
     identified: rate(completed.filter((r) => r.confirmed).length),
     flagged: rate(completed.filter((r) => r.detected).length),
     valid: `${completed.length} / ${results.length} (${pct(results.length ? completed.length / results.length : 0)})`,
@@ -704,102 +750,113 @@ function summarize(results: CaseResult[]) {
   };
 }
 
-function graphSection(
-  diffResults: CaseResult[],
+const identifiedCell = (s: ReturnType<typeof summarize>) =>
+  s.judged
+    ? `**${s.identified}**`
+    : `not judged yet (${s.judgedCount} / ${s.completed.length} judged)`;
+
+/** Diff-only reviews of the same cases, to show what the graph context adds. */
+function comparisonSection(
   graphResults: CaseResult[],
+  diffResults: CaseResult[],
 ): string {
-  const graphs = readJson<Record<string, GraphEntry>>(GRAPHS_FILE, {});
-  const paired = new Set(
-    graphResults.filter((r) => !r.error).map((r) => r.url),
-  );
-  const diff = diffResults.filter((r) => !r.error && paired.has(r.url));
+  const paired = new Set(diffResults.filter((r) => !r.error).map((r) => r.url));
   const graph = graphResults.filter((r) => !r.error && paired.has(r.url));
+  const diff = diffResults.filter((r) => !r.error && paired.has(r.url));
   if (graph.length === 0) return "";
   const byUrl = new Map(diff.map((r) => [r.url, r]));
   const won = graph.filter((r) => r.confirmed && !byUrl.get(r.url)?.confirmed);
   const lost = graph.filter((r) => !r.confirmed && byUrl.get(r.url)?.confirmed);
-  const d = summarize(diff);
   const g = summarize(graph);
-  const indexed = Object.values(graphs).filter((e) => !e.error);
-  const traces = graph.map((r) => r.traces ?? 0);
+  const d = summarize(diff);
   return `
-## Diff only vs graph context
+## Comparison: with graph vs diff only
 
-The same ${graph.length} cases, reviewed once with the diff alone and once with one-hop code-graph evidence from the buggy commit.
+The ${graph.length} cases reviewed both with graph context and with the diff alone, without code-graph evidence.
 
-| Metric | Diff only | With graph |
+| Metric | With graph | Diff only |
 | --- | --- | --- |
-| Real bugs identified | ${d.judged ? `**${d.identified}**` : "not judged yet"} | ${g.judged ? `**${g.identified}**` : "not judged yet"} |
-| Real bugs flagged | ${d.flagged} | ${g.flagged} |
-| Review time, median | ${d.median} | ${g.median} |
-| Findings per review, mean | ${d.findings} | ${g.findings} |
-
-- Graph traces per review: median ${percentile(traces, 50)}, max ${Math.max(0, ...traces)}.
-- Indexing the buggy commit (clone, parse, persist to Neo4j): median ${percentile(
-    indexed.map((e) => e.indexSeconds),
-    50,
-  ).toFixed(1)}s over ${indexed.length} commits.
-${g.judged && d.judged ? `- Identified only with the graph: ${won.length}. Identified only without it: ${lost.length}.\n` : ""}`;
+| Real bugs identified | ${identifiedCell(g)} | ${identifiedCell(d)} |
+| Real bugs flagged | ${g.flagged} | ${d.flagged} |
+| Review time, median | ${g.median} | ${d.median} |
+| Findings per review, mean | ${g.findings} | ${d.findings} |
+${g.judged && d.judged ? `\n- Identified only with the graph: ${won.length}. Identified only without it: ${lost.length}.\n` : ""}`;
 }
 
 function report() {
   const cases = loadCases();
-  const results = loadResults("diff");
   const graphResults = loadResults("graph");
+  const diffResults = loadResults("diff");
+  const graphs = readJson<Record<string, GraphEntry>>(GRAPHS_FILE, {});
   const model = process.env.LLM_MODEL ?? DEFAULT_LLM_MODEL;
-  const s = summarize(results);
+  const s = summarize(graphResults);
   const filter = filterStats(cases.filter);
   const saved =
     filter.rawTokens === 0 ? 0 : 1 - filter.keptTokens / filter.rawTokens;
   const repos = [...new Set(s.completed.map((r) => repoOf(r.url)))];
-  const byHand = [...results, ...graphResults].filter((r) => r.judgedBy).length;
+  const byHand = [...graphResults, ...diffResults].filter(
+    (r) => r.judgedBy,
+  ).length;
+  const indexed = Object.values(graphs).filter((e) => !e.error);
+  const traces = s.completed.map((r) => r.traces ?? 0);
+  const status = (x?: CaseResult) =>
+    !x
+      ? "–"
+      : x.error
+        ? "error"
+        : x.confirmed
+          ? "identified"
+          : x.detected
+            ? "flagged"
+            : "missed";
+  const reviewed = cases.detection.filter((c) =>
+    [...graphResults, ...diffResults].some((r) => r.url === c.url),
+  );
 
   const text = `# Lorica benchmark
 
-Run ${new Date().toISOString().slice(0, 10)} with model \`${model}\` and the \`chill\` profile. ${s.completed.length} real bugs from ${repos.length} open-source repositories. Reproduce with \`pnpm benchmark collect && pnpm benchmark run && pnpm benchmark judge\`; add \`pnpm benchmark index\` and \`--graph\` for the graph comparison.
+Run ${new Date().toISOString().slice(0, 10)} with model \`${model}\` and the \`chill\` profile. ${s.completed.length} of ${cases.detection.length} real bugs from ${repos.length} open-source repositories reviewed with diff + code-graph context, as in production. Reproduce with \`pnpm benchmark run\`.
 
-## Results (diff only)
+## Results (diff + code graph)
 
 | Metric | Value |
 | --- | --- |
-${s.judged ? `| Real bugs identified (finding describes the fixed defect) | **${s.identified}** |\n` : ""}| Real bugs flagged (finding within ${LINE_TOLERANCE} lines of the defect) | ${s.flagged} |
+| Real bugs identified (finding describes the fixed defect) | ${identifiedCell(s)} |
+| Real bugs flagged (finding within ${LINE_TOLERANCE} lines of the defect) | ${s.flagged} |
 | Valid structured responses | ${s.valid} |
 | Review time, median | ${s.median} |
 | Review time, p90 | ${s.p90} |
 | Findings per review, mean | ${s.findings} |
+| Graph traces per review | median ${percentile(traces, 50)}, max ${Math.max(0, ...traces)} |
+| Indexing the buggy commit (clone, parse, persist to Neo4j), median | ${percentile(
+    indexed.map((e) => e.indexSeconds),
+    50,
+  ).toFixed(1)}s over ${indexed.length} commits |
 | Prompt tokens removed by file filtering | ${pct(saved)} (${filter.rawTokens.toLocaleString()} → ${filter.keptTokens.toLocaleString()} est. tokens over ${filter.prs} PRs; ${filter.prsWithExclusions} PRs had files filtered) |
-${graphSection(results, graphResults)}
+${comparisonSection(graphResults, diffResults)}
 ## Method
 
 - **Cases:** merged PRs with "fix" in the title, touching 1–3 source files (no examples or docs) and 2–60 changed lines, at most ${MAX_CASES_PER_REPO} per repository, from ${repos.join(", ")}. Each patch is reversed so the diff reintroduces the bug the maintainers fixed. The title is replaced, and the description and test changes are withheld.
+- **Graph context:** the production indexer builds the code graph of the fix PR's base commit (the code with the bug) in Neo4j, and the review receives the same one-hop traces it would in production.
 - **Flagged:** any finding points within ${LINE_TOLERANCE} lines of a reintroduced change. On small diffs this is loose, so it is an upper bound.
 - **Identified:** a judge model, given the real fix's title and patch, says a flagged finding describes the same defect. This is the headline number.${byHand ? ` ${byHand} verdict${byHand === 1 ? " was" : "s were"} made by hand after the judge hit a rate limit (marked in the results files).` : ""}
-- **Graph context:** the production indexer builds the code graph of the fix PR's base commit (the code with the bug) in Neo4j, and the review receives the same one-hop traces it would in production.
 - **Caveats:** a "fix" PR is not always a bug, LLM judging can err in either direction, and public repositories may be in the model's training data. Every case is listed below so each verdict can be checked.
 - **Filtering:** the most recent merged PRs from the same repositories, estimated at ~3 characters per token, before and after the built-in filter (lockfiles, generated, vendored, assets, docs, deletions).
 - **Not measured:** false-positive rate (findings away from the bug may still be valid).
 
 ## Cases
 
-| # | PR | Diff only | With graph | Time | Nearest finding (diff only) |
+| # | PR | With graph | Diff only | Time (graph) | Nearest finding (with graph) |
 | --- | --- | --- | --- | --- | --- |
-${results
-  .map((r, i) => {
-    const status = (x?: CaseResult) =>
-      !x
-        ? "–"
-        : x.error
-          ? "error"
-          : x.confirmed
-            ? "identified"
-            : x.detected
-              ? "flagged"
-              : "missed";
-    const g = graphResults.find((x) => x.url === r.url);
-    const finding = r.matched[0]
-      ? `${r.matched[0].severity} ${r.matched[0].category}: ${r.matched[0].comment.replace(/\s+/g, " ").replace(/\|/g, "\\|").slice(0, 140)}`
+${reviewed
+  .map((c, i) => {
+    const g = graphResults.find((x) => x.url === c.url);
+    const d = diffResults.find((x) => x.url === c.url);
+    const nearest = g?.matched[0];
+    const finding = nearest
+      ? `${nearest.severity} ${nearest.category}: ${nearest.comment.replace(/\s+/g, " ").replace(/\|/g, "\\|").slice(0, 140)}`
       : "";
-    return `| ${i + 1} | [${r.title.replace(/\|/g, "\\|").slice(0, 60)}](${r.url}) | ${status(r)} | ${status(g)} | ${r.seconds.toFixed(1)}s | ${finding} |`;
+    return `| ${i + 1} | [${c.title.replace(/\|/g, "\\|").slice(0, 60)}](${c.url}) | ${status(g)} | ${status(d)} | ${g ? `${g.seconds.toFixed(1)}s` : "–"} | ${finding} |`;
   })
   .join("\n")}
 `;
@@ -812,15 +869,33 @@ const commands: Record<string, () => unknown> = {
   collect,
   index,
   run,
-  judge,
+  judge: () => judge(flagMode).then(report),
   report,
 };
+
+/** Mirrors the console into benchmark/benchmark.log, one block per command. */
+function logToFile() {
+  fs.mkdirSync(OUT_DIR, { recursive: true });
+  fs.appendFileSync(
+    LOG_FILE,
+    `\n=== ${new Date().toISOString()} pnpm benchmark ${process.argv.slice(2).join(" ")} ===\n`,
+  );
+  for (const level of ["log", "info", "warn", "error"] as const) {
+    const write = console[level].bind(console);
+    console[level] = (...args: unknown[]) => {
+      write(...args);
+      fs.appendFileSync(LOG_FILE, `${format(...args)}\n`);
+    };
+  }
+}
+
+logToFile();
 Promise.resolve()
   .then(() => {
     const command = commands[process.argv[2] ?? ""];
     if (!command)
       throw new Error(
-        "Usage: pnpm benchmark <collect|index|run|judge|report> [--graph]",
+        "Usage: pnpm benchmark <collect|index|run|judge|report> [--diff]",
       );
     return command();
   })

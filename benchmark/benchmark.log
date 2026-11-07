@@ -1,0 +1,78 @@
+
+=== 2026-11-07T15:41:48.833Z pnpm benchmark report ===
+
+# Lorica benchmark
+
+Run 2026-11-07 with model `nvidia/nemotron-3-ultra-550b-a55b:free` and the `chill` profile. 43 of 97 real bugs from 8 open-source repositories reviewed with diff + code-graph context, as in production. Reproduce with `pnpm benchmark collect && pnpm benchmark index && pnpm benchmark run && pnpm benchmark judge`; add `--diff` to `run` and `judge` for the diff-only comparison.
+
+## Results (diff + code graph)
+
+| Metric | Value |
+| --- | --- |
+| Real bugs identified (finding describes the fixed defect) | not judged yet (0 / 43 judged) |
+| Real bugs flagged (finding within 3 lines of the defect) | 41 / 43 (95%) |
+| Valid structured responses | 43 / 43 (100%) |
+| Review time, median | 22.4s |
+| Review time, p90 | 667.2s |
+| Findings per review, mean | 1.4 |
+| Graph traces per review | median 27, max 33 |
+| Indexing the buggy commit (clone, parse, persist to Neo4j), median | 26.5s over 97 commits |
+| Prompt tokens removed by file filtering | 24% (116,471 → 88,443 est. tokens over 40 PRs; 12 PRs had files filtered) |
+
+## Comparison: with graph vs diff only
+
+The 27 cases that were also reviewed with the diff alone (`--diff`), without code-graph evidence.
+
+| Metric | With graph | Diff only |
+| --- | --- | --- |
+| Real bugs identified | not judged yet (0 / 27 judged) | **22 / 27 (81%)** |
+| Real bugs flagged | 26 / 27 (96%) | 26 / 27 (96%) |
+| Review time, median | 23.0s | 32.7s |
+| Findings per review, mean | 1.5 | 1.4 |
+
+
+[report] wrote /home/akshay/Code/projects/Lorica/benchmark/REPORT.md
+
+=== 2026-11-07T15:41:50.741Z pnpm benchmark bogus ===
+Error: Usage: pnpm benchmark <collect|index|run|judge|report> [--diff]
+    at <anonymous> (/home/akshay/Code/projects/Lorica/apps/worker/src/benchmark.ts:879:13)
+
+=== 2026-11-07T15:43:55.884Z pnpm benchmark report ===
+
+# Lorica benchmark
+
+Run 2026-11-07 with model `nvidia/nemotron-3-ultra-550b-a55b:free` and the `chill` profile. 43 of 97 real bugs from 8 open-source repositories reviewed with diff + code-graph context, as in production. Reproduce with `pnpm benchmark run`.
+
+## Results (diff + code graph)
+
+| Metric | Value |
+| --- | --- |
+| Real bugs identified (finding describes the fixed defect) | not judged yet (0 / 43 judged) |
+| Real bugs flagged (finding within 3 lines of the defect) | 41 / 43 (95%) |
+| Valid structured responses | 43 / 43 (100%) |
+| Review time, median | 22.4s |
+| Review time, p90 | 667.2s |
+| Findings per review, mean | 1.4 |
+| Graph traces per review | median 27, max 33 |
+| Indexing the buggy commit (clone, parse, persist to Neo4j), median | 26.5s over 97 commits |
+| Prompt tokens removed by file filtering | 24% (116,471 → 88,443 est. tokens over 40 PRs; 12 PRs had files filtered) |
+
+## Comparison: with graph vs diff only
+
+The 27 cases reviewed both with graph context and with the diff alone, without code-graph evidence.
+
+| Metric | With graph | Diff only |
+| --- | --- | --- |
+| Real bugs identified | not judged yet (0 / 27 judged) | **22 / 27 (81%)** |
+| Real bugs flagged | 26 / 27 (96%) | 26 / 27 (96%) |
+| Review time, median | 23.0s | 32.7s |
+| Findings per review, mean | 1.5 | 1.4 |
+
+
+[report] wrote /home/akshay/Code/projects/Lorica/benchmark/REPORT.md
+
+=== 2026-11-07T17:03:40.103Z pnpm benchmark run ===
+
+=== 2026-11-07T17:06:01.473Z pnpm benchmark run ===
+[run] model nvidia/nemotron-3-ultra-550b-a55b:free; steps: review graph, judge graph, review diff, judge diff, report
+[run:graph] 44/97 reviewing https://github.com/vitejs/vite/pull/23694 ...
