@@ -119,20 +119,23 @@ Reviews use the deployment's OpenRouter model (`LLM_MODEL`) unless a user picks 
 
 ## Development
 
-| Command                                               | Description                                                                  |
-| ----------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `pnpm dev`                                            | Start the web app, API, and workers through Turborepo.                       |
-| `pnpm build`                                          | Build all configured workspaces.                                             |
-| `pnpm check-types`                                    | Run workspace type checks where defined.                                     |
-| `pnpm lint`                                           | Run workspace lint scripts where defined.                                    |
-| `pnpm format`                                         | Format TypeScript, TSX, and Markdown files with Prettier.                    |
-| `pnpm test`                                           | Run unit tests.                                                              |
-| `pnpm test:integration`                               | Run webhook intake and review processing tests against PostgreSQL and Redis. |
-| `pnpm test:index`                                     | Run the code-indexer smoke test; requires Redis and a usable Git repository. |
-| `(cd packages/db && pnpm exec prisma migrate dev)`    | Create and apply a development migration.                                    |
-| `(cd packages/db && pnpm exec prisma migrate deploy)` | Apply existing migrations without creating a new one.                        |
-| `(cd packages/db && pnpm exec prisma generate)`       | Regenerate the Prisma client.                                                |
-| `(cd packages/db && pnpm exec prisma studio)`         | Open Prisma Studio.                                                          |
+| Command                                               | Description                                                                   |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `pnpm dev`                                            | Start the web app, API, and workers through Turborepo.                        |
+| `pnpm build`                                          | Build all configured workspaces.                                              |
+| `pnpm check-types`                                    | Type-check the API, worker, and web app (`tsc --noEmit`), including packages. |
+| `pnpm lint`                                           | Lint every workspace with ESLint (config in `eslint.config.mjs`).             |
+| `pnpm format`                                         | Format TypeScript, TSX, and Markdown files with Prettier.                     |
+| `pnpm format:check`                                   | Check formatting without changing files; fails if any file is unformatted.    |
+| `pnpm test`                                           | Run unit tests.                                                               |
+| `pnpm test:integration`                               | Run webhook intake and review processing tests against PostgreSQL and Redis.  |
+| `pnpm test:index`                                     | Run the code-indexer smoke test; requires Redis and a usable Git repository.  |
+| `(cd packages/db && pnpm exec prisma migrate dev)`    | Create and apply a development migration.                                     |
+| `(cd packages/db && pnpm exec prisma migrate deploy)` | Apply existing migrations without creating a new one.                         |
+| `(cd packages/db && pnpm exec prisma generate)`       | Regenerate the Prisma client.                                                 |
+| `(cd packages/db && pnpm exec prisma studio)`         | Open Prisma Studio.                                                           |
+
+CI (`.github/workflows/ci.yml`) runs on every push and pull request. The `lint` job runs `pnpm format:check`, `pnpm lint` and `pnpm check-types`; the other jobs run the unit and integration tests. Run `pnpm format`, then the same three checks, before pushing. `@typescript-eslint/no-explicit-any` is a warning for now, so existing `any` types are reported without failing the build.
 
 `pnpm test:integration` truncates tables, so it refuses to run unless `DATABASE_URL` names a database containing `test`. Locally:
 

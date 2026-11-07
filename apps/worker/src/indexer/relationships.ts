@@ -201,7 +201,7 @@ export function extractRelationships(
             specifier,
             fileIds,
           );
-          let targetFileId = resolvedPath
+          const targetFileId = resolvedPath
             ? fileIds.get(resolvedPath)!
             : `module:${specifier}`;
           if (

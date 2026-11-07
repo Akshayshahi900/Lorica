@@ -626,5 +626,263 @@
         "suggestion": "Either restore the `done` callback pattern with proper error handling, or document the breaking change clearly and provide a codemod/migration guide for hook authors."
       }
     ]
+  },
+  {
+    "url": "https://github.com/nestjs/nest/pull/18109",
+    "title": "fix(fastify): answer the shutdown hooks 503 with fastify's json body",
+    "detected": true,
+    "seconds": 1540.4337634390001,
+    "chunks": 1,
+    "traces": 30,
+    "findings": [
+      {
+        "filePath": "packages/platform-fastify/adapters/fastify-adapter.ts",
+        "lineNumber": 364,
+        "code": "        reply.code(503).send('Service Unavailable');",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The shutdown 503 response was changed from a structured JSON object ({error, message, statusCode}) to a plain text string. This breaks API compatibility for clients that parse the JSON error response. The removed comment explicitly stated the intent was to match Fastify's own 503 response shape so clients get one response shape for the whole shutdown. The new plain text response will cause JSON parsing errors in clients expecting the structured format.",
+        "suggestion": "Restore the JSON response format: reply.code(503).send({ error: 'Service Unavailable', message: 'Service Unavailable', statusCode: 503 });"
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/platform-fastify/adapters/fastify-adapter.ts",
+        "lineNumber": 364,
+        "code": "        reply.code(503).send('Service Unavailable');",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The shutdown 503 response was changed from a structured JSON object ({error, message, statusCode}) to a plain text string. This breaks API compatibility for clients that parse the JSON error response. The removed comment explicitly stated the intent was to match Fastify's own 503 response shape so clients get one response shape for the whole shutdown. The new plain text response will cause JSON parsing errors in clients expecting the structured format.",
+        "suggestion": "Restore the JSON response format: reply.code(503).send({ error: 'Service Unavailable', message: 'Service Unavailable', statusCode: 503 });"
+      }
+    ]
+  },
+  {
+    "url": "https://github.com/nestjs/nest/pull/18104",
+    "title": "fix(core): fail at startup for request-scoped class global enhancers",
+    "detected": true,
+    "seconds": 34.71517029399983,
+    "chunks": 1,
+    "traces": 32,
+    "findings": [
+      {
+        "filePath": "packages/core/scanner.ts",
+        "lineNumber": 713,
+        "code": "        if (",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The condition `isNil(instanceWrapper.instance) && !instanceWrapper.isDependencyTreeStatic()` only catches aliases and factories (which have nil instance). For a useClass provider, instanceWrapper.instance is the prototype (not nil), so the error is not thrown even when the dependency tree is request-scoped. The code then proceeds to register the half-built prototype as a global enhancer via applyProvidersMap.",
+        "suggestion": "Revert to checking only `!instanceWrapper.isDependencyTreeStatic()` to catch all provider kinds (useClass, useExisting, useFactory) that depend on request-scoped providers."
+      },
+      {
+        "filePath": "packages/core/scanner.ts",
+        "lineNumber": 730,
+        "code": "  private describeEnhancerProvider(wrapper: InstanceWrapper): string {",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The method now assumes non-alias providers are always 'useFactory', but useClass providers are also non-alias. The old implementation correctly distinguished useClass (when wrapper.inject is nil) from useFactory. This method is called when throwing the exception, so the error message will misidentify a useClass provider as a factory.",
+        "suggestion": "Restore the logic to check `isNil(wrapper.inject)` to identify useClass providers, and return the appropriate kind string."
+      },
+      {
+        "filePath": "packages/core/errors/messages.ts",
+        "lineNumber": 267,
+        "code": "  isAlias: boolean,",
+        "severity": "medium",
+        "category": "bug",
+        "comment": "The error message function now takes only isAlias (boolean) and provides two message variants: one for aliases (useExisting) and one for non-aliases (assumed to be useFactory). This loses the ability to give correct guidance for useClass providers, which would receive the factory-specific message 'Set scope: Scope.REQUEST on the factory provider.' instead of the correct 'Mark the class with @Injectable({ scope: Scope.REQUEST })'.",
+        "suggestion": "Restore the kind parameter ('useClass' | 'useExisting' | 'useFactory') to provide accurate remediation guidance for each provider type."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/core/scanner.ts",
+        "lineNumber": 713,
+        "code": "        if (",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The condition `isNil(instanceWrapper.instance) && !instanceWrapper.isDependencyTreeStatic()` only catches aliases and factories (which have nil instance). For a useClass provider, instanceWrapper.instance is the prototype (not nil), so the error is not thrown even when the dependency tree is request-scoped. The code then proceeds to register the half-built prototype as a global enhancer via applyProvidersMap.",
+        "suggestion": "Revert to checking only `!instanceWrapper.isDependencyTreeStatic()` to catch all provider kinds (useClass, useExisting, useFactory) that depend on request-scoped providers."
+      },
+      {
+        "filePath": "packages/core/scanner.ts",
+        "lineNumber": 730,
+        "code": "  private describeEnhancerProvider(wrapper: InstanceWrapper): string {",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The method now assumes non-alias providers are always 'useFactory', but useClass providers are also non-alias. The old implementation correctly distinguished useClass (when wrapper.inject is nil) from useFactory. This method is called when throwing the exception, so the error message will misidentify a useClass provider as a factory.",
+        "suggestion": "Restore the logic to check `isNil(wrapper.inject)` to identify useClass providers, and return the appropriate kind string."
+      },
+      {
+        "filePath": "packages/core/errors/messages.ts",
+        "lineNumber": 267,
+        "code": "  isAlias: boolean,",
+        "severity": "medium",
+        "category": "bug",
+        "comment": "The error message function now takes only isAlias (boolean) and provides two message variants: one for aliases (useExisting) and one for non-aliases (assumed to be useFactory). This loses the ability to give correct guidance for useClass providers, which would receive the factory-specific message 'Set scope: Scope.REQUEST on the factory provider.' instead of the correct 'Mark the class with @Injectable({ scope: Scope.REQUEST })'.",
+        "suggestion": "Restore the kind parameter ('useClass' | 'useExisting' | 'useFactory') to provide accurate remediation guidance for each provider type."
+      }
+    ]
+  },
+  {
+    "url": "https://github.com/vuejs/core/pull/15850",
+    "title": "fix(runtime-vapor): start a vapor slot vnode in a vdom outlet on a node of its own",
+    "detected": true,
+    "seconds": 19.509595236999914,
+    "chunks": 1,
+    "traces": 28,
+    "findings": [
+      {
+        "filePath": "packages/runtime-vapor/src/vdomInterop.ts",
+        "lineNumber": 699,
+        "code": "      insert((n2.el = n2.anchor = selfAnchor), container, anchor)",
+        "severity": "high",
+        "category": "bug",
+        "comment": "This change collapses vnode.el and vnode.anchor to the same node (selfAnchor). Previously, two separate text nodes were created: one for el (the fragment's start) and one for anchor (the fragment's end). VDOM fragments require distinct el and anchor nodes to represent the fragment's range. Making them the same node breaks fragment boundary detection, slot content manipulation, and transition logic that depends on el !== anchor.",
+        "suggestion": "Restore the two-node insertion: create a separate text node for el and keep selfAnchor as anchor, as the old code did."
+      },
+      {
+        "filePath": "packages/runtime-vapor/src/vdomInterop.ts",
+        "lineNumber": 3097,
+        "code": "    vnode.el = open || anchor",
+        "severity": "high",
+        "category": "bug",
+        "comment": "This change removes the creation of a start marker text node when no 'open' marker exists. Previously, `start = open || createTextNode()` ensured vnode.el always pointed to a valid start node (either the provided open marker or a newly created text node). Now vnode.el becomes the anchor when open is falsy, collapsing the slot's start and end markers. This breaks slot unmount/move logic that expects vnode.el !== vnode.anchor to identify the slot's content range.",
+        "suggestion": "Restore the start marker creation: create a text node when open is not provided, insert it before the fallback/close, and assign it to vnode.el."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/runtime-vapor/src/vdomInterop.ts",
+        "lineNumber": 699,
+        "code": "      insert((n2.el = n2.anchor = selfAnchor), container, anchor)",
+        "severity": "high",
+        "category": "bug",
+        "comment": "This change collapses vnode.el and vnode.anchor to the same node (selfAnchor). Previously, two separate text nodes were created: one for el (the fragment's start) and one for anchor (the fragment's end). VDOM fragments require distinct el and anchor nodes to represent the fragment's range. Making them the same node breaks fragment boundary detection, slot content manipulation, and transition logic that depends on el !== anchor.",
+        "suggestion": "Restore the two-node insertion: create a separate text node for el and keep selfAnchor as anchor, as the old code did."
+      },
+      {
+        "filePath": "packages/runtime-vapor/src/vdomInterop.ts",
+        "lineNumber": 3097,
+        "code": "    vnode.el = open || anchor",
+        "severity": "high",
+        "category": "bug",
+        "comment": "This change removes the creation of a start marker text node when no 'open' marker exists. Previously, `start = open || createTextNode()` ensured vnode.el always pointed to a valid start node (either the provided open marker or a newly created text node). Now vnode.el becomes the anchor when open is falsy, collapsing the slot's start and end markers. This breaks slot unmount/move logic that expects vnode.el !== vnode.anchor to identify the slot's content range.",
+        "suggestion": "Restore the start marker creation: create a text node when open is not provided, insert it before the fallback/close, and assign it to vnode.el."
+      }
+    ]
+  },
+  {
+    "url": "https://github.com/nestjs/nest/pull/18101",
+    "title": "fix(fastify): honor `return503OnClosing` during the shutdown hooks",
+    "detected": true,
+    "seconds": 12.54445071200002,
+    "chunks": 1,
+    "traces": 30,
+    "findings": [
+      {
+        "filePath": "packages/platform-fastify/adapters/fastify-adapter.ts",
+        "lineNumber": 197,
+        "code": "  private readonly openConnections = new Set<Duplex>();",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The `return503OnClosing` option (previously set at line 777) is no longer honored. Users who configured `return503OnClosing: true` in NestApplicationOptions will find that requests during shutdown no longer receive 503 responses. The option is accepted but silently ignored.",
+        "suggestion": "Either restore the `return503OnClosing` field and the onRequest hook that checks it, or remove the option from the type definition and documentation if the feature is intentionally deprecated."
+      },
+      {
+        "filePath": "packages/platform-fastify/adapters/fastify-adapter.ts",
+        "lineNumber": 758,
+        "code": "  public async close() {",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The `beforeClose()` method (previously at line 758-761) has been removed. If the NestJS framework or user code calls `adapter.beforeClose()` as part of the shutdown lifecycle, this will now fail with a TypeError (method not found). The method was setting `isShuttingDown = true` which was used by the onRequest hook to return 503 during shutdown.",
+        "suggestion": "Restore the `beforeClose()` method if it's part of the expected adapter interface, or verify that no callers exist in the framework codebase."
+      },
+      {
+        "filePath": "packages/platform-fastify/adapters/fastify-adapter.ts",
+        "lineNumber": 351,
+        "code": "    this.instance.addHook('onResponse', (request, reply, done) => {",
+        "severity": "medium",
+        "category": "bug",
+        "comment": "The onRequest hook that returned 503 during shutdown (previously lines 353-368) has been removed. This hook was specifically added to run before Nest middleware (via middie) to ensure 503 responses during the shutdown window. Without it, requests during shutdown will be processed normally instead of being rejected with 503, potentially causing errors as the application tears down.",
+        "suggestion": "Restore the onRequest hook with the shutdown check, using the `isClosing` flag (which is set in close()) instead of the removed `isShuttingDown` flag."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/platform-fastify/adapters/fastify-adapter.ts",
+        "lineNumber": 197,
+        "code": "  private readonly openConnections = new Set<Duplex>();",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The `return503OnClosing` option (previously set at line 777) is no longer honored. Users who configured `return503OnClosing: true` in NestApplicationOptions will find that requests during shutdown no longer receive 503 responses. The option is accepted but silently ignored.",
+        "suggestion": "Either restore the `return503OnClosing` field and the onRequest hook that checks it, or remove the option from the type definition and documentation if the feature is intentionally deprecated."
+      },
+      {
+        "filePath": "packages/platform-fastify/adapters/fastify-adapter.ts",
+        "lineNumber": 758,
+        "code": "  public async close() {",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The `beforeClose()` method (previously at line 758-761) has been removed. If the NestJS framework or user code calls `adapter.beforeClose()` as part of the shutdown lifecycle, this will now fail with a TypeError (method not found). The method was setting `isShuttingDown = true` which was used by the onRequest hook to return 503 during shutdown.",
+        "suggestion": "Restore the `beforeClose()` method if it's part of the expected adapter interface, or verify that no callers exist in the framework codebase."
+      },
+      {
+        "filePath": "packages/platform-fastify/adapters/fastify-adapter.ts",
+        "lineNumber": 351,
+        "code": "    this.instance.addHook('onResponse', (request, reply, done) => {",
+        "severity": "medium",
+        "category": "bug",
+        "comment": "The onRequest hook that returned 503 during shutdown (previously lines 353-368) has been removed. This hook was specifically added to run before Nest middleware (via middie) to ensure 503 responses during the shutdown window. Without it, requests during shutdown will be processed normally instead of being rejected with 503, potentially causing errors as the application tears down.",
+        "suggestion": "Restore the onRequest hook with the shutdown check, using the `isClosing` flag (which is set in close()) instead of the removed `isShuttingDown` flag."
+      }
+    ]
+  },
+  {
+    "url": "https://github.com/nestjs/nest/pull/18100",
+    "title": "fix(microservices): default server options like the client factory does",
+    "detected": true,
+    "seconds": 22.978123462999704,
+    "chunks": 1,
+    "traces": 10,
+    "findings": [
+      {
+        "filePath": "packages/microservices/server/server-factory.ts",
+        "lineNumber": 19,
+        "code": "    const { transport, options } = microserviceOptions as Exclude<",
+        "severity": "high",
+        "category": "bug",
+        "comment": "Removed the default value `= {}` for `options` in the destructuring. If `microserviceOptions` does not include an `options` property (which is valid for some transport configurations), `options` will be `undefined` instead of an empty object. This `undefined` value is then passed to server constructors (e.g., `ServerMqtt`, `ServerKafka`, `ServerGrpc`, etc.) which likely expect an object, potentially causing runtime errors like 'Cannot read properties of undefined'.",
+        "suggestion": "Restore the default value: `const { transport, options = {} } = microserviceOptions as Exclude<MicroserviceOptions, CustomStrategy>;`"
+      },
+      {
+        "filePath": "packages/microservices/server/server-factory.ts",
+        "lineNumber": 34,
+        "code": "        return new ServerGrpc(options);",
+        "severity": "medium",
+        "category": "correctness",
+        "comment": "Removed the type cast `as GrpcOptions['options']` when passing `options` to `ServerGrpc`. The `ServerGrpc` constructor likely expects the specific `GrpcOptions['options']` shape (e.g., `GrpcClientOptions` or similar). Passing the raw `options` (which could be `undefined` due to the missing default, or a broader `MicroserviceOptions['options']` type) reduces type safety and may cause runtime errors if the constructor accesses properties that don't exist on the broader type.",
+        "suggestion": "Restore the appropriate type cast for GRPC, or verify that `ServerGrpc` constructor accepts the broader `MicroserviceOptions['options']` type. If `GrpcOptions` is no longer used, ensure the import removal is intentional and the constructor signature matches the new input."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/microservices/server/server-factory.ts",
+        "lineNumber": 19,
+        "code": "    const { transport, options } = microserviceOptions as Exclude<",
+        "severity": "high",
+        "category": "bug",
+        "comment": "Removed the default value `= {}` for `options` in the destructuring. If `microserviceOptions` does not include an `options` property (which is valid for some transport configurations), `options` will be `undefined` instead of an empty object. This `undefined` value is then passed to server constructors (e.g., `ServerMqtt`, `ServerKafka`, `ServerGrpc`, etc.) which likely expect an object, potentially causing runtime errors like 'Cannot read properties of undefined'.",
+        "suggestion": "Restore the default value: `const { transport, options = {} } = microserviceOptions as Exclude<MicroserviceOptions, CustomStrategy>;`"
+      },
+      {
+        "filePath": "packages/microservices/server/server-factory.ts",
+        "lineNumber": 34,
+        "code": "        return new ServerGrpc(options);",
+        "severity": "medium",
+        "category": "correctness",
+        "comment": "Removed the type cast `as GrpcOptions['options']` when passing `options` to `ServerGrpc`. The `ServerGrpc` constructor likely expects the specific `GrpcOptions['options']` shape (e.g., `GrpcClientOptions` or similar). Passing the raw `options` (which could be `undefined` due to the missing default, or a broader `MicroserviceOptions['options']` type) reduces type safety and may cause runtime errors if the constructor accesses properties that don't exist on the broader type.",
+        "suggestion": "Restore the appropriate type cast for GRPC, or verify that `ServerGrpc` constructor accepts the broader `MicroserviceOptions['options']` type. If `GrpcOptions` is no longer used, ensure the import removal is intentional and the constructor signature matches the new input."
+      }
+    ]
   }
 ]

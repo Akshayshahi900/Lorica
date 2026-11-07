@@ -7,7 +7,6 @@ import {
   GitPullRequest,
   Clock,
   ShieldAlert,
-  TrendingUp,
   Zap,
   AlertTriangle,
   CheckCircle2,

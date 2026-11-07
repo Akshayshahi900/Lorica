@@ -9,7 +9,6 @@ import {
   MessageSquare,
   Plus,
   CheckCircle2,
-  ExternalLink,
 } from "lucide-react";
 
 import { fetchPullRequests, PullRequestRecord } from "@/lib/pull-requests";
