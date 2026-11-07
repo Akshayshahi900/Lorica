@@ -96,9 +96,6 @@ async function main() {
   // A dedicated queue prevents a separately running `pnpm dev` worker from
   // consuming this test job.
   const queueName = `code-index-smoke-${process.pid}`;
-  // The smoke test is intentionally verbose. Set LOG_INDEX_DETAILS=false to
-  // suppress per-file output, or LOG_INDEX_AST=true to print raw Tree-sitter ASTs.
-  process.env.LOG_INDEX_DETAILS ??= "true";
   process.env.INDEX_QUEUE_NAME = queueName;
   const { indexWorker } = await import("./codeIndex.worker.js");
   const localRepositoryUrl = pathToFileURL(

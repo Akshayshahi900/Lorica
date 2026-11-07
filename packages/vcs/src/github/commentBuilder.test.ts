@@ -1,7 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { renderAgentPrompt, renderReview } from "./commentBuilder";
-import type { ReviewFinding } from "../../../types/src/types";
+import type { ReviewFinding } from "@lorica/types";
 
 const finding: ReviewFinding = {
   filePath: "src/app.ts",

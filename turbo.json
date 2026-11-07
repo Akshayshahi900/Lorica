@@ -31,12 +31,6 @@
       "env": ["*"]
     },
 
-    "dev:worker": {
-      "cache": false,
-      "persistent": true,
-      "env": ["*"]
-    },
-
     "test:index": {
       "cache": false,
       "env": ["*"]

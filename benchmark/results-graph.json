@@ -884,5 +884,693 @@
         "suggestion": "Restore the appropriate type cast for GRPC, or verify that `ServerGrpc` constructor accepts the broader `MicroserviceOptions['options']` type. If `GrpcOptions` is no longer used, ensure the import removal is intentional and the constructor signature matches the new input."
       }
     ]
+  },
+  {
+    "url": "https://github.com/nestjs/nest/pull/18095",
+    "title": "fix(microservices): fail mqtt requests whose publish fails",
+    "detected": true,
+    "seconds": 1300.3763011539997,
+    "chunks": 1,
+    "traces": 29,
+    "findings": [
+      {
+        "filePath": "packages/microservices/client/client-mqtt.ts",
+        "lineNumber": 353,
+        "code": ");",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The error callback argument was removed from the MQTT client method call (likely publish/subscribe). This callback handled asynchronous errors from the broker (e.g., subscription acknowledgment failures) by calling undoBookkeeping() and propagating the error to the user's callback. Without it, async broker errors are silently dropped, undoBookkeeping() never runs (leaving bookkeeping state inconsistent), and callers never receive error notifications. The catch block only catches synchronous errors, not async broker acknowledgments.",
+        "suggestion": "Restore the error callback as the 4th argument to the MQTT method call, or implement equivalent async error handling that calls undoBookkeeping() and invokes the user callback with the error when the broker reports a failure."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/microservices/client/client-mqtt.ts",
+        "lineNumber": 353,
+        "code": ");",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The error callback argument was removed from the MQTT client method call (likely publish/subscribe). This callback handled asynchronous errors from the broker (e.g., subscription acknowledgment failures) by calling undoBookkeeping() and propagating the error to the user's callback. Without it, async broker errors are silently dropped, undoBookkeeping() never runs (leaving bookkeeping state inconsistent), and callers never receive error notifications. The catch block only catches synchronous errors, not async broker acknowledgments.",
+        "suggestion": "Restore the error callback as the 4th argument to the MQTT method call, or implement equivalent async error handling that calls undoBookkeeping() and invokes the user callback with the error when the broker reports a failure."
+      }
+    ]
+  },
+  {
+    "url": "https://github.com/remix-run/react-router/pull/15620",
+    "title": "fix(node): write file sessions atomically",
+    "detected": true,
+    "seconds": 9.729283479000442,
+    "chunks": 1,
+    "traces": 16,
+    "findings": [
+      {
+        "filePath": "packages/react-router-node/sessions/fileStorage.ts",
+        "lineNumber": 94,
+        "code": "      await fsp.writeFile(file, content, \"utf-8\");",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The atomic write pattern was replaced with a direct write. The original code wrote to a temporary file, preserved existing file permissions, then atomically renamed it into place. This prevented concurrent readers from seeing partially written session data and preserved file permissions. The new direct write exposes a race condition where a concurrent readData call can read incomplete/corrupted session data. It also loses the permission preservation logic (mode & 0o777).",
+        "suggestion": "Restore the atomic write pattern: create a temp file in a sibling .tmp- directory, write content there, preserve permissions with chmod if the file existed, then rename atomically. Clean up the temp directory in a finally block."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/react-router-node/sessions/fileStorage.ts",
+        "lineNumber": 94,
+        "code": "      await fsp.writeFile(file, content, \"utf-8\");",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The atomic write pattern was replaced with a direct write. The original code wrote to a temporary file, preserved existing file permissions, then atomically renamed it into place. This prevented concurrent readers from seeing partially written session data and preserved file permissions. The new direct write exposes a race condition where a concurrent readData call can read incomplete/corrupted session data. It also loses the permission preservation logic (mode & 0o777).",
+        "suggestion": "Restore the atomic write pattern: create a temp file in a sibling .tmp- directory, write content there, preserve permissions with chmod if the file existed, then rename atomically. Clean up the temp directory in a finally block."
+      }
+    ]
+  },
+  {
+    "url": "https://github.com/vuejs/core/pull/15846",
+    "title": "fix(runtime-vapor): finish a deactivation leave where the element is after a KeepAlive move",
+    "detected": true,
+    "seconds": 12.776038642000406,
+    "chunks": 1,
+    "traces": 27,
+    "findings": [
+      {
+        "filePath": "packages/runtime-vapor/src/block.ts",
+        "lineNumber": 286,
+        "code": "              parent.insertBefore(block, anchor as Node)",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The else block now unconditionally calls `parent.insertBefore(block, anchor)` without checking if `anchor` is still a child of `parent`. The removed condition `!anchor || anchor.parentNode === parent` specifically handled the case where a KeepAlive reactivation during a leave transition moved the anchor to a different parent (e.g., KeepAlive's hidden storage). Without this guard, if the anchor has been moved elsewhere, `insertBefore` will throw a DOMException (\"The node before which the new node is to be inserted is not a child of this node\") or corrupt the DOM by inserting into the wrong parent.",
+        "suggestion": "Restore the anchor parent check. Either keep the original condition `!anchor || anchor.parentNode === parent` or add an explicit check before insertBefore: `if (anchor && anchor.parentNode !== parent) return; parent.insertBefore(block, anchor as Node);`"
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/runtime-vapor/src/block.ts",
+        "lineNumber": 286,
+        "code": "              parent.insertBefore(block, anchor as Node)",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The else block now unconditionally calls `parent.insertBefore(block, anchor)` without checking if `anchor` is still a child of `parent`. The removed condition `!anchor || anchor.parentNode === parent` specifically handled the case where a KeepAlive reactivation during a leave transition moved the anchor to a different parent (e.g., KeepAlive's hidden storage). Without this guard, if the anchor has been moved elsewhere, `insertBefore` will throw a DOMException (\"The node before which the new node is to be inserted is not a child of this node\") or corrupt the DOM by inserting into the wrong parent.",
+        "suggestion": "Restore the anchor parent check. Either keep the original condition `!anchor || anchor.parentNode === parent` or add an explicit check before insertBefore: `if (anchor && anchor.parentNode !== parent) return; parent.insertBefore(block, anchor as Node);`"
+      }
+    ]
+  },
+  {
+    "url": "https://github.com/vuejs/core/pull/15844",
+    "title": "fix(runtime-vapor): render the deferred out-in branch where the fragment is after a KeepAlive move",
+    "detected": true,
+    "seconds": 21.624370300999843,
+    "chunks": 1,
+    "traces": 27,
+    "findings": [
+      {
+        "filePath": "packages/runtime-vapor/src/components/Transition.ts",
+        "lineNumber": 686,
+        "code": "            parent,",
+        "severity": "high",
+        "category": "bug",
+        "comment": "Changed from `liveParent` to `parent` when calling `renderBranch`. The `liveParent` variable was computed as `frag.anchor.parentNode` to handle the case where KeepAlive may have moved the fragment to a different parent. Using `parent` directly could render the new branch into the wrong parent if KeepAlive has relocated the fragment, causing DOM corruption or lost nodes.",
+        "suggestion": "Restore the `liveParent` computation and use it for renderBranch, or add a check that the fragment's anchor is still in the expected parent before rendering."
+      },
+      {
+        "filePath": "packages/runtime-vapor/src/components/Transition.ts",
+        "lineNumber": 697,
+        "code": "            parent,",
+        "severity": "high",
+        "category": "bug",
+        "comment": "Same issue as line 686 - changed from `liveParent` to `parent` in the second `renderBranch` call. This affects the non-deferred branch rendering path and has the same KeepAlive relocation problem.",
+        "suggestion": "Use `liveParent` (computed as `frag.anchor.parentNode`) instead of `parent` to ensure rendering into the fragment's actual current parent."
+      },
+      {
+        "filePath": "packages/runtime-vapor/src/block.ts",
+        "lineNumber": 323,
+        "code": "     // fragment",
+        "severity": "medium",
+        "category": "bug",
+        "comment": "Removed the check `if (isTransitionEnabled && (block as DynamicFragment).leaving) return` that prevented moving a leaving branch during transition. Without this, a branch that is currently animating out (leaving) could be moved by the `move()` function, breaking the leave animation and potentially causing DOM errors since the leaving branch's nodes are being managed by the transition system.",
+        "suggestion": "Re-add the leaving branch check in move(), or implement alternative logic to skip moving fragments that are in the process of leaving."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/runtime-vapor/src/components/Transition.ts",
+        "lineNumber": 686,
+        "code": "            parent,",
+        "severity": "high",
+        "category": "bug",
+        "comment": "Changed from `liveParent` to `parent` when calling `renderBranch`. The `liveParent` variable was computed as `frag.anchor.parentNode` to handle the case where KeepAlive may have moved the fragment to a different parent. Using `parent` directly could render the new branch into the wrong parent if KeepAlive has relocated the fragment, causing DOM corruption or lost nodes.",
+        "suggestion": "Restore the `liveParent` computation and use it for renderBranch, or add a check that the fragment's anchor is still in the expected parent before rendering."
+      },
+      {
+        "filePath": "packages/runtime-vapor/src/components/Transition.ts",
+        "lineNumber": 697,
+        "code": "            parent,",
+        "severity": "high",
+        "category": "bug",
+        "comment": "Same issue as line 686 - changed from `liveParent` to `parent` in the second `renderBranch` call. This affects the non-deferred branch rendering path and has the same KeepAlive relocation problem.",
+        "suggestion": "Use `liveParent` (computed as `frag.anchor.parentNode`) instead of `parent` to ensure rendering into the fragment's actual current parent."
+      },
+      {
+        "filePath": "packages/runtime-vapor/src/block.ts",
+        "lineNumber": 323,
+        "code": "     // fragment",
+        "severity": "medium",
+        "category": "bug",
+        "comment": "Removed the check `if (isTransitionEnabled && (block as DynamicFragment).leaving) return` that prevented moving a leaving branch during transition. Without this, a branch that is currently animating out (leaving) could be moved by the `move()` function, breaking the leave animation and potentially causing DOM errors since the leaving branch's nodes are being managed by the transition system.",
+        "suggestion": "Re-add the leaving branch check in move(), or implement alternative logic to skip moving fragments that are in the process of leaving."
+      }
+    ]
+  },
+  {
+    "url": "https://github.com/nestjs/nest/pull/18154",
+    "title": "fix(core): treat fastify validation errors as http errors",
+    "detected": true,
+    "seconds": 22.422501101999543,
+    "chunks": 1,
+    "traces": 16,
+    "findings": [
+      {
+        "filePath": "packages/core/exceptions/base-exception-filter.ts",
+        "lineNumber": 94,
+        "code": "      err.constructor?.name === 'FastifyError' &&",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The condition was changed to only check for `err.constructor?.name === 'FastifyError'`, removing the `err.code === 'FST_ERR_VALIDATION'` check. The comment above explains that Fastify's schema validation errors are plain errors (not FastifyError instances) with this code. These validation errors will now fall through to `handleUnknownError` instead of being handled as validation errors, likely resulting in incorrect HTTP status codes or error responses.",
+        "suggestion": "Restore the check for `err.code === 'FST_ERR_VALIDATION'` to handle plain Fastify validation errors: `(err.constructor?.name === 'FastifyError' || err.code === 'FST_ERR_VALIDATION') &&`"
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/core/exceptions/base-exception-filter.ts",
+        "lineNumber": 94,
+        "code": "      err.constructor?.name === 'FastifyError' &&",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The condition was changed to only check for `err.constructor?.name === 'FastifyError'`, removing the `err.code === 'FST_ERR_VALIDATION'` check. The comment above explains that Fastify's schema validation errors are plain errors (not FastifyError instances) with this code. These validation errors will now fall through to `handleUnknownError` instead of being handled as validation errors, likely resulting in incorrect HTTP status codes or error responses.",
+        "suggestion": "Restore the check for `err.code === 'FST_ERR_VALIDATION'` to handle plain Fastify validation errors: `(err.constructor?.name === 'FastifyError' || err.code === 'FST_ERR_VALIDATION') &&`"
+      }
+    ]
+  },
+  {
+    "url": "https://github.com/vitejs/vite/pull/23728",
+    "title": "fix(server): handle socket errors on upgrade requests not taken by the HMR server",
+    "detected": true,
+    "seconds": 12.359529081999325,
+    "chunks": 1,
+    "traces": 32,
+    "findings": [
+      {
+        "filePath": "packages/vite/src/node/server/ws.ts",
+        "lineNumber": 234,
+        "code": "      }",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The removed else block added a noop error handler to sockets for non-HMR upgrade requests. The comment explains: 'Node.js detaches its own socket error handler before emitting `upgrade`, so a socket that no listener takes over would crash the process when the client resets the connection (e.g. ECONNRESET).' By removing this handler, any upgrade request that doesn't match the HMR path (e.g., proxy upgrades, plugin upgrades, or invalid paths) will have no error handler, causing unhandled 'error' events that crash the Node.js process on ECONNRESET.",
+        "suggestion": "Restore the else block with the socket error handler, or add a default error handler for all upgrade requests that aren't handled by handleUpgrade."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/vite/src/node/server/ws.ts",
+        "lineNumber": 234,
+        "code": "      }",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The removed else block added a noop error handler to sockets for non-HMR upgrade requests. The comment explains: 'Node.js detaches its own socket error handler before emitting `upgrade`, so a socket that no listener takes over would crash the process when the client resets the connection (e.g. ECONNRESET).' By removing this handler, any upgrade request that doesn't match the HMR path (e.g., proxy upgrades, plugin upgrades, or invalid paths) will have no error handler, causing unhandled 'error' events that crash the Node.js process on ECONNRESET.",
+        "suggestion": "Restore the else block with the socket error handler, or add a default error handler for all upgrade requests that aren't handled by handleUpgrade."
+      }
+    ]
+  },
+  {
+    "url": "https://github.com/vuejs/core/pull/15841",
+    "title": "fix(runtime-vapor): support hasOwnProperty on props, attrs and slot props",
+    "detected": true,
+    "seconds": 12.107313608999364,
+    "chunks": 1,
+    "traces": 27,
+    "findings": [
+      {
+        "filePath": "packages/runtime-vapor/src/componentProps.ts",
+        "lineNumber": 246,
+        "code": "    return instance.propsValues[key]",
+        "severity": "high",
+        "category": "bug",
+        "comment": "Removed the fallback to Object.prototype that made `props.hasOwnProperty()` work like vdom. Now accessing a non-existent prop returns undefined instead of falling back to Object.prototype, which breaks the expected behavior where `props.hasOwnProperty('toString')` should return true (since it exists on Object.prototype).",
+        "suggestion": "Restore the fallback to Object.prototype for keys not found in propsValues, or implement hasOwnProperty trap on the proxy to handle this correctly."
+      },
+      {
+        "filePath": "packages/runtime-vapor/src/componentProps.ts",
+        "lineNumber": 277,
+        "code": "      return instance.propsValues[key]",
+        "severity": "high",
+        "category": "bug",
+        "comment": "Removed the hasOwn check and Object.prototype fallback for attrs. Now `attrs.hasOwnProperty('toString')` will return false instead of true, breaking compatibility with vdom behavior. Also, accessing a non-existent attr returns undefined without checking if it's actually an own property.",
+        "suggestion": "Restore the hasOwn check before returning the value, and add back the Object.prototype fallback for keys not in propsValues."
+      },
+      {
+        "filePath": "packages/runtime-vapor/src/vdomInterop.ts",
+        "lineNumber": 1020,
+        "code": "    if (key in target.value) {",
+        "severity": "high",
+        "category": "bug",
+        "comment": "Changed from `hasOwn(target.value, key)` to `key in target.value`. This is a semantic breaking change: `hasOwn` checks only own properties, while `key in` checks the entire prototype chain. This means inherited properties (e.g., from Object.prototype) will now return a property descriptor, causing incorrect behavior for slot props proxy.",
+        "suggestion": "Revert to using `hasOwn(target.value, key)` or import and use `Object.prototype.hasOwnProperty.call(target.value, key)` to check only own properties."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/runtime-vapor/src/componentProps.ts",
+        "lineNumber": 246,
+        "code": "    return instance.propsValues[key]",
+        "severity": "high",
+        "category": "bug",
+        "comment": "Removed the fallback to Object.prototype that made `props.hasOwnProperty()` work like vdom. Now accessing a non-existent prop returns undefined instead of falling back to Object.prototype, which breaks the expected behavior where `props.hasOwnProperty('toString')` should return true (since it exists on Object.prototype).",
+        "suggestion": "Restore the fallback to Object.prototype for keys not found in propsValues, or implement hasOwnProperty trap on the proxy to handle this correctly."
+      },
+      {
+        "filePath": "packages/runtime-vapor/src/componentProps.ts",
+        "lineNumber": 277,
+        "code": "      return instance.propsValues[key]",
+        "severity": "high",
+        "category": "bug",
+        "comment": "Removed the hasOwn check and Object.prototype fallback for attrs. Now `attrs.hasOwnProperty('toString')` will return false instead of true, breaking compatibility with vdom behavior. Also, accessing a non-existent attr returns undefined without checking if it's actually an own property.",
+        "suggestion": "Restore the hasOwn check before returning the value, and add back the Object.prototype fallback for keys not in propsValues."
+      },
+      {
+        "filePath": "packages/runtime-vapor/src/vdomInterop.ts",
+        "lineNumber": 1020,
+        "code": "    if (key in target.value) {",
+        "severity": "high",
+        "category": "bug",
+        "comment": "Changed from `hasOwn(target.value, key)` to `key in target.value`. This is a semantic breaking change: `hasOwn` checks only own properties, while `key in` checks the entire prototype chain. This means inherited properties (e.g., from Object.prototype) will now return a property descriptor, causing incorrect behavior for slot props proxy.",
+        "suggestion": "Revert to using `hasOwn(target.value, key)` or import and use `Object.prototype.hasOwnProperty.call(target.value, key)` to check only own properties."
+      }
+    ]
+  },
+  {
+    "url": "https://github.com/honojs/hono/pull/5547",
+    "title": "fix(reg-exp-router): support line terminators in route paths for v5",
+    "detected": true,
+    "seconds": 110.0788763070004,
+    "chunks": 1,
+    "traces": 15,
+    "findings": [
+      {
+        "filePath": "src/router/reg-exp-router/node.ts",
+        "lineNumber": 4,
+        "code": "export const ONLY_WILDCARD_REG_EXP_STR = '.*'",
+        "severity": "medium",
+        "category": "bug",
+        "comment": "Changed ONLY_WILDCARD_REG_EXP_STR from '[^]*' to '.*' and TAIL_WILDCARD_REG_EXP_STR (line 6) from '(?:|/[^]*)' to '(?:|/.*)'. Both now use '.*' which does NOT match newlines without the 's' flag. However, PREFIXED_WILDCARD_REG_EXP_STR (line 5) remains '[^/]*' which DOES match newlines (negated character class). This creates inconsistent wildcard behavior: 'x*' (prefixed) matches newlines, but '*' (only) and '/*' (tail) do not. The trie.ts change (removing 's' flag from tokenizing regex) suggests the final route-matching regex also lacks 's' flag, making this inconsistency a real bug for any path containing newlines.",
+        "suggestion": "Make all wildcard patterns consistent. Options: (1) Change ONLY_WILDCARD_REG_EXP_STR to '[\\s\\S]*' and TAIL_WILDCARD_REG_EXP_STR to '(?:|/[\\s\\S]*)' to match newlines without 's' flag, like the old '[^]*' did. (2) Or change PREFIXED_WILDCARD_REG_EXP_STR to '[^/]*' and ensure the final regex uses 's' flag. (3) Or change PREFIXED_WILDCARD_REG_EXP_STR to '[^/]*' with a note that it behaves differently."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "src/router/reg-exp-router/node.ts",
+        "lineNumber": 4,
+        "code": "export const ONLY_WILDCARD_REG_EXP_STR = '.*'",
+        "severity": "medium",
+        "category": "bug",
+        "comment": "Changed ONLY_WILDCARD_REG_EXP_STR from '[^]*' to '.*' and TAIL_WILDCARD_REG_EXP_STR (line 6) from '(?:|/[^]*)' to '(?:|/.*)'. Both now use '.*' which does NOT match newlines without the 's' flag. However, PREFIXED_WILDCARD_REG_EXP_STR (line 5) remains '[^/]*' which DOES match newlines (negated character class). This creates inconsistent wildcard behavior: 'x*' (prefixed) matches newlines, but '*' (only) and '/*' (tail) do not. The trie.ts change (removing 's' flag from tokenizing regex) suggests the final route-matching regex also lacks 's' flag, making this inconsistency a real bug for any path containing newlines.",
+        "suggestion": "Make all wildcard patterns consistent. Options: (1) Change ONLY_WILDCARD_REG_EXP_STR to '[\\s\\S]*' and TAIL_WILDCARD_REG_EXP_STR to '(?:|/[\\s\\S]*)' to match newlines without 's' flag, like the old '[^]*' did. (2) Or change PREFIXED_WILDCARD_REG_EXP_STR to '[^/]*' and ensure the final regex uses 's' flag. (3) Or change PREFIXED_WILDCARD_REG_EXP_STR to '[^/]*' with a note that it behaves differently."
+      }
+    ]
+  },
+  {
+    "url": "https://github.com/vuejs/core/pull/15839",
+    "title": "fix(vapor): read unknown identifiers from props in templates and css vars",
+    "detected": true,
+    "seconds": 52.46991087799985,
+    "chunks": 1,
+    "traces": 26,
+    "findings": [
+      {
+        "filePath": "packages/runtime-vapor/src/helpers/useCssVars.ts",
+        "lineNumber": 43,
+        "code": "vars = extend({}, getter())",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The getter is now called without arguments, but the removed comment explicitly states: 'the compiled getter reads identifiers the compiler couldn't resolve from `_ctx`, which can only be props'. The old code passed `instance.props` as context via `getVars = () => getter(instance.props)`. Compiled getters that expect to receive props as their first parameter (to access `_ctx.someProp`) will now receive `undefined`, causing runtime errors when accessing properties on `_ctx`.",
+        "suggestion": "Either restore the `getVars` wrapper that passes `instance.props` to the getter, or update the compiler to generate getters that don't require a context argument."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/runtime-vapor/src/helpers/useCssVars.ts",
+        "lineNumber": 43,
+        "code": "vars = extend({}, getter())",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The getter is now called without arguments, but the removed comment explicitly states: 'the compiled getter reads identifiers the compiler couldn't resolve from `_ctx`, which can only be props'. The old code passed `instance.props` as context via `getVars = () => getter(instance.props)`. Compiled getters that expect to receive props as their first parameter (to access `_ctx.someProp`) will now receive `undefined`, causing runtime errors when accessing properties on `_ctx`.",
+        "suggestion": "Either restore the `getVars` wrapper that passes `instance.props` to the getter, or update the compiler to generate getters that don't require a context argument."
+      }
+    ]
+  },
+  {
+    "url": "https://github.com/vuejs/core/pull/15835",
+    "title": "fix(runtime-vapor): support hasOwnProperty on the slots object like vdom",
+    "detected": true,
+    "seconds": 749.218557519,
+    "chunks": 1,
+    "traces": 27,
+    "findings": [
+      {
+        "filePath": "packages/runtime-vapor/src/componentSlots.ts",
+        "lineNumber": 207,
+        "code": "  get: getSlot,",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The get handler no longer falls back to Object.prototype for keys not found in slots. This breaks access to built-in methods like hasOwnProperty, toString, valueOf, etc. on the slots proxy. The removed comment explicitly states this fallback was needed so 'slots.hasOwnProperty() works like vdom'. Code calling slots.hasOwnProperty('foo') will now try to retrieve a slot named 'hasOwnProperty' instead of invoking the method.",
+        "suggestion": "Restore the fallback: get: (target, key: string) => getSlot(target, key) || (Object.prototype as any)[key]"
+      },
+      {
+        "filePath": "packages/runtime-vapor/src/vdomInterop.ts",
+        "lineNumber": 1062,
+        "code": "    return slot",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "Same issue as componentSlots.ts - the vaporSlotsProxyHandler get trap no longer falls back to Object.prototype. This breaks built-in method access on the slots proxy used for VDOM interop. The original code had 'return slot || (Object.prototype as any)[key]' to maintain compatibility.",
+        "suggestion": "Restore the fallback: return slot || (Object.prototype as any)[key]"
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/runtime-vapor/src/componentSlots.ts",
+        "lineNumber": 207,
+        "code": "  get: getSlot,",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The get handler no longer falls back to Object.prototype for keys not found in slots. This breaks access to built-in methods like hasOwnProperty, toString, valueOf, etc. on the slots proxy. The removed comment explicitly states this fallback was needed so 'slots.hasOwnProperty() works like vdom'. Code calling slots.hasOwnProperty('foo') will now try to retrieve a slot named 'hasOwnProperty' instead of invoking the method.",
+        "suggestion": "Restore the fallback: get: (target, key: string) => getSlot(target, key) || (Object.prototype as any)[key]"
+      },
+      {
+        "filePath": "packages/runtime-vapor/src/vdomInterop.ts",
+        "lineNumber": 1062,
+        "code": "    return slot",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "Same issue as componentSlots.ts - the vaporSlotsProxyHandler get trap no longer falls back to Object.prototype. This breaks built-in method access on the slots proxy used for VDOM interop. The original code had 'return slot || (Object.prototype as any)[key]' to maintain compatibility.",
+        "suggestion": "Restore the fallback: return slot || (Object.prototype as any)[key]"
+      }
+    ]
+  },
+  {
+    "url": "https://github.com/TanStack/query/pull/11945",
+    "title": "fix(mutation-observer): snapshot mutateOptions before dispatching callbacks",
+    "detected": true,
+    "seconds": 41.572599030000156,
+    "chunks": 1,
+    "traces": 28,
+    "findings": [
+      {
+        "filePath": "packages/query-core/src/mutationObserver.ts",
+        "lineNumber": 262,
+        "code": "this.#mutateOptions.onSuccess?.(",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The PR removes the snapshot of `mutateOptions` before dispatching callbacks. The removed comment explicitly documents the reentrancy hazard: if a callback (e.g., onSuccess) calls `mutate()` again, it overwrites `this.#mutateOptions` in place. Without the snapshot, subsequent callbacks (onSettled, onError) fire with the *next* mutation's options but the *current* mutation's data/variables, causing data corruption and incorrect callback arguments. This affects all four callback invocations (onSuccess, onSettled, onError, onSettled) at lines 262, 272, 284, 294.",
+        "suggestion": "Restore the snapshot before the callback block: `const mutateOptions = this.#mutateOptions` and use `mutateOptions` in all callback invocations instead of `this.#mutateOptions`."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/query-core/src/mutationObserver.ts",
+        "lineNumber": 262,
+        "code": "this.#mutateOptions.onSuccess?.(",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The PR removes the snapshot of `mutateOptions` before dispatching callbacks. The removed comment explicitly documents the reentrancy hazard: if a callback (e.g., onSuccess) calls `mutate()` again, it overwrites `this.#mutateOptions` in place. Without the snapshot, subsequent callbacks (onSettled, onError) fire with the *next* mutation's options but the *current* mutation's data/variables, causing data corruption and incorrect callback arguments. This affects all four callback invocations (onSuccess, onSettled, onError, onSettled) at lines 262, 272, 284, 294.",
+        "suggestion": "Restore the snapshot before the callback block: `const mutateOptions = this.#mutateOptions` and use `mutateOptions` in all callback invocations instead of `this.#mutateOptions`."
+      }
+    ]
+  },
+  {
+    "url": "https://github.com/vuejs/core/pull/15834",
+    "title": "fix(compiler-vapor): wrap unref in parentheses for new expressions",
+    "detected": true,
+    "seconds": 13.310406134000049,
+    "chunks": 1,
+    "traces": 26,
+    "findings": [
+      {
+        "filePath": "packages/compiler-vapor/src/generators/expression.ts",
+        "lineNumber": 308,
+        "code": "    return `${helper('unref')}(${raw})`",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The `unref` function no longer wraps the call in parentheses when the identifier appears in a `new` expression context. The old code checked `isInNewExpression(parentStack)` and returned `(${wrapped})` to ensure correct operator precedence. Without this, generated code like `new _unref(Foo)()` would be parsed as `new (_unref(Foo))()` — attempting to construct the `unref` function itself — instead of the intended `(_unref(Foo))()` which calls `unref(Foo)` first then constructs the result.",
+        "suggestion": "Restore the `isInNewExpression` check and conditional parentheses wrapping. Re-add the import for `isInNewExpression` and update the `unref` function to:\n\n```js\nfunction unref() {\n  const wrapped = `${helper('unref')}(${raw})`\n  return parentStack && isInNewExpression(parentStack)\n    ? `(${wrapped})`\n    : wrapped\n}\n```"
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/compiler-vapor/src/generators/expression.ts",
+        "lineNumber": 308,
+        "code": "    return `${helper('unref')}(${raw})`",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The `unref` function no longer wraps the call in parentheses when the identifier appears in a `new` expression context. The old code checked `isInNewExpression(parentStack)` and returned `(${wrapped})` to ensure correct operator precedence. Without this, generated code like `new _unref(Foo)()` would be parsed as `new (_unref(Foo))()` — attempting to construct the `unref` function itself — instead of the intended `(_unref(Foo))()` which calls `unref(Foo)` first then constructs the result.",
+        "suggestion": "Restore the `isInNewExpression` check and conditional parentheses wrapping. Re-add the import for `isInNewExpression` and update the `unref` function to:\n\n```js\nfunction unref() {\n  const wrapped = `${helper('unref')}(${raw})`\n  return parentStack && isInNewExpression(parentStack)\n    ? `(${wrapped})`\n    : wrapped\n}\n```"
+      }
+    ]
+  },
+  {
+    "url": "https://github.com/vitejs/vite/pull/23713",
+    "title": "fix(bundled-dev): include user `import.meta.env.*` defines in the `import.meta.env` object",
+    "detected": true,
+    "seconds": 25.183239155999384,
+    "chunks": 1,
+    "traces": 29,
+    "findings": [
+      {
+        "filePath": "packages/vite/src/node/plugins/define.ts",
+        "lineNumber": 58,
+        "code": "      if (isBuild && key.startsWith('import.meta.env.')) {",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "Changed condition from `isBundled` to `isBuild`. These flags have different meanings: `isBuild` is true for any `vite build` command, while `isBundled` indicates the output is actually bundled. In library mode builds (`vite build --lib`), `isBuild` is true but `isBundled` is false. This change causes `import.meta.env.*` defines to be added to `userDefineEnv` during non-bundled builds, which can lead to duplicate or incorrect define replacements since the bundling-time replacement logic may not apply.",
+        "suggestion": "Revert to `isBundled` or use a condition that correctly captures when bundling occurs. If the intent was to fix a specific case, ensure the condition matches the actual bundling behavior, not just the build command."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/vite/src/node/plugins/define.ts",
+        "lineNumber": 58,
+        "code": "      if (isBuild && key.startsWith('import.meta.env.')) {",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "Changed condition from `isBundled` to `isBuild`. These flags have different meanings: `isBuild` is true for any `vite build` command, while `isBundled` indicates the output is actually bundled. In library mode builds (`vite build --lib`), `isBuild` is true but `isBundled` is false. This change causes `import.meta.env.*` defines to be added to `userDefineEnv` during non-bundled builds, which can lead to duplicate or incorrect define replacements since the bundling-time replacement logic may not apply.",
+        "suggestion": "Revert to `isBundled` or use a condition that correctly captures when bundling occurs. If the intent was to fix a specific case, ensure the condition matches the actual bundling behavior, not just the build command."
+      }
+    ]
+  },
+  {
+    "url": "https://github.com/vuejs/core/pull/15830",
+    "title": "fix(runtime-vapor): stringify symbol input values like vdom",
+    "detected": true,
+    "seconds": 15.565584494000301,
+    "chunks": 1,
+    "traces": 27,
+    "findings": [
+      {
+        "filePath": "packages/runtime-vapor/src/dom/prop.ts",
+        "lineNumber": 501,
+        "code": "  const newValue = value == null ? '' : value",
+        "severity": "high",
+        "category": "bug",
+        "comment": "Removing String() conversion breaks value comparison and attribute setting. oldValue is always a string (from el.getAttribute('value') or el.value), but newValue can now be a non-string (number, boolean, object). The strict equality check oldValue !== newValue will always be true for non-string values even when they have the same string representation (e.g., '123' !== 123), causing unnecessary DOM updates. Additionally, el.setAttribute('value', newValue) with non-string values like objects will produce '[object Object]' instead of the intended value.",
+        "suggestion": "Restore String() conversion for all non-null values, or at minimum convert newValue to string before comparison and attribute setting: const newValue = value == null ? '' : String(value)"
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/runtime-vapor/src/dom/prop.ts",
+        "lineNumber": 501,
+        "code": "  const newValue = value == null ? '' : value",
+        "severity": "high",
+        "category": "bug",
+        "comment": "Removing String() conversion breaks value comparison and attribute setting. oldValue is always a string (from el.getAttribute('value') or el.value), but newValue can now be a non-string (number, boolean, object). The strict equality check oldValue !== newValue will always be true for non-string values even when they have the same string representation (e.g., '123' !== 123), causing unnecessary DOM updates. Additionally, el.setAttribute('value', newValue) with non-string values like objects will produce '[object Object]' instead of the intended value.",
+        "suggestion": "Restore String() conversion for all non-null values, or at minimum convert newValue to string before comparison and attribute setting: const newValue = value == null ? '' : String(value)"
+      }
+    ]
+  },
+  {
+    "url": "https://github.com/vuejs/core/pull/15828",
+    "title": "fix(compiler-vapor): prefix cached expression names that start with a digit",
+    "detected": true,
+    "seconds": 17.403877628999762,
+    "chunks": 1,
+    "traces": 26,
+    "findings": [
+      {
+        "filePath": "packages/compiler-vapor/src/generators/expression.ts",
+        "lineNumber": 1113,
+        "code": "    .replace(/_+$/, '')}`",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The line `.replace(/^\\d/, '_$&')` was removed, which previously ensured generated variable names don't start with a digit. JavaScript identifiers cannot start with a digit (must start with letter, _, or $). Without this, inputs like '123abc' or '0value' will produce invalid identifiers like '123abc' or '0value', causing syntax errors when the generated code runs. The comment 'the name is spliced into other expressions, keep it a valid identifier' explicitly documents this requirement.",
+        "suggestion": "Restore the removed line: `.replace(/^\\d/, '_$&')` before the closing backtick to prefix leading digits with underscore."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/compiler-vapor/src/generators/expression.ts",
+        "lineNumber": 1113,
+        "code": "    .replace(/_+$/, '')}`",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The line `.replace(/^\\d/, '_$&')` was removed, which previously ensured generated variable names don't start with a digit. JavaScript identifiers cannot start with a digit (must start with letter, _, or $). Without this, inputs like '123abc' or '0value' will produce invalid identifiers like '123abc' or '0value', causing syntax errors when the generated code runs. The comment 'the name is spliced into other expressions, keep it a valid identifier' explicitly documents this requirement.",
+        "suggestion": "Restore the removed line: `.replace(/^\\d/, '_$&')` before the closing backtick to prefix leading digits with underscore."
+      }
+    ]
+  },
+  {
+    "url": "https://github.com/vuejs/core/pull/15826",
+    "title": "fix(compiler-vapor): map only declared identifiers in destructured aliases",
+    "detected": true,
+    "seconds": 44.74698922100011,
+    "chunks": 1,
+    "traces": 28,
+    "findings": [
+      {
+        "filePath": "packages/compiler-vapor/src/generators/for.ts",
+        "lineNumber": 327,
+        "code": "        (id, _, parentStack, ___, isLocal) => {",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The old code explicitly collected only declared bindings from function parameters (via walkFunctionParams), which correctly excludes identifiers in default values and computed keys. The new code relies on walkIdentifiers' isLocal flag to make this distinction. If walkIdentifiers does not perfectly replicate the semantics (e.g., if it marks identifiers in default values as local), this will incorrectly treat referenced identifiers as declared bindings, leading to wrong destructuring code generation. The removed comment explicitly warned about this case: 'only the identifiers the pattern declares, not reads of them inside it (default values, computed keys)'.",
+        "suggestion": "Verify that walkIdentifiers' isLocal flag returns false for identifiers in default values and computed keys within destructuring patterns. If not, restore the explicit binding collection logic or add a filter to exclude non-binding positions."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/compiler-vapor/src/generators/for.ts",
+        "lineNumber": 327,
+        "code": "        (id, _, parentStack, ___, isLocal) => {",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The old code explicitly collected only declared bindings from function parameters (via walkFunctionParams), which correctly excludes identifiers in default values and computed keys. The new code relies on walkIdentifiers' isLocal flag to make this distinction. If walkIdentifiers does not perfectly replicate the semantics (e.g., if it marks identifiers in default values as local), this will incorrectly treat referenced identifiers as declared bindings, leading to wrong destructuring code generation. The removed comment explicitly warned about this case: 'only the identifiers the pattern declares, not reads of them inside it (default values, computed keys)'.",
+        "suggestion": "Verify that walkIdentifiers' isLocal flag returns false for identifiers in default values and computed keys within destructuring patterns. If not, restore the explicit binding collection logic or add a filter to exclude non-binding positions."
+      }
+    ]
+  },
+  {
+    "url": "https://github.com/vuejs/core/pull/15822",
+    "title": "fix(runtime-vapor): preserve v-model branch scopes during mount",
+    "detected": true,
+    "seconds": 15.824586761000566,
+    "chunks": 1,
+    "traces": 11,
+    "findings": [
+      {
+        "filePath": "packages/runtime-vapor/src/directives/vModel.ts",
+        "lineNumber": 38,
+        "code": "    onMounted(inOnce ? () => withOnce(cb) : cb)",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The old implementation captured the current effect scope via getCurrentScope() and only executed the deferred callback if that scope was still active at mount time. The new implementation removes this check entirely. If ensureMounted is called within an effect scope that gets stopped before the component mounts (e.g., during async setup or conditional rendering), the old code would correctly skip the callback, but the new code will execute it anyway. This can cause callbacks to run in a stopped scope, leading to memory leaks, double-execution, or errors from accessing disposed resources.",
+        "suggestion": "Either restore the scope capture and active check, or document why the branch scope check is no longer needed. If the scope should be preserved, use: let scope = getCurrentScope(); onMounted(() => { if (scope?.active) scope.run(inOnce ? () => withOnce(cb) : cb); })"
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/runtime-vapor/src/directives/vModel.ts",
+        "lineNumber": 38,
+        "code": "    onMounted(inOnce ? () => withOnce(cb) : cb)",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The old implementation captured the current effect scope via getCurrentScope() and only executed the deferred callback if that scope was still active at mount time. The new implementation removes this check entirely. If ensureMounted is called within an effect scope that gets stopped before the component mounts (e.g., during async setup or conditional rendering), the old code would correctly skip the callback, but the new code will execute it anyway. This can cause callbacks to run in a stopped scope, leading to memory leaks, double-execution, or errors from accessing disposed resources.",
+        "suggestion": "Either restore the scope capture and active check, or document why the branch scope check is no longer needed. If the scope should be preserved, use: let scope = getCurrentScope(); onMounted(() => { if (scope?.active) scope.run(inOnce ? () => withOnce(cb) : cb); })"
+      }
+    ]
+  },
+  {
+    "url": "https://github.com/TanStack/query/pull/11935",
+    "title": "fix(query-core): preserve union narrowing in setQueryData updaters",
+    "detected": true,
+    "seconds": 20.62174738499988,
+    "chunks": 1,
+    "traces": 28,
+    "findings": [
+      {
+        "filePath": "packages/query-core/src/queryClient.ts",
+        "lineNumber": 292,
+        "code": "      NoInfer<TInferredQueryFnData> | undefined,",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The updater parameter type was changed from InferDataFromTag<NoInfer<TQueryFnData>, TTaggedQueryKey> to NoInfer<TInferredQueryFnData>. This breaks type safety for tagged query keys. When a query key is tagged with a specific data type (different from the query function's return type), the updater will now receive the wrong type, causing potential runtime type mismatches when updating cached data.",
+        "suggestion": "Revert to using InferDataFromTag<NoInfer<TQueryFnData>, TTaggedQueryKey> for the updater parameter to maintain the tagged query key's type contract."
+      },
+      {
+        "filePath": "packages/query-core/src/queryClient.ts",
+        "lineNumber": 305,
+        "code": "    const query = this.#queryCache.get<TInferredQueryFnData>(",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The query retrieval type was changed from InferDataFromTag<NoInfer<TQueryFnData>, TTaggedQueryKey> to TInferredQueryFnData. This means the cache lookup uses the query function's inferred type instead of the tagged query key's type. If the query key is tagged with a different data type, this will retrieve the query with an incorrect type, leading to type mismatches when reading or updating the cached data.",
+        "suggestion": "Revert to using InferDataFromTag<NoInfer<TQueryFnData>, TTaggedQueryKey> for the query cache retrieval to respect the tagged query key's type."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/query-core/src/queryClient.ts",
+        "lineNumber": 292,
+        "code": "      NoInfer<TInferredQueryFnData> | undefined,",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The updater parameter type was changed from InferDataFromTag<NoInfer<TQueryFnData>, TTaggedQueryKey> to NoInfer<TInferredQueryFnData>. This breaks type safety for tagged query keys. When a query key is tagged with a specific data type (different from the query function's return type), the updater will now receive the wrong type, causing potential runtime type mismatches when updating cached data.",
+        "suggestion": "Revert to using InferDataFromTag<NoInfer<TQueryFnData>, TTaggedQueryKey> for the updater parameter to maintain the tagged query key's type contract."
+      },
+      {
+        "filePath": "packages/query-core/src/queryClient.ts",
+        "lineNumber": 305,
+        "code": "    const query = this.#queryCache.get<TInferredQueryFnData>(",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The query retrieval type was changed from InferDataFromTag<NoInfer<TQueryFnData>, TTaggedQueryKey> to TInferredQueryFnData. This means the cache lookup uses the query function's inferred type instead of the tagged query key's type. If the query key is tagged with a different data type, this will retrieve the query with an incorrect type, leading to type mismatches when reading or updating the cached data.",
+        "suggestion": "Revert to using InferDataFromTag<NoInfer<TQueryFnData>, TTaggedQueryKey> for the query cache retrieval to respect the tagged query key's type."
+      }
+    ]
+  },
+  {
+    "url": "https://github.com/remix-run/react-router/pull/15600",
+    "title": "Fix RSC external redirect tests after example.com page change",
+    "detected": false,
+    "seconds": 13.309018883000128,
+    "chunks": 1,
+    "traces": 6,
+    "findings": [],
+    "matched": []
+  },
+  {
+    "url": "https://github.com/vitejs/vite/pull/23698",
+    "title": "fix(build): correct preloads when chunkImportMap is enabled with non-root base",
+    "detected": true,
+    "seconds": 23.037659752000124,
+    "chunks": 1,
+    "traces": 30,
+    "findings": [
+      {
+        "filePath": "packages/vite/src/node/plugins/html.ts",
+        "lineNumber": 1733,
+        "code": "  return '/'",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The fallback base URL changed from `options.base` (Vite's resolved base URL) to hardcoded `'/'`. The old comment explicitly states: 'Vite overrides Rolldown's chunkImportMap.baseUrl with the resolved base.' The new implementation does the opposite - it uses Rolldown's baseUrl if set, but falls back to '/' instead of Vite's configured base. This will cause incorrect import map base URLs when chunkImportMap.baseUrl is not explicitly configured in rolldownOptions.",
+        "suggestion": "Change the fallback to use Vite's resolved base URL. Since the function parameter is now only `ResolvedEnvironmentOptions`, ensure this type includes a `base` property, or pass the base URL separately. For example: `return options.base ?? '/'`"
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/vite/src/node/plugins/html.ts",
+        "lineNumber": 1733,
+        "code": "  return '/'",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The fallback base URL changed from `options.base` (Vite's resolved base URL) to hardcoded `'/'`. The old comment explicitly states: 'Vite overrides Rolldown's chunkImportMap.baseUrl with the resolved base.' The new implementation does the opposite - it uses Rolldown's baseUrl if set, but falls back to '/' instead of Vite's configured base. This will cause incorrect import map base URLs when chunkImportMap.baseUrl is not explicitly configured in rolldownOptions.",
+        "suggestion": "Change the fallback to use Vite's resolved base URL. Since the function parameter is now only `ResolvedEnvironmentOptions`, ensure this type includes a `base` property, or pass the base URL separately. For example: `return options.base ?? '/'`"
+      }
+    ]
   }
 ]

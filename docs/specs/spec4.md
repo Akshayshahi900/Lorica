@@ -110,7 +110,7 @@ between repositories or branches with similarly named symbols.
 
 ## Tests and verification
 
-`apps/worker/src/test.ts` now starts by executing a small in-memory fixture
+`apps/worker/src/smoke-index.ts` now starts by executing a small in-memory fixture
 that verifies:
 
 - local and external `IMPORTS`;

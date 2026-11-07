@@ -4,7 +4,7 @@ import {
   type GraphTrace,
   type PrMetadata,
   type ReviewContext,
-} from "../../types/src/types";
+} from "@lorica/types";
 
 /**
  * Produces the single review input contract. Keeping this pure means graph and

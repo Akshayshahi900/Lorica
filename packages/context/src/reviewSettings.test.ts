@@ -2,9 +2,9 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   resolveReviewSettings,
+  type ReviewFinding,
   type ReviewSettings,
-} from "../../types/src/reviewSettings";
-import type { ReviewFinding } from "../../types/src/types";
+} from "@lorica/types";
 import {
   excludeConfiguredPaths,
   mergeVerdict,

@@ -6,7 +6,7 @@ import {
   ReviewResult,
   ReviewResultSchema,
   type ReviewContext,
-} from "../../types/src/types";
+} from "@lorica/types";
 import {
   PROVIDERS,
   baseUrlFor,

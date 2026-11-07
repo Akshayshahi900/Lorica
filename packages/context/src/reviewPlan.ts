@@ -6,7 +6,7 @@ import {
   type ReviewContext,
   type ReviewFinding,
   type ReviewResult,
-} from "../../types/src/types";
+} from "@lorica/types";
 import { assembleReviewContext } from "./reviewContext";
 
 // ---------------------------------------------------------------------------

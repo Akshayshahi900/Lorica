@@ -6,7 +6,7 @@ import { DEFAULT_LLM_MODEL } from "./providers";
 import { assertSafeBaseUrl } from "./safety";
 import { decryptSecret, encryptSecret } from "./secrets";
 import { configFromStoredSettings } from "./settings";
-import type { ReviewContext } from "../../types/src/types";
+import type { ReviewContext } from "@lorica/types";
 
 const context: ReviewContext = {
   schemaVersion: "1",

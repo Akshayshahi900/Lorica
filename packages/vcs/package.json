@@ -8,7 +8,6 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@lorica/llm": "workspace:*",
     "@lorica/types": "workspace:*",
     "@octokit/auth-app": "^8.2.0",
     "@octokit/rest": "^22.0.1"

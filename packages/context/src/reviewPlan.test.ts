@@ -10,7 +10,7 @@ import {
   splitPatch,
   type ReviewBudget,
 } from "./reviewPlan";
-import type { ChangedFile, ReviewFinding } from "../../types/src/types";
+import type { ChangedFile, ReviewFinding } from "@lorica/types";
 
 const pullRequest = {
   repository: "acme/widget",

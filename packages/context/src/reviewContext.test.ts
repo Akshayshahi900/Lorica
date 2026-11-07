@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { assembleReviewContext } from "./reviewContext";
-import { ReviewContextSchema, ReviewResultSchema } from "../../types/src/types";
+import { ReviewContextSchema, ReviewResultSchema } from "@lorica/types";
 import { REVIEW_PROMPT } from "../../llm/src/prompt";
 
 const validContext = {

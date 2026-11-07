@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 
-import type { ReviewContext } from "../../types/src/types";
+import type { ReviewContext } from "@lorica/types";
 import { LlmRequestError, callLLM } from "./client";
 import { REVIEW_PROMPT } from "./prompt";
 import { PROVIDERS, baseUrlFor, type LlmConfig } from "./providers";

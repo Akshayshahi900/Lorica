@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.133.0",
+    "@lorica/types": "workspace:*",
     "zod": "^4.4.3"
   }
 }

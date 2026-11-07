@@ -2,7 +2,7 @@ import {
   PostMergeAction,
   ReviewFinding,
   ReviewResult,
-} from "../../../types/src/types";
+} from "@lorica/types";
 import { REVIEW_COMMENT_MARKER } from "./postComment";
 
 type Severity = ReviewFinding["severity"];

@@ -4,8 +4,8 @@ import {
   REVIEW_SEVERITIES,
   type EffectiveReviewSettings,
   type PathInstruction,
-} from "../../types/src/reviewSettings";
-import { type ReviewFinding } from "../../types/src/types";
+  type ReviewFinding,
+} from "@lorica/types";
 import { type ExcludedFile, type ReviewLimits } from "./reviewPlan";
 
 /**
