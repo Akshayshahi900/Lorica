@@ -59,7 +59,7 @@ export default function DashboardPage() {
 
   const recentPullRequests = useMemo(
     () => pullRequests.slice(0, 5),
-    [pullRequests]
+    [pullRequests],
   );
 
   const attentionPullRequests = useMemo(
@@ -71,7 +71,7 @@ export default function DashboardPage() {
           return (pr as any).commentCount > 0 || (pr as any).comments > 0;
         })
         .slice(0, 3),
-    [pullRequests]
+    [pullRequests],
   );
 
   const today = new Date().toLocaleDateString("en-US", {
@@ -158,10 +158,7 @@ export default function DashboardPage() {
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-status-red/10 border border-status-red/20">
-                    <AlertTriangle
-                      size={14}
-                      className="text-status-red"
-                    />
+                    <AlertTriangle size={14} className="text-status-red" />
                   </div>
 
                   <div className="min-w-0">
@@ -263,9 +260,7 @@ export default function DashboardPage() {
               <StatCard
                 label="Clean Review Rate"
                 value={
-                  stats.approvalRate === null
-                    ? "—"
-                    : `${stats.approvalRate}%`
+                  stats.approvalRate === null ? "—" : `${stats.approvalRate}%`
                 }
                 sub="reviews with no findings"
                 icon={CheckCircle2}
@@ -311,9 +306,7 @@ export default function DashboardPage() {
             </h2>
           </div>
 
-          <span className="text-xs font-mono text-text-muted">
-            recent
-          </span>
+          <span className="text-xs font-mono text-text-muted">recent</span>
         </div>
 
         {loading ? (
@@ -360,9 +353,7 @@ function TableSkeleton() {
 }
 
 function ActivitySkeleton() {
-  return (
-    <div className="h-12 animate-pulse rounded-lg bg-bg-base" />
-  );
+  return <div className="h-12 animate-pulse rounded-lg bg-bg-base" />;
 }
 
 /* ===============================================================
@@ -373,10 +364,7 @@ function EmptyReviews() {
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
       <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-bg-border bg-bg-base mb-4">
-        <GitPullRequest
-          size={17}
-          className="text-text-muted"
-        />
+        <GitPullRequest size={17} className="text-text-muted" />
       </div>
 
       <h3 className="text-sm font-medium text-text-primary">

@@ -21,7 +21,12 @@ type SavedSettings = {
   verifiedAt: string | null;
 };
 
-type Check = { id: string; label: string; status: "pass" | "warn" | "fail"; detail: string };
+type Check = {
+  id: string;
+  label: string;
+  status: "pass" | "warn" | "fail";
+  detail: string;
+};
 
 type Report = {
   verdict: "ready" | "limited" | "unsupported";
@@ -35,7 +40,10 @@ type SettingsResponse = {
   settings: SavedSettings | null;
   defaultModel: { provider: string; model: string };
   providers: Provider[];
-  requirements: { minimumContextWindow: number; recommendedContextWindow: number };
+  requirements: {
+    minimumContextWindow: number;
+    recommendedContextWindow: number;
+  };
 };
 
 type Form = {
@@ -51,9 +59,18 @@ const inputClass =
 const labelClass = "text-xs font-mono text-text-muted uppercase tracking-wider";
 
 const VERDICT = {
-  ready: { label: "Ready for reviews", className: "text-status-green border-status-green/30 bg-status-green/5" },
-  limited: { label: "Usable, with caveats", className: "text-status-yellow border-status-yellow/30 bg-status-yellow/5" },
-  unsupported: { label: "Cannot produce reviews", className: "text-status-red border-status-red/30 bg-status-red/5" },
+  ready: {
+    label: "Ready for reviews",
+    className: "text-status-green border-status-green/30 bg-status-green/5",
+  },
+  limited: {
+    label: "Usable, with caveats",
+    className: "text-status-yellow border-status-yellow/30 bg-status-yellow/5",
+  },
+  unsupported: {
+    label: "Cannot produce reviews",
+    className: "text-status-red border-status-red/30 bg-status-red/5",
+  },
 } as const;
 
 function formFor(settings: SavedSettings | null, providers: Provider[]): Form {
@@ -63,13 +80,21 @@ function formFor(settings: SavedSettings | null, providers: Provider[]): Form {
     model: settings?.model ?? "",
     baseUrl: settings?.baseUrl ?? "",
     apiKey: "",
-    contextWindow: settings?.contextWindow ? String(settings.contextWindow) : "",
+    contextWindow: settings?.contextWindow
+      ? String(settings.contextWindow)
+      : "",
   };
 }
 
 function CheckIcon({ status }: { status: Check["status"] }) {
-  if (status === "pass") return <CheckCircle2 size={14} className="text-status-green shrink-0 mt-px" />;
-  if (status === "warn") return <AlertTriangle size={14} className="text-status-yellow shrink-0 mt-px" />;
+  if (status === "pass")
+    return (
+      <CheckCircle2 size={14} className="text-status-green shrink-0 mt-px" />
+    );
+  if (status === "warn")
+    return (
+      <AlertTriangle size={14} className="text-status-yellow shrink-0 mt-px" />
+    );
   return <XCircle size={14} className="text-status-red shrink-0 mt-px" />;
 }
 
@@ -80,14 +105,21 @@ export default function ModelSettings() {
   const [form, setForm] = useState<Form | null>(null);
   const [busy, setBusy] = useState<"test" | "save" | "reset" | null>(null);
   const [report, setReport] = useState<Report | null>(null);
-  const [message, setMessage] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
+  const [message, setMessage] = useState<{
+    tone: "ok" | "error";
+    text: string;
+  } | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch("/api/settings/model", { signal: controller.signal, cache: "no-store" })
+    fetch("/api/settings/model", {
+      signal: controller.signal,
+      cache: "no-store",
+    })
       .then(async (response) => {
         const payload = await response.json();
-        if (!response.ok) throw new Error(payload.error ?? "Failed to load model settings");
+        if (!response.ok)
+          throw new Error(payload.error ?? "Failed to load model settings");
         const loaded = payload as SettingsResponse;
         setData(loaded);
         setUseOwnModel(Boolean(loaded.settings));
@@ -102,7 +134,9 @@ export default function ModelSettings() {
   if (loadError) {
     return (
       <div className="bg-bg-panel border border-bg-border rounded-xl p-5 space-y-2">
-        <h2 className="text-sm font-semibold text-text-primary">Review model</h2>
+        <h2 className="text-sm font-semibold text-text-primary">
+          Review model
+        </h2>
         <p className="text-xs text-status-red font-mono">{loadError}</p>
       </div>
     );
@@ -117,8 +151,11 @@ export default function ModelSettings() {
   }
 
   const saved = data.settings;
-  const provider = data.providers.find((p) => p.id === form.provider) ?? data.providers[0]!;
-  const savedKeyApplies = Boolean(saved?.hasApiKey && saved.provider === form.provider);
+  const provider =
+    data.providers.find((p) => p.id === form.provider) ?? data.providers[0]!;
+  const savedKeyApplies = Boolean(
+    saved?.hasApiKey && saved.provider === form.provider,
+  );
   const update = (patch: Partial<Form>) => {
     setForm({ ...form, ...patch });
     setReport(null);
@@ -131,7 +168,9 @@ export default function ModelSettings() {
       model: form.model.trim(),
       baseUrl: form.baseUrl.trim(),
       apiKey: form.apiKey.trim(),
-      contextWindow: form.contextWindow.trim() ? Number(form.contextWindow) : null,
+      contextWindow: form.contextWindow.trim()
+        ? Number(form.contextWindow)
+        : null,
     });
 
   async function send(kind: "test" | "save") {
@@ -141,7 +180,11 @@ export default function ModelSettings() {
     try {
       const response = await fetch(
         kind === "test" ? "/api/settings/model/check" : "/api/settings/model",
-        { method: kind === "test" ? "POST" : "PUT", body: payload(), headers: { "Content-Type": "application/json" } },
+        {
+          method: kind === "test" ? "POST" : "PUT",
+          body: payload(),
+          headers: { "Content-Type": "application/json" },
+        },
       );
       const body = await response.json().catch(() => ({}));
       if (body.report) setReport(body.report);
@@ -152,7 +195,10 @@ export default function ModelSettings() {
       if (kind === "save") {
         setData({ ...data!, settings: body.settings });
         setForm((current) => current && { ...current, apiKey: "" });
-        setMessage({ tone: "ok", text: "Saved. New reviews will use this model." });
+        setMessage({
+          tone: "ok",
+          text: "Saved. New reviews will use this model.",
+        });
       }
     } catch {
       setMessage({ tone: "error", text: "Unable to reach the server" });
@@ -175,7 +221,10 @@ export default function ModelSettings() {
       setData({ ...data!, settings: null });
       setForm(formFor(null, data!.providers));
       setUseOwnModel(false);
-      setMessage({ tone: "ok", text: "Reviews use Lorica's default model again." });
+      setMessage({
+        tone: "ok",
+        text: "Reviews use Lorica's default model again.",
+      });
     } catch {
       setMessage({ tone: "error", text: "Unable to reach the server" });
     } finally {
@@ -185,7 +234,9 @@ export default function ModelSettings() {
 
   const canSubmit =
     form.model.trim() !== "" &&
-    (provider.apiKey === "optional" || form.apiKey.trim() !== "" || savedKeyApplies) &&
+    (provider.apiKey === "optional" ||
+      form.apiKey.trim() !== "" ||
+      savedKeyApplies) &&
     (provider.defaultBaseUrl !== null || form.baseUrl.trim() !== "") &&
     busy === null;
   const tokensK = (n: number) => `${Math.round(n / 1000)}K`;
@@ -193,9 +244,12 @@ export default function ModelSettings() {
   return (
     <div className="bg-bg-panel border border-bg-border rounded-xl p-5 space-y-4">
       <div>
-        <h2 className="text-sm font-semibold text-text-primary">Review model</h2>
+        <h2 className="text-sm font-semibold text-text-primary">
+          Review model
+        </h2>
         <p className="text-xs text-text-muted mt-0.5">
-          Optional. Lorica reviews with its built-in model unless you bring your own.
+          Optional. Lorica reviews with its built-in model unless you bring your
+          own.
         </p>
       </div>
 
@@ -242,11 +296,20 @@ export default function ModelSettings() {
       {useOwnModel && (
         <div className="space-y-4">
           <div className="flex flex-col gap-1.5">
-            <label className={labelClass} htmlFor="llm-provider">Provider</label>
+            <label className={labelClass} htmlFor="llm-provider">
+              Provider
+            </label>
             <select
               id="llm-provider"
               value={form.provider}
-              onChange={(event) => update({ provider: event.target.value, model: "", baseUrl: "", apiKey: "" })}
+              onChange={(event) =>
+                update({
+                  provider: event.target.value,
+                  model: "",
+                  baseUrl: "",
+                  apiKey: "",
+                })
+              }
               className={clsx(inputClass, "appearance-none sm:w-fit")}
             >
               {data.providers.map((p) => (
@@ -259,7 +322,9 @@ export default function ModelSettings() {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className={labelClass} htmlFor="llm-model">Model</label>
+            <label className={labelClass} htmlFor="llm-model">
+              Model
+            </label>
             <input
               id="llm-model"
               value={form.model}
@@ -273,13 +338,18 @@ export default function ModelSettings() {
 
           <div className="flex flex-col gap-1.5">
             <label className={labelClass} htmlFor="llm-base-url">
-              Base URL {provider.defaultBaseUrl && <span className="normal-case">(optional)</span>}
+              Base URL{" "}
+              {provider.defaultBaseUrl && (
+                <span className="normal-case">(optional)</span>
+              )}
             </label>
             <input
               id="llm-base-url"
               value={form.baseUrl}
               onChange={(event) => update({ baseUrl: event.target.value })}
-              placeholder={provider.defaultBaseUrl ?? "http://localhost:8080/v1"}
+              placeholder={
+                provider.defaultBaseUrl ?? "http://localhost:8080/v1"
+              }
               className={inputClass}
               autoComplete="off"
               spellCheck={false}
@@ -288,14 +358,19 @@ export default function ModelSettings() {
 
           <div className="flex flex-col gap-1.5">
             <label className={labelClass} htmlFor="llm-api-key">
-              API key {provider.apiKey === "optional" && <span className="normal-case">(optional)</span>}
+              API key{" "}
+              {provider.apiKey === "optional" && (
+                <span className="normal-case">(optional)</span>
+              )}
             </label>
             <input
               id="llm-api-key"
               type="password"
               value={form.apiKey}
               onChange={(event) => update({ apiKey: event.target.value })}
-              placeholder={savedKeyApplies ? "Saved key in use. Type to replace it" : ""}
+              placeholder={
+                savedKeyApplies ? "Saved key in use. Type to replace it" : ""
+              }
               className={inputClass}
               autoComplete="off"
             />
@@ -306,19 +381,26 @@ export default function ModelSettings() {
 
           <div className="flex flex-col gap-1.5">
             <label className={labelClass} htmlFor="llm-context">
-              Context window <span className="normal-case">(tokens, optional)</span>
+              Context window{" "}
+              <span className="normal-case">(tokens, optional)</span>
             </label>
             <input
               id="llm-context"
               inputMode="numeric"
               value={form.contextWindow}
-              onChange={(event) => update({ contextWindow: event.target.value.replace(/[^0-9]/g, "") })}
+              onChange={(event) =>
+                update({
+                  contextWindow: event.target.value.replace(/[^0-9]/g, ""),
+                })
+              }
               placeholder="Detected automatically when the provider reports it"
               className={clsx(inputClass, "sm:w-80")}
             />
             <p className="text-xs text-text-muted">
-              Reviews need at least {tokensK(data.requirements.minimumContextWindow)} tokens;{" "}
-              {tokensK(data.requirements.recommendedContextWindow)}+ avoids smaller chunks.
+              Reviews need at least{" "}
+              {tokensK(data.requirements.minimumContextWindow)} tokens;{" "}
+              {tokensK(data.requirements.recommendedContextWindow)}+ avoids
+              smaller chunks.
             </p>
           </div>
 
@@ -348,7 +430,12 @@ export default function ModelSettings() {
       )}
 
       {message && (
-        <p className={clsx("text-xs font-mono", message.tone === "ok" ? "text-status-green" : "text-status-red")}>
+        <p
+          className={clsx(
+            "text-xs font-mono",
+            message.tone === "ok" ? "text-status-green" : "text-status-red",
+          )}
+        >
           {message.text}
         </p>
       )}
@@ -368,8 +455,12 @@ export default function ModelSettings() {
               <li key={check.id} className="flex items-start gap-2">
                 <CheckIcon status={check.status} />
                 <div className="min-w-0">
-                  <p className="text-xs font-medium text-text-primary">{check.label}</p>
-                  <p className="text-xs text-text-secondary break-words">{check.detail}</p>
+                  <p className="text-xs font-medium text-text-primary">
+                    {check.label}
+                  </p>
+                  <p className="text-xs text-text-secondary break-words">
+                    {check.detail}
+                  </p>
                 </div>
               </li>
             ))}

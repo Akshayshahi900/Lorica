@@ -26,18 +26,17 @@ export async function proxyToApi(
 
   const query = new URLSearchParams({ owner: owner ?? login, actor: login });
   try {
-    const response = await fetch(
-      `${serverEnv.apiUrl}${path}?${query}`,
-      {
-        method,
-        body,
-        cache: "no-store",
-        headers: {
-          ...(body ? { "Content-Type": "application/json" } : {}),
-          ...(serverEnv.apiToken ? { "x-lorica-api-token": serverEnv.apiToken } : {}),
-        },
+    const response = await fetch(`${serverEnv.apiUrl}${path}?${query}`, {
+      method,
+      body,
+      cache: "no-store",
+      headers: {
+        ...(body ? { "Content-Type": "application/json" } : {}),
+        ...(serverEnv.apiToken
+          ? { "x-lorica-api-token": serverEnv.apiToken }
+          : {}),
       },
-    );
+    });
     const payload = (await response.json().catch(() => null)) ?? {
       error: "The Lorica API returned an invalid response",
     };

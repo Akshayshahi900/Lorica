@@ -6,7 +6,8 @@ export function verifySignature(
   secret: string,
 ): boolean {
   const expected =
-    "sha256=" + crypto.createHmac("sha256", secret).update(payload).digest("hex");
+    "sha256=" +
+    crypto.createHmac("sha256", secret).update(payload).digest("hex");
   const sigBuffer = Buffer.from(signature);
   const expectedBuffer = Buffer.from(expected);
   if (sigBuffer.length !== expectedBuffer.length) return false;

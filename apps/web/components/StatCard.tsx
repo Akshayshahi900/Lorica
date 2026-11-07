@@ -24,7 +24,7 @@ export function StatCard({
         "bg-bg-panel border rounded-xl p-4 flex flex-col gap-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/10",
         accent
           ? "border-accent-violet/30 bg-accent-violet-glow shadow-lg shadow-accent-violet/5"
-          : "border-bg-border hover:border-bg-hover"
+          : "border-bg-border hover:border-bg-hover",
       )}
     >
       <div className="flex items-center justify-between">
@@ -34,7 +34,7 @@ export function StatCard({
         <div
           className={clsx(
             "w-7 h-7 rounded-lg flex items-center justify-center",
-            accent ? "bg-accent-violet/20" : "bg-bg-hover"
+            accent ? "bg-accent-violet/20" : "bg-bg-hover",
           )}
         >
           <Icon
@@ -47,7 +47,7 @@ export function StatCard({
         <p
           className={clsx(
             "text-2xl font-mono font-semibold",
-            accent ? "text-accent-violet" : "text-text-primary"
+            accent ? "text-accent-violet" : "text-text-primary",
           )}
         >
           {value}
@@ -60,7 +60,7 @@ export function StatCard({
         <div
           className={clsx(
             "inline-flex items-center gap-1 text-xs font-mono",
-            trend.up ? "text-status-green" : "text-status-red"
+            trend.up ? "text-status-green" : "text-status-red",
           )}
         >
           <span>{trend.up ? "↑" : "↓"}</span>

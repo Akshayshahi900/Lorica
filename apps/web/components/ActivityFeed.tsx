@@ -24,7 +24,11 @@ const TYPE_LABEL = {
 
 export function ActivityFeed({ items }: { items: ActivityItem[] }) {
   if (items.length === 0) {
-    return <p className="py-6 text-center text-xs font-mono text-text-muted">No review activity yet.</p>;
+    return (
+      <p className="py-6 text-center text-xs font-mono text-text-muted">
+        No review activity yet.
+      </p>
+    );
   }
 
   return (
@@ -34,7 +38,7 @@ export function ActivityFeed({ items }: { items: ActivityItem[] }) {
           <span
             className={clsx(
               "flex-shrink-0 font-mono text-[10px] px-1.5 py-0.5 rounded border uppercase font-semibold tracking-wider mt-0.5",
-              TYPE_STYLES[item.type]
+              TYPE_STYLES[item.type],
             )}
           >
             {TYPE_LABEL[item.type]}

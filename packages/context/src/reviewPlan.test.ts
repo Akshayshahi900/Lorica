@@ -65,7 +65,11 @@ describe("review file filtering", () => {
       { filePath: "app/global.d.ts", status: "modified", patch: "@@" },
       { filePath: "requirements.txt", status: "modified", patch: "@@" },
       { filePath: "pnpm-lock.yaml", status: "modified", patch: "@@" },
-      { filePath: "apps/api/generated/prisma/client.ts", status: "modified", patch: "@@" },
+      {
+        filePath: "apps/api/generated/prisma/client.ts",
+        status: "modified",
+        patch: "@@",
+      },
       { filePath: "node_modules/x/index.js", status: "added", patch: "@@" },
       { filePath: "public/bundle.min.js", status: "added", patch: "@@" },
       { filePath: "docs/logo.png", status: "added", patch: undefined },
@@ -79,7 +83,16 @@ describe("review file filtering", () => {
     );
     assert.deepEqual(
       excluded.map((f) => f.reason),
-      ["lockfile", "generated", "vendored", "generated", "asset", "documentation", "removed", "no_patch"],
+      [
+        "lockfile",
+        "generated",
+        "vendored",
+        "generated",
+        "asset",
+        "documentation",
+        "removed",
+        "no_patch",
+      ],
     );
   });
 });
@@ -102,17 +115,27 @@ describe("patch splitting", () => {
     const pieces = splitPatch(patch, 300);
     assert.ok(pieces.length > 1);
     for (const piece of pieces) assert.ok(estimateTokens(piece) <= 300 + 30);
-    assert.deepEqual(
-      pieces.flatMap(addedLineNumbers),
-      addedLineNumbers(patch),
+    assert.deepEqual(pieces.flatMap(addedLineNumbers), addedLineNumbers(patch));
+    assert.ok(
+      pieces.every(
+        (piece) => piece.startsWith("@@ -") && piece.includes("function run()"),
+      ),
     );
-    assert.ok(pieces.every((piece) => piece.startsWith("@@ -") && piece.includes("function run()")));
-    assert.ok(!pieces.some((piece) => piece.startsWith("@@") && piece.split("\n")[1]?.startsWith("\\")));
+    assert.ok(
+      !pieces.some(
+        (piece) =>
+          piece.startsWith("@@") && piece.split("\n")[1]?.startsWith("\\"),
+      ),
+    );
   });
 });
 
 describe("review planning", () => {
-  const budget: ReviewBudget = { ...DEFAULT_REVIEW_BUDGET, diffTokensPerChunk: 2_000, maxChunks: 3 };
+  const budget: ReviewBudget = {
+    ...DEFAULT_REVIEW_BUDGET,
+    diffTokensPerChunk: 2_000,
+    maxChunks: 3,
+  };
 
   it("uses one chunk for a small PR", () => {
     const plan = planReview({
@@ -126,13 +149,22 @@ describe("review planning", () => {
   });
 
   it("bounds every chunk and reports what did not fit", () => {
-    const changedFiles = Array.from({ length: 20 }, (_, i) => file(`src/f${i}.ts`, addedPatch(40)));
-    const plan = planReview({ pullRequest, changedFiles, indexedCommit: "head", traces: [] }, budget);
+    const changedFiles = Array.from({ length: 20 }, (_, i) =>
+      file(`src/f${i}.ts`, addedPatch(40)),
+    );
+    const plan = planReview(
+      { pullRequest, changedFiles, indexedCommit: "head", traces: [] },
+      budget,
+    );
     assert.equal(plan.contexts.length, 3);
     for (const context of plan.contexts) {
-      assert.ok(estimateTokens(context.changedFiles) <= budget.diffTokensPerChunk);
+      assert.ok(
+        estimateTokens(context.changedFiles) <= budget.diffTokensPerChunk,
+      );
     }
-    const planned = plan.contexts.flatMap((c) => c.changedFiles.map((f) => f.filePath));
+    const planned = plan.contexts.flatMap((c) =>
+      c.changedFiles.map((f) => f.filePath),
+    );
     assert.equal(planned.length + plan.truncatedFiles.length, 20);
   });
 
@@ -145,7 +177,10 @@ describe("review planning", () => {
       { pullRequest, changedFiles, indexedCommit: "head", traces: [] },
       { ...budget, maxChunks: 1 },
     );
-    assert.deepEqual(plan.contexts[0]!.changedFiles.map((f) => f.filePath), ["src/z.ts"]);
+    assert.deepEqual(
+      plan.contexts[0]!.changedFiles.map((f) => f.filePath),
+      ["src/z.ts"],
+    );
     assert.deepEqual(plan.truncatedFiles, ["src/a.test.ts"]);
   });
 
@@ -162,14 +197,20 @@ describe("review planning", () => {
     const plan = planReview(
       {
         pullRequest: { ...pullRequest, description: "x".repeat(10_000) },
-        changedFiles: [file("src/a.ts", addedPatch(120)), file("src/b.ts", addedPatch(120))],
+        changedFiles: [
+          file("src/a.ts", addedPatch(120)),
+          file("src/b.ts", addedPatch(120)),
+        ],
         indexedCommit: "head",
         traces: [trace("src/a.ts"), trace("src/b.ts")],
       },
       budget,
     );
     assert.equal(plan.contexts.length, 2);
-    assert.deepEqual(plan.contexts.map((c) => c.graph.traces.map((t) => t.changedFile)), [["src/a.ts"], ["src/b.ts"]]);
+    assert.deepEqual(
+      plan.contexts.map((c) => c.graph.traces.map((t) => t.changedFile)),
+      [["src/a.ts"], ["src/b.ts"]],
+    );
     assert.ok(plan.contexts[0]!.pullRequest.description!.length < 2_100);
   });
 });
@@ -186,16 +227,40 @@ describe("merging chunk results", () => {
   it("combines findings, drops ones for files not shown, and keeps the worst duplicate", () => {
     const merged = mergeReviewResults(
       [
-        { context, result: { summary: "a", reviews: [finding({ severity: "low" }), finding({ filePath: "src/ghost.ts" })] } },
-        { context, result: { summary: "b", reviews: [finding({ severity: "high" }), finding({ filePath: "src/b.ts", severity: "critical" })] } },
+        {
+          context,
+          result: {
+            summary: "a",
+            reviews: [
+              finding({ severity: "low" }),
+              finding({ filePath: "src/ghost.ts" }),
+            ],
+          },
+        },
+        {
+          context,
+          result: {
+            summary: "b",
+            reviews: [
+              finding({ severity: "high" }),
+              finding({ filePath: "src/b.ts", severity: "critical" }),
+            ],
+          },
+        },
       ],
-      { excluded: [{ filePath: "pnpm-lock.yaml", reason: "lockfile" }], truncatedFiles: ["src/huge.ts"] },
+      {
+        excluded: [{ filePath: "pnpm-lock.yaml", reason: "lockfile" }],
+        truncatedFiles: ["src/huge.ts"],
+      },
     );
     assert.deepEqual(
       merged.reviews.map((r) => `${r.filePath}:${r.severity}`),
       ["src/b.ts:critical", "src/a.ts:high"],
     );
-    assert.match(merged.summary, /Found 2 concrete issues across 2 reviewed files/);
+    assert.match(
+      merged.summary,
+      /Found 2 concrete issues across 2 reviewed files/,
+    );
     assert.match(merged.summary, /Skipped 1 file /);
     assert.match(merged.summary, /`src\/huge.ts` were not fully reviewed/);
   });
@@ -209,29 +274,59 @@ describe("merging chunk results", () => {
     ];
     const merged = mergeReviewResults(
       [{ context, result: { summary: "", reviews } }],
-      { excluded: [{ filePath: "e2e/a.spec.ts", reason: "configured" }], truncatedFiles: [] },
+      {
+        excluded: [{ filePath: "e2e/a.spec.ts", reason: "configured" }],
+        truncatedFiles: [],
+      },
       { minSeverity: "high", maxFindings: 2, label: "Quiet" },
     );
-    assert.deepEqual(merged.reviews.map((r) => r.lineNumber), [3, 2]);
-    assert.match(merged.summary, /Found 3 concrete issues across 2 reviewed files\./);
-    assert.match(merged.summary, /1 lower-severity finding was hidden by the Quiet review settings/);
-    assert.match(merged.summary, /Showing the 2 most severe; 1 more was left out/);
-    assert.match(merged.summary, /Skipped 1 file excluded by the review settings/);
+    assert.deepEqual(
+      merged.reviews.map((r) => r.lineNumber),
+      [3, 2],
+    );
+    assert.match(
+      merged.summary,
+      /Found 3 concrete issues across 2 reviewed files\./,
+    );
+    assert.match(
+      merged.summary,
+      /1 lower-severity finding was hidden by the Quiet review settings/,
+    );
+    assert.match(
+      merged.summary,
+      /Showing the 2 most severe; 1 more was left out/,
+    );
+    assert.match(
+      merged.summary,
+      /Skipped 1 file excluded by the review settings/,
+    );
     assert.doesNotMatch(merged.summary, /cannot carry reviewable code/);
   });
 
   it("reports a clean review when every finding is below the floor", () => {
     const merged = mergeReviewResults(
-      [{ context, result: { summary: "", reviews: [finding({ severity: "low" })] } }],
+      [
+        {
+          context,
+          result: { summary: "", reviews: [finding({ severity: "low" })] },
+        },
+      ],
       { excluded: [], truncatedFiles: [] },
       { minSeverity: "high", maxFindings: 5, label: "Quiet" },
     );
     assert.deepEqual(merged.reviews, []);
-    assert.match(merged.summary, /^No high-severity or worse issues found in 2 reviewed files\./);
+    assert.match(
+      merged.summary,
+      /^No high-severity or worse issues found in 2 reviewed files\./,
+    );
   });
 
   it("always shows enforced guideline violations, and lists each post-merge action once", () => {
-    const action = { category: "database" as const, action: "Run the migration.", reason: "New column." };
+    const action = {
+      category: "database" as const,
+      action: "Run the migration.",
+      reason: "New column.",
+    };
     const merged = mergeReviewResults(
       [
         {
@@ -241,35 +336,69 @@ describe("merging chunk results", () => {
             reviews: [
               finding({ lineNumber: 1, severity: "high" }),
               finding({ lineNumber: 2, severity: "high" }),
-              finding({ lineNumber: 3, severity: "low", category: "standards" }),
+              finding({
+                lineNumber: 3,
+                severity: "low",
+                category: "standards",
+              }),
             ],
             postMergeActions: [action],
           },
         },
-        { context, result: { summary: "", reviews: [], postMergeActions: [{ ...action, action: " run the  MIGRATION." }] } },
+        {
+          context,
+          result: {
+            summary: "",
+            reviews: [],
+            postMergeActions: [{ ...action, action: " run the  MIGRATION." }],
+          },
+        },
       ],
       { excluded: [], truncatedFiles: [] },
-      { minSeverity: "high", maxFindings: 1, label: "Quiet", keepStandards: true },
+      {
+        minSeverity: "high",
+        maxFindings: 1,
+        label: "Quiet",
+        keepStandards: true,
+      },
     );
-    assert.deepEqual(merged.reviews.map((r) => r.lineNumber), [1, 3]);
+    assert.deepEqual(
+      merged.reviews.map((r) => r.lineNumber),
+      [1, 3],
+    );
     assert.deepEqual(merged.postMergeActions, [action]);
   });
 
   it("says so when nothing was reviewable", () => {
     const merged = mergeReviewResults([], { excluded: [], truncatedFiles: [] });
-    assert.deepEqual(merged, { summary: "No reviewable code changes in this PR.", reviews: [] });
+    assert.deepEqual(merged, {
+      summary: "No reviewable code changes in this PR.",
+      reviews: [],
+    });
   });
 });
 
 describe("fitting the budget to a context window", () => {
   it("leaves the budget alone when the window is unknown or large enough", () => {
-    assert.equal(fitBudgetToContextWindow(DEFAULT_REVIEW_BUDGET, undefined, 10_000), DEFAULT_REVIEW_BUDGET);
-    assert.equal(fitBudgetToContextWindow(DEFAULT_REVIEW_BUDGET, 200_000, 10_000), DEFAULT_REVIEW_BUDGET);
+    assert.equal(
+      fitBudgetToContextWindow(DEFAULT_REVIEW_BUDGET, undefined, 10_000),
+      DEFAULT_REVIEW_BUDGET,
+    );
+    assert.equal(
+      fitBudgetToContextWindow(DEFAULT_REVIEW_BUDGET, 200_000, 10_000),
+      DEFAULT_REVIEW_BUDGET,
+    );
   });
 
   it("shrinks chunks so a request fits a small window", () => {
-    const fitted = fitBudgetToContextWindow(DEFAULT_REVIEW_BUDGET, 16_384, 10_000);
-    assert.ok(fitted.diffTokensPerChunk + fitted.traceTokensPerChunk <= 16_384 - 10_000);
+    const fitted = fitBudgetToContextWindow(
+      DEFAULT_REVIEW_BUDGET,
+      16_384,
+      10_000,
+    );
+    assert.ok(
+      fitted.diffTokensPerChunk + fitted.traceTokensPerChunk <= 16_384 - 10_000,
+    );
     assert.ok(fitted.diffTokensPerChunk > fitted.traceTokensPerChunk);
     assert.equal(fitted.maxChunks, DEFAULT_REVIEW_BUDGET.maxChunks);
   });

@@ -63,7 +63,9 @@ type PullRequestRef = {
 /** Everything a review touches outside the database, replaceable in tests. */
 export type ReviewDependencies = {
   fetchFiles: (pr: PullRequestRef) => ReturnType<typeof fetchPrFiles>;
-  fetchDetails: (pr: PullRequestRef) => ReturnType<typeof fetchPullRequestDetails>;
+  fetchDetails: (
+    pr: PullRequestRef,
+  ) => ReturnType<typeof fetchPullRequestDetails>;
   indexCommit: (pr: PullRequestRef, commit: string) => Promise<void>;
   loadGraphContext: typeof getReviewGraphContext;
   /** The owner's own model, or null for the deployment default. */
@@ -156,7 +158,13 @@ export const githubDependencies: ReviewDependencies = {
   },
   fetchRepoConfig: async (pr, ref) => {
     for (const path of REPO_CONFIG_FILES) {
-      const source = await fetchRepoFile(pr.installationId, pr.owner, pr.repo, path, ref);
+      const source = await fetchRepoFile(
+        pr.installationId,
+        pr.owner,
+        pr.repo,
+        path,
+        ref,
+      );
       if (source !== null) return { path, source };
     }
     return null;
@@ -227,10 +235,14 @@ async function loadReviewSettings(
   if (ownerConfig) {
     const parsed = ReviewSettingsSchema.safeParse(ownerConfig);
     if (parsed.success) layers.push(parsed.data);
-    else notices.push("The review settings saved in the Lorica dashboard could not be read and were ignored. Save them again.");
+    else
+      notices.push(
+        "The review settings saved in the Lorica dashboard could not be read and were ignored. Save them again.",
+      );
   }
 
-  let repoConfig: Awaited<ReturnType<ReviewDependencies["fetchRepoConfig"]>> = null;
+  let repoConfig: Awaited<ReturnType<ReviewDependencies["fetchRepoConfig"]>> =
+    null;
   try {
     repoConfig = await deps.fetchRepoConfig(pr, baseSha);
   } catch (error) {
@@ -271,8 +283,8 @@ export function createReviewProcessor(deps: ReviewDependencies) {
     let stopHeartbeat: (() => void) | undefined;
     // Set once the review settings say the merge gate is on.
     let reportGate:
-      | ((state: MergeGateState, description: string) => Promise<void>)
-      | null = null;
+      ((state: MergeGateState, description: string) => Promise<void>) | null =
+      null;
     try {
       lease = await claimReviewJob(reviewJobId);
       if (!lease) {
@@ -334,7 +346,8 @@ export function createReviewProcessor(deps: ReviewDependencies) {
           } catch (error) {
             // 403: the app may not write commit statuses. That will not change
             // on retry, so review anyway and tell the team on the PR.
-            if ((error as { status?: unknown } | null)?.status !== 403) throw error;
+            if ((error as { status?: unknown } | null)?.status !== 403)
+              throw error;
             gateDenied = true;
             notices.push(
               'Lorica could not set its merge-gate commit status (GitHub denied access). Grant the app "Commit statuses: Read and write", or turn the merge gate off.',
@@ -410,7 +423,10 @@ export function createReviewProcessor(deps: ReviewDependencies) {
         buildReviewPrompt({
           profile: settings.profile,
           guidelines: settings.guidelines,
-          pathInstructions: pathInstructionsFor(settings.pathInstructions, filePaths),
+          pathInstructions: pathInstructionsFor(
+            settings.pathInstructions,
+            filePaths,
+          ),
           tone: settings.tone,
           enforceGuidelines:
             settings.mergeGate.enabled && settings.mergeGate.enforceGuidelines,
@@ -418,28 +434,32 @@ export function createReviewProcessor(deps: ReviewDependencies) {
         });
 
       stage = "context_validation";
-      const plan = planReview({
-        pullRequest: {
-          repository: `${pr.owner}/${pr.repo}`,
-          number: pr.prNumber,
-          title: metadata.title,
-          description: metadata.description,
-          author: metadata.author,
-          baseSha: metadata.baseSha,
-          headSha: metadata.headSha,
-          event: pullRequest.action === "synchronize" ? "synchronize" : "fresh",
+      const plan = planReview(
+        {
+          pullRequest: {
+            repository: `${pr.owner}/${pr.repo}`,
+            number: pr.prNumber,
+            title: metadata.title,
+            description: metadata.description,
+            author: metadata.author,
+            baseSha: metadata.baseSha,
+            headSha: metadata.headSha,
+            event:
+              pullRequest.action === "synchronize" ? "synchronize" : "fresh",
+          },
+          changedFiles,
+          indexedCommit: graph.indexedCommit,
+          traces: graph.traces,
         },
-        changedFiles,
-        indexedCommit: graph.indexedCommit,
-        traces: graph.traces,
-      }, fitBudgetToContextWindow(
-        reviewBudgetFromEnv(),
-        modelConfig?.contextWindow,
-        // The largest prompt any chunk can get: every matching path instruction.
-        reservedReviewTokens(
-          promptFor(changedFiles.map((file) => file.filePath)),
+        fitBudgetToContextWindow(
+          reviewBudgetFromEnv(),
+          modelConfig?.contextWindow,
+          // The largest prompt any chunk can get: every matching path instruction.
+          reservedReviewTokens(
+            promptFor(changedFiles.map((file) => file.filePath)),
+          ),
         ),
-      ));
+      );
       if (plan.truncatedFiles.length > 0) {
         console.warn(
           `[worker] stage=review.budget_exceeded job=${reviewJobId} chunks=${plan.contexts.length} truncated_files=${plan.truncatedFiles.length}`,

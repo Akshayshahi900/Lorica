@@ -95,7 +95,9 @@ describe("webhook intake: success cases", () => {
   it("records a new PR, its review job and the delivery", async () => {
     const deliveryId = randomUUID();
     assert.equal(
-      await deliver(pullRequestEvent("sha-1", { action: "opened" }), { deliveryId }),
+      await deliver(pullRequestEvent("sha-1", { action: "opened" }), {
+        deliveryId,
+      }),
       200,
     );
 
@@ -139,14 +141,30 @@ describe("webhook intake: success cases", () => {
     const job = await prisma.reviewJob.findFirstOrThrow();
     await prisma.reviewJob.update({
       where: { id: job.id },
-      data: { status: "completed", skipReason: "draft pull requests are not reviewed" },
+      data: {
+        status: "completed",
+        skipReason: "draft pull requests are not reviewed",
+      },
     });
 
     // A push to a skipped draft is not a reason to look again.
-    await deliver(pullRequestEvent("sha-1", { action: "synchronize", updatedAt: "2026-10-15T10:01:00Z" }));
-    assert.equal((await prisma.reviewJob.findFirstOrThrow()).status, "completed");
+    await deliver(
+      pullRequestEvent("sha-1", {
+        action: "synchronize",
+        updatedAt: "2026-10-15T10:01:00Z",
+      }),
+    );
+    assert.equal(
+      (await prisma.reviewJob.findFirstOrThrow()).status,
+      "completed",
+    );
 
-    await deliver(pullRequestEvent("sha-1", { action: "ready_for_review", updatedAt: "2026-10-15T10:02:00Z" }));
+    await deliver(
+      pullRequestEvent("sha-1", {
+        action: "ready_for_review",
+        updatedAt: "2026-10-15T10:02:00Z",
+      }),
+    );
     const requeued = await prisma.reviewJob.findFirstOrThrow();
     assert.equal(requeued.status, "queued");
     assert.equal(requeued.skipReason, null);
@@ -158,7 +176,9 @@ describe("webhook intake: success cases", () => {
     // replaying the event that already produced it does not.
     const deliveryId = randomUUID();
     await deliver(pullRequestEvent("sha-1"), { deliveryId });
-    await prisma.reviewJob.updateMany({ data: { status: "failed", attempts: 9 } });
+    await prisma.reviewJob.updateMany({
+      data: { status: "failed", attempts: 9 },
+    });
 
     assert.equal(await deliver(pullRequestEvent("sha-1"), { deliveryId }), 200);
 
@@ -193,15 +213,21 @@ describe("webhook intake: success cases", () => {
   });
 
   it("supersedes queued and running reviews of older commits", async () => {
-    await deliver(pullRequestEvent("sha-1", { updatedAt: "2026-10-15T10:00:00Z" }));
-    await deliver(pullRequestEvent("sha-2", { updatedAt: "2026-10-15T10:01:00Z" }));
+    await deliver(
+      pullRequestEvent("sha-1", { updatedAt: "2026-10-15T10:00:00Z" }),
+    );
+    await deliver(
+      pullRequestEvent("sha-2", { updatedAt: "2026-10-15T10:01:00Z" }),
+    );
     // sha-2's review is in progress when sha-3 is pushed.
     await prisma.reviewJob.updateMany({
       where: { headSha: "sha-2" },
       data: { status: "running", leaseToken: "attempt-1" },
     });
 
-    await deliver(pullRequestEvent("sha-3", { updatedAt: "2026-10-15T10:02:00Z" }));
+    await deliver(
+      pullRequestEvent("sha-3", { updatedAt: "2026-10-15T10:02:00Z" }),
+    );
 
     assert.deepEqual(await jobs(), [
       { headSha: "sha-1", status: "superseded", attempts: 0 },
@@ -212,9 +238,13 @@ describe("webhook intake: success cases", () => {
   });
 
   it("ignores an out-of-order delivery for an older commit", async () => {
-    await deliver(pullRequestEvent("sha-new", { updatedAt: "2026-10-15T10:05:00Z" }));
+    await deliver(
+      pullRequestEvent("sha-new", { updatedAt: "2026-10-15T10:05:00Z" }),
+    );
     assert.equal(
-      await deliver(pullRequestEvent("sha-old", { updatedAt: "2026-10-15T10:00:00Z" })),
+      await deliver(
+        pullRequestEvent("sha-old", { updatedAt: "2026-10-15T10:00:00Z" }),
+      ),
       200,
     );
 
@@ -271,7 +301,9 @@ describe("webhook intake: failure cases", () => {
 
     // GitHub's redelivery reuses the delivery id.
     assert.equal(
-      await deliver(pullRequestEvent("sha-1", { action: "opened" }), { deliveryId }),
+      await deliver(pullRequestEvent("sha-1", { action: "opened" }), {
+        deliveryId,
+      }),
       200,
     );
     assert.deepEqual(await jobs(), [

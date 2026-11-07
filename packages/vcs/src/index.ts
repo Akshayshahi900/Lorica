@@ -1,4 +1,3 @@
-
 export * from "./github/fetchDiff";
 export * from "./github/octokit";
 export * from "./github/postComment";

@@ -34,7 +34,9 @@ type OrgMembership = {
  * The user's own account plus every organisation they administer: org
  * settings apply to all of its repositories, so only admins may change them.
  */
-export async function settingsAccounts(session: Session | null): Promise<SettingsAccount[]> {
+export async function settingsAccounts(
+  session: Session | null,
+): Promise<SettingsAccount[]> {
   const { login, accessToken, user } = (session ?? {}) as SessionWithGitHub;
   if (!login) return [];
   const accounts: SettingsAccount[] = [
@@ -43,7 +45,10 @@ export async function settingsAccounts(session: Session | null): Promise<Setting
   if (!accessToken) return accounts;
 
   const memberships =
-    (await github<OrgMembership[]>(accessToken, "/user/memberships/orgs?state=active&per_page=100")) ?? [];
+    (await github<OrgMembership[]>(
+      accessToken,
+      "/user/memberships/orgs?state=active&per_page=100",
+    )) ?? [];
   for (const membership of memberships) {
     if (membership.role !== "admin") continue;
     accounts.push({
@@ -65,7 +70,8 @@ export async function authorizeSettingsOwner(
 ): Promise<string | null> {
   const { login, accessToken } = (session ?? {}) as SessionWithGitHub;
   if (!login) return null;
-  if (!requested || requested.toLowerCase() === login.toLowerCase()) return login;
+  if (!requested || requested.toLowerCase() === login.toLowerCase())
+    return login;
   if (!accessToken || !GITHUB_LOGIN.test(requested)) return null;
 
   const membership = await github<OrgMembership>(

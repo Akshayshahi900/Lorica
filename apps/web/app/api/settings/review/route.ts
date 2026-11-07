@@ -16,7 +16,11 @@ async function withOwner(
   const owner = await authorizeSettingsOwner(session, requested);
   if (!owner) {
     return NextResponse.json(
-      { error: requested ? `You are not an admin of ${requested}` : "Unauthorized" },
+      {
+        error: requested
+          ? `You are not an admin of ${requested}`
+          : "Unauthorized",
+      },
       { status: requested ? 403 : 401 },
     );
   }

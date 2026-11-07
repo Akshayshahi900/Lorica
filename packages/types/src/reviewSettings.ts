@@ -14,23 +14,31 @@ export type MergeBlockLevel = (typeof MERGE_BLOCK_LEVELS)[number];
 /** What each profile means when nothing more specific is configured. */
 export const PROFILE_PRESETS: Record<
   ReviewProfile,
-  { label: string; description: string; minSeverity: ReviewSeverity; maxFindings: number }
+  {
+    label: string;
+    description: string;
+    minSeverity: ReviewSeverity;
+    maxFindings: number;
+  }
 > = {
   quiet: {
     label: "Quiet",
-    description: "Only high-confidence, high-impact bugs and security issues. Silence over noise.",
+    description:
+      "Only high-confidence, high-impact bugs and security issues. Silence over noise.",
     minSeverity: "high",
     maxFindings: 5,
   },
   chill: {
     label: "Chill",
-    description: "Concrete defects of any severity, no style or preference comments.",
+    description:
+      "Concrete defects of any severity, no style or preference comments.",
     minSeverity: "low",
     maxFindings: 20,
   },
   assertive: {
     label: "Assertive",
-    description: "Defects plus maintainability, readability, naming and missing tests.",
+    description:
+      "Defects plus maintainability, readability, naming and missing tests.",
     minSeverity: "low",
     maxFindings: 40,
   },
@@ -185,13 +193,18 @@ export function resolveReviewSettings(
     if (workflow.baseBranches) baseBranches = workflow.baseBranches;
     ignoreTitleKeywords.push(...(workflow.ignoreTitleKeywords ?? []));
     ignoreAuthors.push(...(workflow.ignoreAuthors ?? []));
-    if (workflow.autoReview !== undefined) flags.autoReview = workflow.autoReview;
-    if (workflow.reviewDrafts !== undefined) flags.reviewDrafts = workflow.reviewDrafts;
-    if (workflow.reviewOnPush !== undefined) flags.reviewOnPush = workflow.reviewOnPush;
+    if (workflow.autoReview !== undefined)
+      flags.autoReview = workflow.autoReview;
+    if (workflow.reviewDrafts !== undefined)
+      flags.reviewDrafts = workflow.reviewDrafts;
+    if (workflow.reviewOnPush !== undefined)
+      flags.reviewOnPush = workflow.reviewOnPush;
     if (style.fixPrompt !== undefined) flags.fixPrompt = style.fixPrompt;
-    if (style.postMergeActions !== undefined) flags.postMergeActions = style.postMergeActions;
+    if (style.postMergeActions !== undefined)
+      flags.postMergeActions = style.postMergeActions;
     if (mergeGate.enabled !== undefined) flags.mergeGate = mergeGate.enabled;
-    if (mergeGate.enforceGuidelines !== undefined) flags.enforceGuidelines = mergeGate.enforceGuidelines;
+    if (mergeGate.enforceGuidelines !== undefined)
+      flags.enforceGuidelines = mergeGate.enforceGuidelines;
     if (mergeGate.blockOn) blockOn = mergeGate.blockOn;
     if (style.minSeverity) minSeverity = style.minSeverity;
     if (style.maxFindings) maxFindings = style.maxFindings;
@@ -210,7 +223,9 @@ export function resolveReviewSettings(
       reviewOnPush: flags.reviewOnPush,
       baseBranches,
       ignoreTitleKeywords: [...new Set(ignoreTitleKeywords)],
-      ignoreAuthors: [...new Set(ignoreAuthors.map((author) => author.toLowerCase()))],
+      ignoreAuthors: [
+        ...new Set(ignoreAuthors.map((author) => author.toLowerCase())),
+      ],
     },
     style: {
       minSeverity: minSeverity ?? preset.minSeverity,
@@ -236,13 +251,17 @@ export function parseRepoReviewConfig(
   source: string,
 ): { settings: ReviewSettings } | { error: string } {
   if (source.length > MAX_REPO_CONFIG_BYTES) {
-    return { error: `the file is larger than ${MAX_REPO_CONFIG_BYTES / 1024} KB` };
+    return {
+      error: `the file is larger than ${MAX_REPO_CONFIG_BYTES / 1024} KB`,
+    };
   }
   let document: unknown;
   try {
     document = parseYaml(source, { maxAliasCount: 50 }) ?? {};
   } catch (error) {
-    return { error: `invalid YAML: ${error instanceof Error ? error.message.split("\n")[0] : String(error)}` };
+    return {
+      error: `invalid YAML: ${error instanceof Error ? error.message.split("\n")[0] : String(error)}`,
+    };
   }
   const parsed = ReviewSettingsSchema.safeParse(document);
   if (!parsed.success) {
@@ -258,8 +277,9 @@ export function parseRepoReviewConfig(
 
 /** Settings as a `.lorica.yaml` a team can commit to a repository. */
 export function toRepoConfigYaml(settings: ReviewSettings | null): string {
-  const body = settings && Object.keys(settings).length > 0
-    ? stringifyYaml(settings, { lineWidth: 0 })
-    : `profile: ${DEFAULT_REVIEW_PROFILE}\n`;
+  const body =
+    settings && Object.keys(settings).length > 0
+      ? stringifyYaml(settings, { lineWidth: 0 })
+      : `profile: ${DEFAULT_REVIEW_PROFILE}\n`;
   return `# Lorica review settings. Read from the branch a pull request targets.\n# Guidelines and lists add to the owner's dashboard settings; other values override them.\n${body}`;
 }

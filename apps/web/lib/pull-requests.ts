@@ -39,7 +39,10 @@ export interface DashboardStats {
 }
 
 function timeAgo(date: string): string {
-  const seconds = Math.max(0, Math.floor((Date.now() - new Date(date).getTime()) / 1000));
+  const seconds = Math.max(
+    0,
+    Math.floor((Date.now() - new Date(date).getTime()) / 1000),
+  );
   if (seconds < 60) return "just now";
   if (seconds < 3_600) return `${Math.floor(seconds / 60)}m ago`;
   if (seconds < 86_400) return `${Math.floor(seconds / 3_600)}h ago`;
@@ -47,7 +50,10 @@ function timeAgo(date: string): string {
 }
 
 function wasSkipped(pullRequest: PullRequestRecord): boolean {
-  return pullRequest.status === "completed" && Boolean(pullRequest.reviewJob?.skipReason);
+  return (
+    pullRequest.status === "completed" &&
+    Boolean(pullRequest.reviewJob?.skipReason)
+  );
 }
 
 function formatDuration(milliseconds: number): string {
@@ -72,14 +78,19 @@ export function toPRRows(pullRequests: PullRequestRecord[]): PRRow[] {
           : "pending",
     statusDetail: pullRequest.reviewJob?.skipReason ?? undefined,
     author: pullRequest.author ?? pullRequest.repoOwner,
-    reviewedAt: timeAgo(pullRequest.reviewJob?.completedAt ?? pullRequest.updatedAt),
+    reviewedAt: timeAgo(
+      pullRequest.reviewJob?.completedAt ?? pullRequest.updatedAt,
+    ),
     url: `https://github.com/${pullRequest.repoFullName}/pull/${pullRequest.number}`,
   }));
 }
 
-export function toDashboardStats(pullRequests: PullRequestRecord[]): DashboardStats {
+export function toDashboardStats(
+  pullRequests: PullRequestRecord[],
+): DashboardStats {
   const completed = pullRequests.filter(
-    (pullRequest) => pullRequest.status === "completed" && !wasSkipped(pullRequest),
+    (pullRequest) =>
+      pullRequest.status === "completed" && !wasSkipped(pullRequest),
   );
   const comments = completed.reduce(
     (total, pullRequest) => total + (pullRequest.reviewJob?.commentsCount ?? 0),
@@ -100,15 +111,25 @@ export function toDashboardStats(pullRequests: PullRequestRecord[]): DashboardSt
     prsReviewed: completed.length,
     avgReviewTime:
       durations.length > 0
-        ? formatDuration(durations.reduce((total, duration) => total + duration, 0) / durations.length)
+        ? formatDuration(
+            durations.reduce((total, duration) => total + duration, 0) /
+              durations.length,
+          )
         : "—",
     issuesCaught: comments,
-    approvalRate: completed.length > 0 ? Math.round((noFindingReviews / completed.length) * 100) : null,
-    reposInstalled: new Set(pullRequests.map((pullRequest) => pullRequest.repoFullName)).size,
+    approvalRate:
+      completed.length > 0
+        ? Math.round((noFindingReviews / completed.length) * 100)
+        : null,
+    reposInstalled: new Set(
+      pullRequests.map((pullRequest) => pullRequest.repoFullName),
+    ).size,
   };
 }
 
-export function toActivityItems(pullRequests: PullRequestRecord[]): ActivityItem[] {
+export function toActivityItems(
+  pullRequests: PullRequestRecord[],
+): ActivityItem[] {
   return pullRequests.slice(0, 6).map((pullRequest) => {
     const skipped = wasSkipped(pullRequest);
     const completed = pullRequest.status === "completed";
@@ -123,20 +144,27 @@ export function toActivityItems(pullRequests: PullRequestRecord[]): ActivityItem
         : skipped
           ? `Skipped PR #${pullRequest.number}: ${pullRequest.reviewJob!.skipReason}`
           : completed
-          ? `Reviewed PR #${pullRequest.number} — ${findings} finding${findings === 1 ? "" : "s"}`
-          : `Review queued for PR #${pullRequest.number}`,
+            ? `Reviewed PR #${pullRequest.number} — ${findings} finding${findings === 1 ? "" : "s"}`
+            : `Review queued for PR #${pullRequest.number}`,
       repo: pullRequest.repoFullName,
       ts: timeAgo(pullRequest.reviewJob?.completedAt ?? pullRequest.updatedAt),
     };
   });
 }
 
-export async function fetchPullRequests(signal?: AbortSignal): Promise<PullRequestRecord[]> {
+export async function fetchPullRequests(
+  signal?: AbortSignal,
+): Promise<PullRequestRecord[]> {
   const response = await fetch("/api/pulls", { signal, cache: "no-store" });
-  const payload = (await response.json()) as PullRequestsResponse | { error?: string };
+  const payload = (await response.json()) as
+    PullRequestsResponse | { error?: string };
 
   if (!response.ok || !("data" in payload)) {
-    throw new Error("error" in payload ? payload.error ?? "Failed to load pull requests" : "Failed to load pull requests");
+    throw new Error(
+      "error" in payload
+        ? (payload.error ?? "Failed to load pull requests")
+        : "Failed to load pull requests",
+    );
   }
 
   return payload.data;

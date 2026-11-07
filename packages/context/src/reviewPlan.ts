@@ -45,14 +45,16 @@ const LOCKFILES = new Set([
   "flake.lock",
 ]);
 
-const VENDORED_DIRS = /(^|\/)(node_modules|vendor|third_party|bower_components|\.yarn)\//;
+const VENDORED_DIRS =
+  /(^|\/)(node_modules|vendor|third_party|bower_components|\.yarn)\//;
 const GENERATED_DIRS =
   /(^|\/)(dist|coverage|generated|__generated__|\.next|\.turbo|\.nuxt)\//;
 const GENERATED_FILES =
   /(\.min\.(js|css)|\.map|\.snap|\.pb\.go|_pb2\.py|\.g\.dart|\.generated\.\w+)$/;
 const ASSET_EXTENSIONS =
   /\.(png|jpe?g|gif|webp|bmp|ico|svg|avif|mp3|mp4|mov|webm|wav|ogg|woff2?|ttf|otf|eot|pdf|zip|gz|tgz|tar|jar|wasm|exe|dll|so|dylib|bin)$/;
-const DOCUMENTATION = /(\.(md|mdx|rst|adoc)$)|(^|\/)(LICEN[CS]E|CHANGELOG|AUTHORS|NOTICE)[^/]*$/i;
+const DOCUMENTATION =
+  /(\.(md|mdx|rst|adoc)$)|(^|\/)(LICEN[CS]E|CHANGELOG|AUTHORS|NOTICE)[^/]*$/i;
 
 function exclusionReason(file: {
   filePath: string;
@@ -63,7 +65,8 @@ function exclusionReason(file: {
   const name = path.split("/").pop()!.toLowerCase();
   if (LOCKFILES.has(name)) return "lockfile";
   if (VENDORED_DIRS.test(path)) return "vendored";
-  if (GENERATED_DIRS.test(path) || GENERATED_FILES.test(name)) return "generated";
+  if (GENERATED_DIRS.test(path) || GENERATED_FILES.test(name))
+    return "generated";
   if (ASSET_EXTENSIONS.test(name)) return "asset";
   if (DOCUMENTATION.test(path)) return "documentation";
   if (file.status === "removed") return "removed";
@@ -130,10 +133,19 @@ export function reviewBudgetFromEnv(
     return Number.isInteger(value) && value > 0 ? value : fallback;
   };
   return {
-    diffTokensPerChunk: read("REVIEW_DIFF_TOKENS_PER_CHUNK", DEFAULT_REVIEW_BUDGET.diffTokensPerChunk),
-    traceTokensPerChunk: read("REVIEW_TRACE_TOKENS_PER_CHUNK", DEFAULT_REVIEW_BUDGET.traceTokensPerChunk),
+    diffTokensPerChunk: read(
+      "REVIEW_DIFF_TOKENS_PER_CHUNK",
+      DEFAULT_REVIEW_BUDGET.diffTokensPerChunk,
+    ),
+    traceTokensPerChunk: read(
+      "REVIEW_TRACE_TOKENS_PER_CHUNK",
+      DEFAULT_REVIEW_BUDGET.traceTokensPerChunk,
+    ),
     maxChunks: read("REVIEW_MAX_CHUNKS", DEFAULT_REVIEW_BUDGET.maxChunks),
-    maxDescriptionChars: read("REVIEW_MAX_DESCRIPTION_CHARS", DEFAULT_REVIEW_BUDGET.maxDescriptionChars),
+    maxDescriptionChars: read(
+      "REVIEW_MAX_DESCRIPTION_CHARS",
+      DEFAULT_REVIEW_BUDGET.maxDescriptionChars,
+    ),
   };
 }
 
@@ -170,7 +182,7 @@ export function fitBudgetToContextWindow(
   };
 }
 
-const HUNK_HEADER =/^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@(.*)$/;
+const HUNK_HEADER = /^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@(.*)$/;
 
 /**
  * Re-cuts one hunk into hunks of at most `maxTokens`, each with a header
@@ -233,7 +245,8 @@ export function splitPatch(patch: string, maxTokens: number): string[] {
   const pieces: string[] = [];
   let current = "";
   for (const hunk of hunks) {
-    const parts = estimateTokens(hunk) > maxTokens ? splitHunk(hunk, maxTokens) : [hunk];
+    const parts =
+      estimateTokens(hunk) > maxTokens ? splitHunk(hunk, maxTokens) : [hunk];
     for (const part of parts) {
       const joined = current ? `${current}\n${part}` : part;
       if (current && estimateTokens(joined) > maxTokens) {
@@ -250,10 +263,15 @@ export function splitPatch(patch: string, maxTokens: number): string[] {
 
 /** Source before tests before config, so a capped review spends tokens where bugs live. */
 function priority(filePath: string): number {
-  if (/(^|\/)(__tests__|tests?|spec|e2e|fixtures?)\/|\.(test|spec)\.\w+$/i.test(filePath)) {
+  if (
+    /(^|\/)(__tests__|tests?|spec|e2e|fixtures?)\/|\.(test|spec)\.\w+$/i.test(
+      filePath,
+    )
+  ) {
     return 1;
   }
-  if (/\.(json|ya?ml|toml|ini|cfg|conf|lock|env\w*|xml|csv)$/i.test(filePath)) return 2;
+  if (/\.(json|ya?ml|toml|ini|cfg|conf|lock|env\w*|xml|csv)$/i.test(filePath))
+    return 2;
   return 0;
 }
 
@@ -280,14 +298,18 @@ export function planReview(
   budget: ReviewBudget = DEFAULT_REVIEW_BUDGET,
 ): ReviewPlan {
   const ordered = [...input.changedFiles].sort(
-    (a, b) => priority(a.filePath) - priority(b.filePath) || a.filePath.localeCompare(b.filePath),
+    (a, b) =>
+      priority(a.filePath) - priority(b.filePath) ||
+      a.filePath.localeCompare(b.filePath),
   );
   const pieces = ordered.flatMap((file) => {
     const overhead = estimateTokens({ ...file, patch: "" });
-    return splitPatch(file.patch, budget.diffTokensPerChunk - overhead).map((patch) => ({
-      ...file,
-      patch,
-    }));
+    return splitPatch(file.patch, budget.diffTokensPerChunk - overhead).map(
+      (patch) => ({
+        ...file,
+        patch,
+      }),
+    );
   });
 
   const chunks: { files: ChangedFile[]; tokens: number }[] = [];
@@ -305,7 +327,9 @@ export function planReview(
       chunks.push({ files: [piece], tokens });
     } else {
       // Out of chunks: use leftover room in any chunk before giving up.
-      const room = chunks.find((chunk) => chunk.tokens + tokens <= budget.diffTokensPerChunk);
+      const room = chunks.find(
+        (chunk) => chunk.tokens + tokens <= budget.diffTokensPerChunk,
+      );
       if (room) {
         room.files.push(piece);
         room.tokens += tokens;
@@ -403,7 +427,10 @@ export function mergeReviewResults(
       if (!shown.has(finding.filePath)) continue;
       const key = `${finding.filePath}:${finding.lineNumber}:${finding.category}`;
       const existing = byLine.get(key);
-      if (!existing || SEVERITY_RANK[finding.severity] < SEVERITY_RANK[existing.severity]) {
+      if (
+        !existing ||
+        SEVERITY_RANK[finding.severity] < SEVERITY_RANK[existing.severity]
+      ) {
         byLine.set(key, finding);
       }
     }
@@ -426,9 +453,13 @@ export function mergeReviewResults(
       )
     : sorted;
   const capped = new Set(
-    atSeverity.filter((finding) => !enforced(finding)).slice(0, limits?.maxFindings),
+    atSeverity
+      .filter((finding) => !enforced(finding))
+      .slice(0, limits?.maxFindings),
   );
-  const reviews = atSeverity.filter((finding) => enforced(finding) || capped.has(finding));
+  const reviews = atSeverity.filter(
+    (finding) => enforced(finding) || capped.has(finding),
+  );
   const belowSeverity = sorted.length - atSeverity.length;
   const overLimit = atSeverity.length - reviews.length;
 
@@ -436,8 +467,8 @@ export function mergeReviewResults(
     reviewedFiles.size === 0
       ? "No reviewable code changes in this PR."
       : reviews.length === 0
-      ? `No ${belowSeverity > 0 ? `${limits!.minSeverity}-severity or worse ` : "concrete "}issues found in ${plural(reviewedFiles.size, "reviewed file")}.`
-      : `Found ${plural(atSeverity.length, "concrete issue")} across ${plural(reviewedFiles.size, "reviewed file")}.`,
+        ? `No ${belowSeverity > 0 ? `${limits!.minSeverity}-severity or worse ` : "concrete "}issues found in ${plural(reviewedFiles.size, "reviewed file")}.`
+        : `Found ${plural(atSeverity.length, "concrete issue")} across ${plural(reviewedFiles.size, "reviewed file")}.`,
   ];
   if (belowSeverity > 0) {
     sentences.push(
@@ -445,9 +476,13 @@ export function mergeReviewResults(
     );
   }
   if (overLimit > 0) {
-    sentences.push(`Showing the ${limits!.maxFindings} most severe; ${overLimit} more ${overLimit === 1 ? "was" : "were"} left out.`);
+    sentences.push(
+      `Showing the ${limits!.maxFindings} most severe; ${overLimit} more ${overLimit === 1 ? "was" : "were"} left out.`,
+    );
   }
-  const configured = coverage.excluded.filter((file) => file.reason === "configured").length;
+  const configured = coverage.excluded.filter(
+    (file) => file.reason === "configured",
+  ).length;
   const builtIn = coverage.excluded.length - configured;
   if (builtIn > 0) {
     sentences.push(
@@ -455,16 +490,27 @@ export function mergeReviewResults(
     );
   }
   if (configured > 0) {
-    sentences.push(`Skipped ${plural(configured, "file")} excluded by the review settings.`);
+    sentences.push(
+      `Skipped ${plural(configured, "file")} excluded by the review settings.`,
+    );
   }
   if (coverage.truncatedFiles.length > 0) {
-    const shown = coverage.truncatedFiles.slice(0, 5).map((path) => `\`${path}\``).join(", ");
-    const more = coverage.truncatedFiles.length > 5 ? `, and ${coverage.truncatedFiles.length - 5} more` : "";
+    const shown = coverage.truncatedFiles
+      .slice(0, 5)
+      .map((path) => `\`${path}\``)
+      .join(", ");
+    const more =
+      coverage.truncatedFiles.length > 5
+        ? `, and ${coverage.truncatedFiles.length - 5} more`
+        : "";
     sentences.push(
       `This PR exceeds the review size budget; changes in ${shown}${more} were not fully reviewed.`,
     );
   }
-  const postMergeActions = [...actions.values()].slice(0, MAX_POST_MERGE_ACTIONS);
+  const postMergeActions = [...actions.values()].slice(
+    0,
+    MAX_POST_MERGE_ACTIONS,
+  );
   return {
     summary: sentences.join(" "),
     reviews,

@@ -16,9 +16,14 @@ function globMatcher(patterns: string[]): (path: string) => boolean {
   // picomatch's own `basename` option applies to every pattern, slashes or not.
   const byName = patterns.filter((pattern) => !pattern.includes("/"));
   const byPath = patterns.filter((pattern) => pattern.includes("/"));
-  const nameMatches = byName.length ? picomatch(byName, { dot: true }) : () => false;
-  const pathMatches = byPath.length ? picomatch(byPath, { dot: true }) : () => false;
-  return (path) => pathMatches(path) || nameMatches(path.split("/").pop() ?? path);
+  const nameMatches = byName.length
+    ? picomatch(byName, { dot: true })
+    : () => false;
+  const pathMatches = byPath.length
+    ? picomatch(byPath, { dot: true })
+    : () => false;
+  return (path) =>
+    pathMatches(path) || nameMatches(path.split("/").pop() ?? path);
 }
 
 export type PullRequestFacts = {
@@ -40,7 +45,8 @@ export function reviewSkipReason(
 ): string | null {
   const { workflow } = settings;
   if (!workflow.autoReview) return "automatic reviews are turned off";
-  if (pr.draft && !workflow.reviewDrafts) return "draft pull requests are not reviewed";
+  if (pr.draft && !workflow.reviewDrafts)
+    return "draft pull requests are not reviewed";
   if (pr.action === "synchronize" && !workflow.reviewOnPush) {
     return "new commits are not reviewed";
   }
@@ -96,7 +102,8 @@ export function reviewLimits(settings: EffectiveReviewSettings): ReviewLimits {
     minSeverity: settings.style.minSeverity,
     maxFindings: settings.style.maxFindings,
     label: PROFILE_PRESETS[settings.profile].label,
-    keepStandards: settings.mergeGate.enabled && settings.mergeGate.enforceGuidelines,
+    keepStandards:
+      settings.mergeGate.enabled && settings.mergeGate.enforceGuidelines,
   };
 }
 
@@ -127,7 +134,9 @@ export function mergeVerdict(
   const threshold =
     gate.blockOn === "none" ? -1 : REVIEW_SEVERITIES.indexOf(gate.blockOn);
   const severe = reviews.filter(
-    (finding) => !isStandard(finding) && REVIEW_SEVERITIES.indexOf(finding.severity) <= threshold,
+    (finding) =>
+      !isStandard(finding) &&
+      REVIEW_SEVERITIES.indexOf(finding.severity) <= threshold,
   ).length;
   const standards = reviews.filter(isStandard).length;
 
@@ -139,10 +148,14 @@ export function mergeVerdict(
 
   const reasons: string[] = [];
   if (severe > 0) reasons.push(`${plural(severe, "finding")} of ${level}`);
-  if (standards > 0) reasons.push(plural(standards, "coding-guideline violation"));
+  if (standards > 0)
+    reasons.push(plural(standards, "coding-guideline violation"));
   return {
     blocked: reasons.length > 0,
     reasons,
-    rule: rules.length > 0 ? `blocks on ${rules.join(" and ")}` : "nothing is configured to block",
+    rule:
+      rules.length > 0
+        ? `blocks on ${rules.join(" and ")}`
+        : "nothing is configured to block",
   };
 }

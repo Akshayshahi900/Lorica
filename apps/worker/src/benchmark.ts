@@ -36,7 +36,11 @@ import {
   DEFAULT_LLM_MODEL,
   defaultLlmConfig,
 } from "@lorica/llm";
-import { estimateTokens, filterReviewableFiles, planReview } from "@lorica/context";
+import {
+  estimateTokens,
+  filterReviewableFiles,
+  planReview,
+} from "@lorica/context";
 import { getAppOctokit, getInstallationAccessToken } from "@lorica/vcs";
 import type { ChangedFile, GraphTrace, ReviewFinding } from "@lorica/types";
 import { refreshCodeGraph } from "./indexer/refreshCodeGraph";
@@ -46,7 +50,10 @@ process.env.NEO4J_URI ??= "bolt://localhost:7687";
 process.env.NEO4J_USER ??= "neo4j";
 process.env.NEO4J_PASSWORD ??= "password123";
 
-const OUT_DIR = path.resolve(process.env.LORICA_ROOT ?? process.cwd(), "benchmark");
+const OUT_DIR = path.resolve(
+  process.env.LORICA_ROOT ?? process.cwd(),
+  "benchmark",
+);
 const CASES_FILE = path.join(OUT_DIR, "cases.json");
 const GRAPHS_FILE = path.join(OUT_DIR, "graphs.json");
 
@@ -76,9 +83,18 @@ const TEST_FILE =
   /(^|\/)(__tests__|tests?|spec|e2e|fixtures?|__snapshots__)\/|\.(test|spec|bench)\.\w+$/i;
 
 type PrFile = { filePath: string; status: string; patch?: string };
-type DetectionCase = { url: string; title: string; baseSha?: string; files: PrFile[] };
+type DetectionCase = {
+  url: string;
+  title: string;
+  baseSha?: string;
+  files: PrFile[];
+};
 type FilterCase = { url: string; files: PrFile[] };
-type Cases = { collectedAt: string; detection: DetectionCase[]; filter: FilterCase[] };
+type Cases = {
+  collectedAt: string;
+  detection: DetectionCase[];
+  filter: FilterCase[];
+};
 type GraphEntry = {
   indexedCommit: string;
   traces: GraphTrace[];
@@ -94,10 +110,14 @@ const resultsFile = (m: Mode) =>
 const repoOf = (url: string) => url.split("/").slice(3, 5).join("/");
 const numberOf = (url: string) => Number(url.split("/")[6]);
 const sourceFiles = (files: PrFile[]) =>
-  files.filter((f) => SOURCE_FILE.test(f.filePath) && !TEST_FILE.test(f.filePath));
+  files.filter(
+    (f) => SOURCE_FILE.test(f.filePath) && !TEST_FILE.test(f.filePath),
+  );
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const readJson = <T>(file: string, fallback: T): T =>
-  fs.existsSync(file) ? (JSON.parse(fs.readFileSync(file, "utf8")) as T) : fallback;
+  fs.existsSync(file)
+    ? (JSON.parse(fs.readFileSync(file, "utf8")) as T)
+    : fallback;
 const writeJson = (file: string, value: unknown) => {
   fs.mkdirSync(OUT_DIR, { recursive: true });
   fs.writeFileSync(file, JSON.stringify(value, null, 2));
@@ -109,8 +129,11 @@ const writeJson = (file: string, value: unknown) => {
 
 async function githubToken(): Promise<string> {
   if (process.env.GITHUB_TOKEN) return process.env.GITHUB_TOKEN;
-  const { data } = await getAppOctokit().apps.listInstallations({ per_page: 1 });
-  if (!data[0]) throw new Error("Set GITHUB_TOKEN: the GitHub App has no installations");
+  const { data } = await getAppOctokit().apps.listInstallations({
+    per_page: 1,
+  });
+  if (!data[0])
+    throw new Error("Set GITHUB_TOKEN: the GitHub App has no installations");
   return getInstallationAccessToken(data[0].id);
 }
 
@@ -120,14 +143,19 @@ function github(token: string): GitHub {
   return async <T>(pathname: string): Promise<T> => {
     for (let attempt = 0; ; attempt++) {
       const response = await fetch(`https://api.github.com${pathname}`, {
-        headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json" },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/vnd.github+json",
+        },
       });
       if (response.ok) return (await response.json()) as T;
       if ((response.status === 403 || response.status === 429) && attempt < 3) {
         await sleep(30_000); // secondary rate limit
         continue;
       }
-      throw new Error(`GitHub ${pathname}: ${response.status} ${await response.text()}`);
+      throw new Error(
+        `GitHub ${pathname}: ${response.status} ${await response.text()}`,
+      );
     }
   };
 }
@@ -141,14 +169,21 @@ async function searchPrs(get: GitHub, query: string, page: number) {
   const result = await get<SearchResult>(
     `/search/issues?q=${q}&sort=created&order=desc&per_page=50&page=${page}`,
   );
-  return result.items.map((item) => ({ url: item.html_url, title: item.title }));
+  return result.items.map((item) => ({
+    url: item.html_url,
+    title: item.title,
+  }));
 }
 
 async function prFiles(get: GitHub, url: string): Promise<PrFile[]> {
-  const files = await get<{ filename: string; status: string; patch?: string }[]>(
-    `/repos/${repoOf(url)}/pulls/${numberOf(url)}/files?per_page=100`,
-  );
-  return files.map((f) => ({ filePath: f.filename, status: f.status, patch: f.patch }));
+  const files = await get<
+    { filename: string; status: string; patch?: string }[]
+  >(`/repos/${repoOf(url)}/pulls/${numberOf(url)}/files?per_page=100`);
+  return files.map((f) => ({
+    filePath: f.filename,
+    status: f.status,
+    patch: f.patch,
+  }));
 }
 
 async function baseSha(get: GitHub, url: string): Promise<string> {
@@ -175,25 +210,42 @@ function isDetectionCandidate(files: PrFile[]): boolean {
 /** Adds cases up to the targets; cases already collected (and their results) are kept. */
 async function collect() {
   const get = github(await githubToken());
-  const cases = readJson<Cases>(CASES_FILE, { collectedAt: "", detection: [], filter: [] });
+  const cases = readJson<Cases>(CASES_FILE, {
+    collectedAt: "",
+    detection: [],
+    filter: [],
+  });
   const known = new Set(cases.detection.map((c) => c.url));
   const perRepo = new Map<string, number>();
-  for (const c of cases.detection) perRepo.set(repoOf(c.url), (perRepo.get(repoOf(c.url)) ?? 0) + 1);
+  for (const c of cases.detection)
+    perRepo.set(repoOf(c.url), (perRepo.get(repoOf(c.url)) ?? 0) + 1);
 
   // GitHub search returns at most 1,000 results.
-  for (let page = 1; cases.detection.length < DETECTION_TARGET && page <= 20; page++) {
+  for (
+    let page = 1;
+    cases.detection.length < DETECTION_TARGET && page <= 20;
+    page++
+  ) {
     const prs = await searchPrs(get, `"fix" in:title`, page);
     if (prs.length === 0) break;
     for (const pr of prs) {
       if (cases.detection.length >= DETECTION_TARGET) break;
       const repo = repoOf(pr.url);
-      if (known.has(pr.url) || (perRepo.get(repo) ?? 0) >= MAX_CASES_PER_REPO) continue;
+      if (known.has(pr.url) || (perRepo.get(repo) ?? 0) >= MAX_CASES_PER_REPO)
+        continue;
       known.add(pr.url);
       const files = await prFiles(get, pr.url);
       if (!isDetectionCandidate(files)) continue;
-      cases.detection.push({ url: pr.url, title: pr.title, baseSha: await baseSha(get, pr.url), files });
+      cases.detection.push({
+        url: pr.url,
+        title: pr.title,
+        baseSha: await baseSha(get, pr.url),
+        files,
+      });
       perRepo.set(repo, (perRepo.get(repo) ?? 0) + 1);
-      console.log(`[collect] detection ${cases.detection.length}/${DETECTION_TARGET} ${pr.url}`);
+      console.log(
+        `[collect] detection ${cases.detection.length}/${DETECTION_TARGET} ${pr.url}`,
+      );
       writeJson(CASES_FILE, cases);
     }
   }
@@ -204,19 +256,30 @@ async function collect() {
       if (cases.filter.length >= FILTER_TARGET) break;
       if (knownFilter.has(pr.url)) continue;
       cases.filter.push({ url: pr.url, files: await prFiles(get, pr.url) });
-      console.log(`[collect] filter ${cases.filter.length}/${FILTER_TARGET} ${pr.url}`);
+      console.log(
+        `[collect] filter ${cases.filter.length}/${FILTER_TARGET} ${pr.url}`,
+      );
     }
   }
 
   cases.collectedAt = new Date().toISOString();
   writeJson(CASES_FILE, cases);
-  console.log(`[collect] ${cases.detection.length} detection cases in ${CASES_FILE}`);
+  console.log(
+    `[collect] ${cases.detection.length} detection cases in ${CASES_FILE}`,
+  );
 }
 
 function loadCases(): Cases {
-  if (!fs.existsSync(CASES_FILE)) throw new Error(`Run "pnpm benchmark collect" first`);
-  const cases = readJson<Cases>(CASES_FILE, { collectedAt: "", detection: [], filter: [] });
-  cases.detection = cases.detection.filter((c) => isDetectionCandidate(c.files));
+  if (!fs.existsSync(CASES_FILE))
+    throw new Error(`Run "pnpm benchmark collect" first`);
+  const cases = readJson<Cases>(CASES_FILE, {
+    collectedAt: "",
+    detection: [],
+    filter: [],
+  });
+  cases.detection = cases.detection.filter((c) =>
+    isDetectionCandidate(c.files),
+  );
   return cases;
 }
 
@@ -230,7 +293,11 @@ function loadCases(): Cases {
  * One Neo4j graph per repository is reused and replaced case by case.
  */
 async function index() {
-  const cases = readJson<Cases>(CASES_FILE, { collectedAt: "", detection: [], filter: [] });
+  const cases = readJson<Cases>(CASES_FILE, {
+    collectedAt: "",
+    detection: [],
+    filter: [],
+  });
   const graphs = readJson<Record<string, GraphEntry>>(GRAPHS_FILE, {});
   const eligible = cases.detection.filter((c) => isDetectionCandidate(c.files));
   let get: GitHub | undefined;
@@ -245,19 +312,27 @@ async function index() {
     const repositoryUrl = `https://github.com/${repoOf(c.url)}.git`;
     const started = performance.now();
     try {
-      await refreshCodeGraph({ repositoryUrl, branch: "benchmark", commit: c.baseSha });
+      await refreshCodeGraph({
+        repositoryUrl,
+        branch: "benchmark",
+        commit: c.baseSha,
+      });
       const graph = await getReviewGraphContext({
         repositoryUrl,
         branch: "benchmark",
         changedFiles: sourceFiles(c.files).map((f) => f.filePath),
       });
-      graphs[c.url] = { ...graph, indexSeconds: (performance.now() - started) / 1000 };
+      graphs[c.url] = {
+        ...graph,
+        indexSeconds: (performance.now() - started) / 1000,
+      };
     } catch (error) {
       graphs[c.url] = {
         indexedCommit: c.baseSha,
         traces: [],
         indexSeconds: (performance.now() - started) / 1000,
-        error: error instanceof Error ? error.message.slice(0, 300) : String(error),
+        error:
+          error instanceof Error ? error.message.slice(0, 300) : String(error),
       };
     }
     const entry = graphs[c.url]!;
@@ -266,6 +341,13 @@ async function index() {
     );
     writeJson(GRAPHS_FILE, graphs);
   }
+
+  const failed = eligible.filter((c) => graphs[c.url]?.error).length;
+  console.log(
+    `[index] ${eligible.length - failed}/${eligible.length} cases indexed` +
+      (failed ? `, ${failed} failed (rerun to retry)` : "") +
+      ` in ${GRAPHS_FILE}. Next: pnpm benchmark run --graph`,
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -280,7 +362,8 @@ export function reversePatch(patch: string): string {
     .split("\n")
     .map((line) => {
       const header = line.match(HUNK_HEADER);
-      if (header) return `@@ -${header[3]}${header[4] ?? ""} +${header[1]}${header[2] ?? ""} @@${header[5]}`;
+      if (header)
+        return `@@ -${header[3]}${header[4] ?? ""} +${header[1]}${header[2] ?? ""} @@${header[5]}`;
       if (line.startsWith("+")) return `-${line.slice(1)}`;
       if (line.startsWith("-")) return `+${line.slice(1)}`;
       return line;
@@ -315,7 +398,9 @@ export function changedLines(patch: string): number[] {
 class DailyLimitError extends Error {}
 
 function isDailyLimit(error: unknown): boolean {
-  return error instanceof Error && /free-models-per-day|per-day/i.test(error.message);
+  return (
+    error instanceof Error && /free-models-per-day|per-day/i.test(error.message)
+  );
 }
 
 /** Retries rate-limit bursts; gives up at once on the daily limit. */
@@ -324,7 +409,8 @@ async function withRetries<T>(call: () => Promise<T>): Promise<T> {
     try {
       return await call();
     } catch (error) {
-      if (isDailyLimit(error)) throw new DailyLimitError((error as Error).message);
+      if (isDailyLimit(error))
+        throw new DailyLimitError((error as Error).message);
       if (attempt >= 2) throw error;
       await sleep(20_000 * (attempt + 1));
     }
@@ -334,7 +420,9 @@ async function withRetries<T>(call: () => Promise<T>): Promise<T> {
 function percentile(values: number[], p: number): number {
   if (values.length === 0) return 0;
   const sorted = [...values].sort((a, b) => a - b);
-  return sorted[Math.min(sorted.length - 1, Math.floor((p / 100) * sorted.length))]!;
+  return sorted[
+    Math.min(sorted.length - 1, Math.floor((p / 100) * sorted.length))
+  ]!;
 }
 
 type CaseResult = {
@@ -378,35 +466,58 @@ async function reviewCase(
     changedFiles,
     indexedCommit: graph?.indexedCommit ?? "benchmark",
     traces: graph?.traces ?? [],
-    ...(graph ? {} : { unavailableReason: "Graph context is disabled for this benchmark run." }),
+    ...(graph
+      ? {}
+      : {
+          unavailableReason:
+            "Graph context is disabled for this benchmark run.",
+        }),
   });
 
   const started = performance.now();
   const findings: ReviewFinding[] = [];
   try {
     for (const context of plan.contexts) {
-      findings.push(...(await withRetries(() => callLLM(context, prompt))).reviews);
+      findings.push(
+        ...(await withRetries(() => callLLM(context, prompt))).reviews,
+      );
     }
   } catch (error) {
     if (error instanceof DailyLimitError) throw error;
     return {
-      url: c.url, title: c.title, detected: false, seconds: 0, chunks: plan.contexts.length,
-      findings: [], matched: [], error: error instanceof Error ? error.message.slice(0, 300) : String(error),
+      url: c.url,
+      title: c.title,
+      detected: false,
+      seconds: 0,
+      chunks: plan.contexts.length,
+      findings: [],
+      matched: [],
+      error:
+        error instanceof Error ? error.message.slice(0, 300) : String(error),
     };
   }
   const seconds = (performance.now() - started) / 1000;
 
-  const targets = new Map(changedFiles.map((f) => [f.filePath, changedLines(f.patch)]));
+  const targets = new Map(
+    changedFiles.map((f) => [f.filePath, changedLines(f.patch)]),
+  );
   const matched = findings.filter((finding) =>
     (targets.get(finding.filePath) ?? []).some(
       (line) => Math.abs(line - finding.lineNumber) <= LINE_TOLERANCE,
     ),
   );
   return {
-    url: c.url, title: c.title, detected: matched.length > 0, seconds,
+    url: c.url,
+    title: c.title,
+    detected: matched.length > 0,
+    seconds,
     chunks: plan.contexts.length,
-    traces: plan.contexts.reduce((sum, ctx) => sum + ctx.graph.traces.length, 0),
-    findings, matched,
+    traces: plan.contexts.reduce(
+      (sum, ctx) => sum + ctx.graph.traces.length,
+      0,
+    ),
+    findings,
+    matched,
   };
 }
 
@@ -417,8 +528,14 @@ function filterStats(cases: FilterCase[]) {
   for (const c of cases) {
     const withPatch = c.files.map((f) => ({ ...f, patch: f.patch ?? null }));
     const { reviewable, excluded } = filterReviewableFiles(withPatch);
-    rawTokens += withPatch.reduce((sum, f) => sum + estimateTokens(f.patch ?? ""), 0);
-    keptTokens += reviewable.reduce((sum, f) => sum + estimateTokens(f.patch ?? ""), 0);
+    rawTokens += withPatch.reduce(
+      (sum, f) => sum + estimateTokens(f.patch ?? ""),
+      0,
+    );
+    keptTokens += reviewable.reduce(
+      (sum, f) => sum + estimateTokens(f.patch ?? ""),
+      0,
+    );
     if (excluded.length > 0) prsWithExclusions++;
   }
   return { prs: cases.length, rawTokens, keptTokens, prsWithExclusions };
@@ -435,8 +552,16 @@ function stopForToday(step: string, done: number, total: number) {
 
 async function run() {
   const cases = loadCases();
-  const graphs = mode === "graph" ? readJson<Record<string, GraphEntry>>(GRAPHS_FILE, {}) : {};
-  const prompt = buildReviewPrompt({ profile: "chill", guidelines: [], pathInstructions: [], tone: null });
+  const graphs =
+    mode === "graph"
+      ? readJson<Record<string, GraphEntry>>(GRAPHS_FILE, {})
+      : {};
+  const prompt = buildReviewPrompt({
+    profile: "chill",
+    guidelines: [],
+    pathInstructions: [],
+    tone: null,
+  });
 
   // Keep finished cases; retry the ones that errored.
   const results = loadResults(mode).filter((r) => !r.error);
@@ -445,12 +570,19 @@ async function run() {
     if (done.has(c.url)) continue;
     const graph = graphs[c.url];
     if (mode === "graph" && (!graph || graph.error)) {
-      console.log(`[run] ${index + 1}/${cases.detection.length} skipped: not indexed ${c.url}`);
+      console.log(
+        `[run] ${index + 1}/${cases.detection.length} skipped: not indexed ${c.url}`,
+      );
       continue;
     }
     let result: CaseResult;
     try {
-      result = await reviewCase(c, index, prompt, mode === "graph" ? graph : undefined);
+      result = await reviewCase(
+        c,
+        index,
+        prompt,
+        mode === "graph" ? graph : undefined,
+      );
     } catch (error) {
       if (!(error instanceof DailyLimitError)) throw error;
       return stopForToday("run", results.length, cases.detection.length);
@@ -486,7 +618,10 @@ async function judge() {
       .join("\n");
     const findings = result.matched
       .slice(0, 5)
-      .map((f, i) => `${i + 1}. ${f.filePath}:${f.lineNumber} [${f.severity} ${f.category}] ${f.comment}`)
+      .map(
+        (f, i) =>
+          `${i + 1}. ${f.filePath}:${f.lineNumber} [${f.severity} ${f.category}] ${f.comment}`,
+      )
       .join("\n");
     const question = `A maintainer fixed a defect with this pull request.
 
@@ -503,27 +638,40 @@ Does any reported finding identify the same defect this fix addresses (the same 
       const answer = await withRetries(async () => {
         const response = await fetch(`${baseUrlFor(config)}/chat/completions`, {
           method: "POST",
-          headers: { Authorization: `Bearer ${config.apiKey}`, "Content-Type": "application/json" },
+          headers: {
+            Authorization: `Bearer ${config.apiKey}`,
+            "Content-Type": "application/json",
+          },
           body: JSON.stringify({
             model: process.env.BENCH_JUDGE_MODEL ?? config.model,
             messages: [{ role: "user", content: question }],
             temperature: 0,
           }),
         });
-        if (!response.ok) throw new Error(`${response.status} ${await response.text()}`);
-        const data = (await response.json()) as { choices: { message: { content: string } }[] };
+        if (!response.ok)
+          throw new Error(`${response.status} ${await response.text()}`);
+        const data = (await response.json()) as {
+          choices: { message: { content: string } }[];
+        };
         return (data.choices[0]?.message.content ?? "")
           .replace(/<think>[\s\S]*?<\/think>/g, "")
           .trim()
           .toUpperCase();
       });
-      result.confirmed = /\bYES\b/.test(answer) && !/\bNO\b/.test(answer.slice(0, 5));
+      result.confirmed =
+        /\bYES\b/.test(answer) && !/\bNO\b/.test(answer.slice(0, 5));
     } catch (error) {
       writeJson(resultsFile(mode), results);
       if (!(error instanceof DailyLimitError)) throw error;
-      return stopForToday("judge", results.filter((r) => r.confirmed !== undefined).length, results.length);
+      return stopForToday(
+        "judge",
+        results.filter((r) => r.confirmed !== undefined).length,
+        results.length,
+      );
     }
-    console.log(`[judge:${mode}] ${index + 1}/${results.length} ${result.confirmed ? "CONFIRMED" : "not confirmed"} ${result.url}`);
+    console.log(
+      `[judge:${mode}] ${index + 1}/${results.length} ${result.confirmed ? "CONFIRMED" : "not confirmed"} ${result.url}`,
+    );
     writeJson(resultsFile(mode), results);
   }
   writeJson(resultsFile(mode), results);
@@ -549,11 +697,17 @@ function summarize(results: CaseResult[]) {
     valid: `${completed.length} / ${results.length} (${pct(results.length ? completed.length / results.length : 0)})`,
     median: `${percentile(times, 50).toFixed(1)}s`,
     p90: `${percentile(times, 90).toFixed(1)}s`,
-    findings: (completed.reduce((s, r) => s + r.findings.length, 0) / Math.max(1, completed.length)).toFixed(1),
+    findings: (
+      completed.reduce((s, r) => s + r.findings.length, 0) /
+      Math.max(1, completed.length)
+    ).toFixed(1),
   };
 }
 
-function graphSection(diffResults: CaseResult[], graphResults: CaseResult[]): string {
+function graphSection(
+  diffResults: CaseResult[],
+  graphResults: CaseResult[],
+): string {
   const graphs = readJson<Record<string, GraphEntry>>(GRAPHS_FILE, {});
   const paired = new Set(
     graphResults.filter((r) => !r.error).map((r) => r.url),
@@ -581,7 +735,10 @@ The same ${graph.length} cases, reviewed once with the diff alone and once with 
 | Findings per review, mean | ${d.findings} | ${g.findings} |
 
 - Graph traces per review: median ${percentile(traces, 50)}, max ${Math.max(0, ...traces)}.
-- Indexing the buggy commit (clone, parse, persist to Neo4j): median ${percentile(indexed.map((e) => e.indexSeconds), 50).toFixed(1)}s over ${indexed.length} commits.
+- Indexing the buggy commit (clone, parse, persist to Neo4j): median ${percentile(
+    indexed.map((e) => e.indexSeconds),
+    50,
+  ).toFixed(1)}s over ${indexed.length} commits.
 ${g.judged && d.judged ? `- Identified only with the graph: ${won.length}. Identified only without it: ${lost.length}.\n` : ""}`;
 }
 
@@ -592,7 +749,8 @@ function report() {
   const model = process.env.LLM_MODEL ?? DEFAULT_LLM_MODEL;
   const s = summarize(results);
   const filter = filterStats(cases.filter);
-  const saved = filter.rawTokens === 0 ? 0 : 1 - filter.keptTokens / filter.rawTokens;
+  const saved =
+    filter.rawTokens === 0 ? 0 : 1 - filter.keptTokens / filter.rawTokens;
   const repos = [...new Set(s.completed.map((r) => repoOf(r.url)))];
   const byHand = [...results, ...graphResults].filter((r) => r.judgedBy).length;
 
@@ -628,7 +786,15 @@ ${graphSection(results, graphResults)}
 ${results
   .map((r, i) => {
     const status = (x?: CaseResult) =>
-      !x ? "–" : x.error ? "error" : x.confirmed ? "identified" : x.detected ? "flagged" : "missed";
+      !x
+        ? "–"
+        : x.error
+          ? "error"
+          : x.confirmed
+            ? "identified"
+            : x.detected
+              ? "flagged"
+              : "missed";
     const g = graphResults.find((x) => x.url === r.url);
     const finding = r.matched[0]
       ? `${r.matched[0].severity} ${r.matched[0].category}: ${r.matched[0].comment.replace(/\s+/g, " ").replace(/\|/g, "\\|").slice(0, 140)}`
@@ -642,11 +808,20 @@ ${results
   console.log(`[report] wrote ${path.join(OUT_DIR, "REPORT.md")}`);
 }
 
-const commands: Record<string, () => unknown> = { collect, index, run, judge, report };
+const commands: Record<string, () => unknown> = {
+  collect,
+  index,
+  run,
+  judge,
+  report,
+};
 Promise.resolve()
   .then(() => {
     const command = commands[process.argv[2] ?? ""];
-    if (!command) throw new Error("Usage: pnpm benchmark <collect|index|run|judge|report> [--graph]");
+    if (!command)
+      throw new Error(
+        "Usage: pnpm benchmark <collect|index|run|judge|report> [--graph]",
+      );
     return command();
   })
   .then(() => process.exit(0)) // the Neo4j driver and timers would keep the process alive

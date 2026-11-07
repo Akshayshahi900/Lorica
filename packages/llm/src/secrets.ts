@@ -20,7 +20,10 @@ export function encryptSecret(
 ): string {
   const iv = crypto.randomBytes(12);
   const cipher = crypto.createCipheriv("aes-256-gcm", encryptionKey(env), iv);
-  const ciphertext = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
+  const ciphertext = Buffer.concat([
+    cipher.update(plaintext, "utf8"),
+    cipher.final(),
+  ]);
   return [VERSION, iv, cipher.getAuthTag(), ciphertext]
     .map((part) => (typeof part === "string" ? part : part.toString("base64")))
     .join(":");

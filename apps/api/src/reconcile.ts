@@ -96,7 +96,9 @@ export function reconcile() {
     } catch (error) {
       result.owedReviewsError = error instanceof Error ? error.name : "unknown";
     }
-    console.info(`[api] stage=reconcile.completed result=${JSON.stringify(result)}`);
+    console.info(
+      `[api] stage=reconcile.completed result=${JSON.stringify(result)}`,
+    );
     return result;
   })().finally(() => {
     running = null;

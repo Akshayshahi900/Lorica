@@ -8,9 +8,9 @@ export const HEARTBEAT_MS = 60_000;
 
 // Delay before attempt n+1. Spread over ~8 hours so an outage of the LLM,
 // GitHub, Neo4j or the database is outlasted rather than raced.
-const RETRY_DELAYS_MS = [
-  1, 2, 5, 15, 30, 60, 120, 240,
-].map((minutes) => minutes * 60_000);
+const RETRY_DELAYS_MS = [1, 2, 5, 15, 30, 60, 120, 240].map(
+  (minutes) => minutes * 60_000,
+);
 export const MAX_ATTEMPTS = RETRY_DELAYS_MS.length + 1;
 
 /** Failures that retrying cannot fix, such as a deleted repository. */
@@ -136,10 +136,15 @@ export function startLeaseHeartbeat(lease: Lease): () => void {
 async function writeIfOwned(
   lease: Lease,
   data: Parameters<typeof prisma.reviewJob.updateMany>[0]["data"],
-  andThen?: (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => Promise<unknown>,
+  andThen?: (
+    tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+  ) => Promise<unknown>,
 ): Promise<boolean> {
   return prisma.$transaction(async (tx) => {
-    const updated = await tx.reviewJob.updateMany({ where: owned(lease), data });
+    const updated = await tx.reviewJob.updateMany({
+      where: owned(lease),
+      data,
+    });
     if (updated.count === 0) return false;
     await andThen?.(tx);
     return true;

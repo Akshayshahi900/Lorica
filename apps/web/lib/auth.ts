@@ -32,7 +32,7 @@ export const authOptions: NextAuthOptions = {
     },
   },
   pages: {
-    signIn: "/",     // redirect unauthenticated users to landing page
+    signIn: "/", // redirect unauthenticated users to landing page
     error: "/",
   },
   session: {

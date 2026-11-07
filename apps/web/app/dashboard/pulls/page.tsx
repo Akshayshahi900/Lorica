@@ -34,12 +34,23 @@ export default function PullsPage() {
     <div className="p-4 sm:p-6 max-w-6xl mx-auto space-y-5">
       <div className="flex items-end justify-between gap-4">
         <div>
-          <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-accent-violet">Review history</p>
-          <h1 className="mt-1 text-xl font-semibold tracking-tight text-text-primary">Pull Requests</h1>
-          <p className="text-xs text-text-muted font-mono mt-1">All pull requests processed by Lorica</p>
+          <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-accent-violet">
+            Review history
+          </p>
+          <h1 className="mt-1 text-xl font-semibold tracking-tight text-text-primary">
+            Pull Requests
+          </h1>
+          <p className="text-xs text-text-muted font-mono mt-1">
+            All pull requests processed by Lorica
+          </p>
         </div>
-        <button onClick={() => loadPullRequests()} disabled={loading} className="inline-flex items-center gap-2 rounded-lg border border-bg-border bg-bg-panel px-3 py-2 text-xs font-mono text-text-secondary transition-colors hover:border-accent-violet/40 hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-60">
-          <RefreshCw size={13} className={loading ? "animate-spin" : ""} /> Refresh
+        <button
+          onClick={() => loadPullRequests()}
+          disabled={loading}
+          className="inline-flex items-center gap-2 rounded-lg border border-bg-border bg-bg-panel px-3 py-2 text-xs font-mono text-text-secondary transition-colors hover:border-accent-violet/40 hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <RefreshCw size={13} className={loading ? "animate-spin" : ""} />{" "}
+          Refresh
         </button>
       </div>
 
@@ -53,13 +64,16 @@ export default function PullsPage() {
         {error && (
           <div className="rounded-lg border border-status-red/20 bg-status-red/5 p-4 text-sm text-status-red">
             <p>{error}</p>
-            <button onClick={() => loadPullRequests()} className="mt-2 text-xs font-mono underline underline-offset-4">Try again</button>
+            <button
+              onClick={() => loadPullRequests()}
+              className="mt-2 text-xs font-mono underline underline-offset-4"
+            >
+              Try again
+            </button>
           </div>
         )}
 
-        {!loading && !error && (
-          <PRTable rows={prs} />
-        )}
+        {!loading && !error && <PRTable rows={prs} />}
       </div>
     </div>
   );

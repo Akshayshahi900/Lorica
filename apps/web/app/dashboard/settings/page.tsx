@@ -57,8 +57,8 @@ export default function SettingsPage() {
       <div className="bg-bg-panel border border-status-red/20 rounded-xl p-5 space-y-3">
         <h2 className="text-sm font-semibold text-status-red">Danger zone</h2>
         <p className="text-xs text-text-secondary">
-          Deleting your account removes all review history and uninstalls the bot
-          from all repositories.
+          Deleting your account removes all review history and uninstalls the
+          bot from all repositories.
         </p>
         <button className="px-4 py-2 text-xs font-mono text-status-red border border-status-red/30 rounded-lg hover:bg-status-red/10 transition-colors">
           Delete account

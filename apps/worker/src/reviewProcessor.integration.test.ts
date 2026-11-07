@@ -35,7 +35,11 @@ function fakeGitHub(overrides: Partial<ReviewDependencies> = {}) {
   };
   const deps: ReviewDependencies = {
     fetchFiles: async () => [
-      { filePath: "src/a.ts", status: "modified", patch: "@@ -1 +1 @@\n-a\n+b" },
+      {
+        filePath: "src/a.ts",
+        status: "modified",
+        patch: "@@ -1 +1 @@\n-a\n+b",
+      },
     ],
     fetchDetails: async () => ({
       title: "Change a",
@@ -95,7 +99,12 @@ function fakeGitHub(overrides: Partial<ReviewDependencies> = {}) {
 
 async function seedJob(headSha = HEAD) {
   const repository = await prisma.repository.create({
-    data: { githubId: 1n, name: "widgets", fullName: "acme/widgets", owner: "acme" },
+    data: {
+      githubId: 1n,
+      name: "widgets",
+      fullName: "acme/widgets",
+      owner: "acme",
+    },
   });
   const pullRequest = await prisma.pullRequest.create({
     data: {
@@ -115,7 +124,8 @@ async function seedJob(headSha = HEAD) {
   });
 }
 
-const job = (id: number) => prisma.reviewJob.findUniqueOrThrow({ where: { id } });
+const job = (id: number) =>
+  prisma.reviewJob.findUniqueOrThrow({ where: { id } });
 const pr = () => prisma.pullRequest.findFirstOrThrow();
 
 beforeEach(resetTestDatabase);
@@ -132,7 +142,10 @@ describe("review processing: success cases", () => {
     assert.equal(await createReviewProcessor(deps)(id), "completed");
 
     assert.equal(state.comments.length, 1);
-    assert.match(state.comments[0]!.body, new RegExp(`lorica-review-job:${id}`));
+    assert.match(
+      state.comments[0]!.body,
+      new RegExp(`lorica-review-job:${id}`),
+    );
     const done = await job(id);
     assert.equal(done.status, "completed");
     assert.equal(done.commentsCount, 1);
@@ -187,7 +200,10 @@ describe("review processing: success cases", () => {
     const review = state.comments[1]!.body;
     assert.ok(review.startsWith(REVIEW_COMMENT_MARKER));
     assert.match(review, new RegExp(`lorica-review-job:${third}\\b`));
-    assert.doesNotMatch(review, new RegExp(`lorica-review-job:(${first.id}|${second})\\b`));
+    assert.doesNotMatch(
+      review,
+      new RegExp(`lorica-review-job:(${first.id}|${second})\\b`),
+    );
     assert.equal(state.edits, 2);
     assert.equal((await job(third)).status, "completed");
   });
@@ -225,18 +241,28 @@ describe("review processing: review settings", () => {
   it("layers the repository config from the base commit over the owner's settings", async () => {
     const { id } = await seedJob();
     const { state, deps } = fakeGitHub();
-    state.ownerSettings = { profile: "assertive", guidelines: "Org: use the shared logger." };
-    state.repoConfig = "profile: quiet\nguidelines: 'Repo: no default exports.'\nstyle:\n  fixPrompt: false\n";
+    state.ownerSettings = {
+      profile: "assertive",
+      guidelines: "Org: use the shared logger.",
+    };
+    state.repoConfig =
+      "profile: quiet\nguidelines: 'Repo: no default exports.'\nstyle:\n  fixPrompt: false\n";
 
     assert.equal(await createReviewProcessor(deps)(id), "completed");
 
     assert.equal(state.repoConfigRef, "sha-base");
     assert.match(state.prompts[0]!, /QUIET\./);
-    assert.match(state.prompts[0]!, /Org: use the shared logger\.\n\nRepo: no default exports\./);
+    assert.match(
+      state.prompts[0]!,
+      /Org: use the shared logger\.\n\nRepo: no default exports\./,
+    );
     // Quiet drops the fake model's low-severity finding and the fix prompt.
     const body = state.comments[0]!.body;
     assert.match(body, /No actionable issues found/);
-    assert.match(body, /1 lower-severity finding was hidden by the Quiet review settings/);
+    assert.match(
+      body,
+      /1 lower-severity finding was hidden by the Quiet review settings/,
+    );
     assert.match(body, /Quiet profile/);
     assert.equal((await job(id)).commentsCount, 0);
   });
@@ -277,7 +303,11 @@ describe("review processing: merge gate", () => {
       },
     ],
     postMergeActions: [
-      { category: "configuration" as const, action: "Set `TOKEN_TTL` in production.", reason: "Read by src/a.ts." },
+      {
+        category: "configuration" as const,
+        action: "Set `TOKEN_TTL` in production.",
+        reason: "Read by src/a.ts.",
+      },
     ],
   };
 
@@ -298,7 +328,10 @@ describe("review processing: merge gate", () => {
     const { id } = await seedJob();
     const { state, deps } = fakeGitHub();
     state.result = blocking;
-    state.ownerSettings = { profile: "quiet", guidelines: "Use the shared logger." };
+    state.ownerSettings = {
+      profile: "quiet",
+      guidelines: "Use the shared logger.",
+    };
 
     assert.equal(await createReviewProcessor(deps)(id), "completed");
 
@@ -307,7 +340,8 @@ describe("review processing: merge gate", () => {
     assert.deepEqual(state.statuses.at(-1), {
       sha: HEAD,
       state: "failure",
-      description: "Merge blocked: 1 finding of high severity or worse, 1 coding-guideline violation",
+      description:
+        "Merge blocked: 1 finding of high severity or worse, 1 coding-guideline violation",
     });
     const body = state.comments[0]!.body;
     // Quiet hides low findings, but not a guideline violation the gate enforces.
@@ -320,13 +354,17 @@ describe("review processing: merge gate", () => {
     const { id } = await seedJob();
     const { state, deps } = fakeGitHub();
     state.result = blocking;
-    state.repoConfig = "mergeGate:\n  enabled: false\nstyle:\n  postMergeActions: false\n";
+    state.repoConfig =
+      "mergeGate:\n  enabled: false\nstyle:\n  postMergeActions: false\n";
 
     assert.equal(await createReviewProcessor(deps)(id), "completed");
 
     assert.deepEqual(state.statuses, []);
     assert.doesNotMatch(state.prompts[0]!, /POST-MERGE ACTIONS/);
-    assert.doesNotMatch(state.comments[0]!.body, /Merge blocked|Ready to merge|After merging/);
+    assert.doesNotMatch(
+      state.comments[0]!.body,
+      /Merge blocked|Ready to merge|After merging/,
+    );
   });
 
   it("passes a pull request the workflow rules out, so a required status never hangs", async () => {
@@ -337,7 +375,11 @@ describe("review processing: merge gate", () => {
     assert.equal(await createReviewProcessor(deps)(id), "not_reviewed");
 
     assert.deepEqual(state.statuses, [
-      { sha: HEAD, state: "success", description: "Not reviewed: automatic reviews are turned off" },
+      {
+        sha: HEAD,
+        state: "success",
+        description: "Not reviewed: automatic reviews are turned off",
+      },
     ]);
   });
 
@@ -347,19 +389,27 @@ describe("review processing: merge gate", () => {
     const { state, deps } = fakeGitHub({
       setCommitStatus: async () => {
         calls++;
-        throw Object.assign(new Error("Resource not accessible"), { status: 403 });
+        throw Object.assign(new Error("Resource not accessible"), {
+          status: 403,
+        });
       },
     });
 
     assert.equal(await createReviewProcessor(deps)(id), "completed");
 
     assert.equal(calls, 1);
-    assert.match(state.comments[0]!.body, /could not set its merge-gate commit status/);
+    assert.match(
+      state.comments[0]!.body,
+      /could not set its merge-gate commit status/,
+    );
   });
 
   it("reports an error instead of leaving the status pending when the review fails for good", async () => {
     const { id } = await seedJob();
-    await prisma.reviewJob.update({ where: { id }, data: { attempts: MAX_ATTEMPTS - 1 } });
+    await prisma.reviewJob.update({
+      where: { id },
+      data: { attempts: MAX_ATTEMPTS - 1 },
+    });
     const { state, deps } = fakeGitHub({
       review: async () => {
         throw new Error("still down");
@@ -368,7 +418,10 @@ describe("review processing: merge gate", () => {
 
     assert.equal(await createReviewProcessor(deps)(id), "failed");
 
-    assert.deepEqual(state.statuses.map((status) => status.state), ["pending", "error"]);
+    assert.deepEqual(
+      state.statuses.map((status) => status.state),
+      ["pending", "error"],
+    );
   });
 });
 
@@ -377,13 +430,18 @@ describe("review processing: review settings failures", () => {
     const { id } = await seedJob();
     const { state, deps } = fakeGitHub({
       fetchRepoConfig: async () => {
-        throw Object.assign(new Error("Resource not accessible"), { status: 403 });
+        throw Object.assign(new Error("Resource not accessible"), {
+          status: 403,
+        });
       },
     });
 
     assert.equal(await createReviewProcessor(deps)(id), "completed");
 
-    assert.match(state.comments[0]!.body, /could not read the repository's `\.lorica\.yaml`/);
+    assert.match(
+      state.comments[0]!.body,
+      /could not read the repository's `\.lorica\.yaml`/,
+    );
     assert.match(state.comments[0]!.body, /Chill profile/);
   });
 
@@ -409,7 +467,10 @@ describe("review processing: review settings failures", () => {
 
     assert.equal(await createReviewProcessor(deps)(id), "completed");
 
-    assert.match(state.comments[0]!.body, /dashboard could not be read and were ignored/);
+    assert.match(
+      state.comments[0]!.body,
+      /dashboard could not be read and were ignored/,
+    );
   });
 });
 
@@ -447,9 +508,11 @@ describe("review processing: only the current head publishes", () => {
     assert.equal(state.comments.length, 0);
     assert.equal((await job(id)).status, "superseded");
     assert.equal(
-      (await prisma.reviewJob.findFirstOrThrow({
-        where: { headSha: "sha-pushed-during-review" },
-      })).status,
+      (
+        await prisma.reviewJob.findFirstOrThrow({
+          where: { headSha: "sha-pushed-during-review" },
+        })
+      ).status,
       "queued",
     );
   });
@@ -566,9 +629,16 @@ describe("review processing: failure cases", () => {
   it("reclaims a job whose worker died, and retires it once attempts run out", async () => {
     const { id } = await seedJob();
     const { state, deps } = fakeGitHub();
-    const expired = { status: "running" as const, leaseToken: "dead-worker", leaseUntil: new Date(Date.now() - 1_000) };
+    const expired = {
+      status: "running" as const,
+      leaseToken: "dead-worker",
+      leaseUntil: new Date(Date.now() - 1_000),
+    };
 
-    await prisma.reviewJob.update({ where: { id }, data: { ...expired, attempts: 1 } });
+    await prisma.reviewJob.update({
+      where: { id },
+      data: { ...expired, attempts: 1 },
+    });
     assert.equal(await createReviewProcessor(deps)(id), "completed");
     assert.equal(state.comments.length, 1);
 
@@ -602,7 +672,11 @@ describe("review processing: failure cases", () => {
 async function seedJob2() {
   const pullRequest = await pr();
   const created = await prisma.reviewJob.create({
-    data: { pullRequestId: pullRequest.id, headSha: "sha-other", status: "queued" },
+    data: {
+      pullRequestId: pullRequest.id,
+      headSha: "sha-other",
+      status: "queued",
+    },
   });
   return created.id;
 }

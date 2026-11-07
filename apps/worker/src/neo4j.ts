@@ -37,7 +37,9 @@ let indexesReady = false;
  * Without indexes each MERGE scans every node in the database, so persisting
  * a graph grows quadratically with repository size. Idempotent.
  */
-async function ensureIndexes(driver: ReturnType<typeof neo4j.driver>): Promise<void> {
+async function ensureIndexes(
+  driver: ReturnType<typeof neo4j.driver>,
+): Promise<void> {
   if (indexesReady) return;
   const session = driver.session();
   try {
@@ -163,7 +165,9 @@ export async function getReviewGraphContext(input: {
     );
 
     const traces = result.records.map((record) => {
-      const relationship = record.get("relationship") as GraphTrace["relationship"];
+      const relationship = record.get(
+        "relationship",
+      ) as GraphTrace["relationship"];
       const changedFile = record.get("changedFile") as string;
       const relatedFile = record.get("relatedFile") as string | null;
       const relatedSymbol = record.get("relatedSymbol") as string | null;

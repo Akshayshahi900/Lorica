@@ -50,12 +50,14 @@ function strictSchema(schema: JsonSchema): JsonSchema {
   if (schema.type === "object" && schema.properties) {
     const required = new Set<string>(schema.required ?? []);
     result.properties = Object.fromEntries(
-      Object.entries(schema.properties as JsonSchema).map(([name, property]) => [
-        name,
-        required.has(name)
-          ? strictSchema(property)
-          : { anyOf: [strictSchema(property), { type: "null" }] },
-      ]),
+      Object.entries(schema.properties as JsonSchema).map(
+        ([name, property]) => [
+          name,
+          required.has(name)
+            ? strictSchema(property)
+            : { anyOf: [strictSchema(property), { type: "null" }] },
+        ],
+      ),
     );
     result.required = Object.keys(schema.properties);
   }
@@ -87,7 +89,9 @@ export class LlmRequestError extends Error {
 }
 
 /** Parses and validates the model's message content into a ReviewResult. */
-export function parseReviewResult(content: string | null | undefined): ReviewResult {
+export function parseReviewResult(
+  content: string | null | undefined,
+): ReviewResult {
   if (!content) {
     throw new Error("LLM returned an empty response");
   }
@@ -179,7 +183,10 @@ ${JSON.stringify(validatedContext)}`;
   return parseReviewResult(content);
 }
 
-async function failedResponse(label: string, response: Response): Promise<never> {
+async function failedResponse(
+  label: string,
+  response: Response,
+): Promise<never> {
   const errorText = await response.text();
   throw new LlmRequestError(
     `${label} request failed: ${response.status} ${errorText}`,
@@ -237,7 +244,8 @@ async function chatCompletions(
         type: "json_schema",
         json_schema: {
           name: "review_result",
-          strict: config.provider === "openrouter" || config.provider === "openai",
+          strict:
+            config.provider === "openrouter" || config.provider === "openai",
           schema,
         },
       },
@@ -275,10 +283,15 @@ async function anthropicMessages(
         output_config: {
           format: { type: "json_schema", schema: portableReviewSchema },
           // Code review is intelligence-sensitive; Opus 5.5 defaults to medium.
-          ...(ANTHROPIC_EFFORT_MODELS.test(config.model) ? { effort: "high" as const } : {}),
+          ...(ANTHROPIC_EFFORT_MODELS.test(config.model)
+            ? { effort: "high" as const }
+            : {}),
         },
         ...(fallback
-          ? { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" as const }
+          ? {
+              betas: ["server-side-fallback-2026-07-01"],
+              fallbacks: "default" as const,
+            }
           : {}),
       },
       { signal },
@@ -288,7 +301,9 @@ async function anthropicMessages(
       throw new LlmRequestError("Claude declined to review this change");
     }
     if (response.stop_reason === "max_tokens") {
-      throw new LlmRequestError("Claude's review was cut off at the output token limit");
+      throw new LlmRequestError(
+        "Claude's review was cut off at the output token limit",
+      );
     }
     return response.content
       .flatMap((block) => (block.type === "text" ? [block.text] : []))
@@ -315,7 +330,10 @@ async function ollamaChat(
   user: string,
   { signal }: CallLlmOptions,
 ): Promise<string | undefined> {
-  const needed = estimateTokens(system) + estimateTokens(user) + REVIEW_OUTPUT_RESERVE_TOKENS;
+  const needed =
+    estimateTokens(system) +
+    estimateTokens(user) +
+    REVIEW_OUTPUT_RESERVE_TOKENS;
   // Coarse steps, so consecutive chunks reuse the loaded model.
   let numCtx = 8_192;
   while (numCtx < needed) numCtx *= 2;

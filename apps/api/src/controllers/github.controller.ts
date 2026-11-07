@@ -81,7 +81,9 @@ export const handleWebhook = async (req: Request, res: Response) => {
       );
       return res
         .status(200)
-        .send("Ignoring non opened/reopened/synchronize/ready_for_review action");
+        .send(
+          "Ignoring non opened/reopened/synchronize/ready_for_review action",
+        );
     }
 
     // Fire-and-forget: the worker boots in parallel with the DB writes below.

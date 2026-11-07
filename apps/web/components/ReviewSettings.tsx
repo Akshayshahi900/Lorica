@@ -1,7 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { Coffee, Loader2, Megaphone, Plus, Trash2, VolumeX } from "lucide-react";
+import {
+  Coffee,
+  Loader2,
+  Megaphone,
+  Plus,
+  Trash2,
+  VolumeX,
+} from "lucide-react";
 import clsx from "clsx";
 
 type Profile = "quiet" | "chill" | "assertive";
@@ -22,11 +29,25 @@ type Settings = {
     ignoreTitleKeywords?: string[];
     ignoreAuthors?: string[];
   };
-  style?: { minSeverity?: Severity; maxFindings?: number; fixPrompt?: boolean; postMergeActions?: boolean };
-  mergeGate?: { enabled?: boolean; blockOn?: BlockLevel; enforceGuidelines?: boolean };
+  style?: {
+    minSeverity?: Severity;
+    maxFindings?: number;
+    fixPrompt?: boolean;
+    postMergeActions?: boolean;
+  };
+  mergeGate?: {
+    enabled?: boolean;
+    blockOn?: BlockLevel;
+    enforceGuidelines?: boolean;
+  };
 };
 
-type Preset = { label: string; description: string; minSeverity: Severity; maxFindings: number };
+type Preset = {
+  label: string;
+  description: string;
+  minSeverity: Severity;
+  maxFindings: number;
+};
 
 type SettingsResponse = {
   settings: Settings | null;
@@ -38,7 +59,11 @@ type SettingsResponse = {
   repoConfigFiles: string[];
 };
 
-type Account = { login: string; type: "user" | "organization"; avatarUrl: string | null };
+type Account = {
+  login: string;
+  type: "user" | "organization";
+  avatarUrl: string | null;
+};
 
 type Form = {
   profile: Profile;
@@ -66,7 +91,11 @@ const inputClass =
 const labelClass = "text-xs font-mono text-text-muted uppercase tracking-wider";
 const hintClass = "text-xs text-text-muted";
 
-const PROFILE_ICONS = { quiet: VolumeX, chill: Coffee, assertive: Megaphone } as const;
+const PROFILE_ICONS = {
+  quiet: VolumeX,
+  chill: Coffee,
+  assertive: Megaphone,
+} as const;
 const SEVERITIES: Severity[] = ["critical", "high", "medium", "low"];
 
 /** Splits a comma- or newline-separated field into its entries. */
@@ -112,7 +141,10 @@ function settingsFor(form: Form): Settings {
       reviewDrafts: form.reviewDrafts,
       reviewOnPush: form.reviewOnPush,
     },
-    style: { fixPrompt: form.fixPrompt, postMergeActions: form.postMergeActions },
+    style: {
+      fixPrompt: form.fixPrompt,
+      postMergeActions: form.postMergeActions,
+    },
     mergeGate: {
       enabled: form.mergeGate,
       blockOn: form.blockOn,
@@ -122,11 +154,19 @@ function settingsFor(form: Form): Settings {
   if (form.guidelines.trim()) settings.guidelines = form.guidelines.trim();
   if (form.tone.trim()) settings.tone = form.tone.trim();
   const pathInstructions = form.pathInstructions
-    .map(({ path, instructions }) => ({ path: path.trim(), instructions: instructions.trim() }))
+    .map(({ path, instructions }) => ({
+      path: path.trim(),
+      instructions: instructions.trim(),
+    }))
     .filter(({ path, instructions }) => path && instructions);
   if (pathInstructions.length) settings.pathInstructions = pathInstructions;
-  if (entries(form.excludePaths).length) settings.excludePaths = entries(form.excludePaths);
-  for (const key of ["baseBranches", "ignoreTitleKeywords", "ignoreAuthors"] as const) {
+  if (entries(form.excludePaths).length)
+    settings.excludePaths = entries(form.excludePaths);
+  for (const key of [
+    "baseBranches",
+    "ignoreTitleKeywords",
+    "ignoreAuthors",
+  ] as const) {
     if (entries(form[key]).length) settings.workflow![key] = entries(form[key]);
   }
   if (form.minSeverity) settings.style!.minSeverity = form.minSeverity;
@@ -161,7 +201,15 @@ function Toggle({
   );
 }
 
-function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
+function Section({
+  title,
+  hint,
+  children,
+}: {
+  title: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="space-y-3 border-t border-bg-border pt-4">
       <div>
@@ -181,13 +229,17 @@ export default function ReviewSettings() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [busy, setBusy] = useState<"save" | "reset" | null>(null);
   const [dirty, setDirty] = useState(false);
-  const [message, setMessage] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
+  const [message, setMessage] = useState<{
+    tone: "ok" | "error";
+    text: string;
+  } | null>(null);
 
   useEffect(() => {
     fetch("/api/settings/accounts", { cache: "no-store" })
       .then(async (response) => {
         const payload = await response.json();
-        if (!response.ok) throw new Error(payload.error ?? "Failed to load accounts");
+        if (!response.ok)
+          throw new Error(payload.error ?? "Failed to load accounts");
         setAccounts(payload.accounts);
         setAccount(payload.accounts[0]?.login ?? null);
       })
@@ -207,7 +259,8 @@ export default function ReviewSettings() {
     })
       .then(async (response) => {
         const payload = await response.json();
-        if (!response.ok) throw new Error(payload.error ?? "Failed to load review settings");
+        if (!response.ok)
+          throw new Error(payload.error ?? "Failed to load review settings");
         setData(payload);
         setForm(formFor(payload.settings, payload.defaultProfile));
       })
@@ -220,7 +273,9 @@ export default function ReviewSettings() {
   if (loadError) {
     return (
       <div className="bg-bg-panel border border-bg-border rounded-xl p-5 space-y-2">
-        <h2 className="text-sm font-semibold text-text-primary">Review settings</h2>
+        <h2 className="text-sm font-semibold text-text-primary">
+          Review settings
+        </h2>
         <p className="text-xs text-status-red font-mono">{loadError}</p>
       </div>
     );
@@ -241,20 +296,28 @@ export default function ReviewSettings() {
     setDirty(true);
     setMessage(null);
   };
-  const updatePath = (index: number, patch: Partial<Form["pathInstructions"][number]>) =>
+  const updatePath = (
+    index: number,
+    patch: Partial<Form["pathInstructions"][number]>,
+  ) =>
     update({
-      pathInstructions: form.pathInstructions.map((entry, i) => (i === index ? { ...entry, ...patch } : entry)),
+      pathInstructions: form.pathInstructions.map((entry, i) =>
+        i === index ? { ...entry, ...patch } : entry,
+      ),
     });
 
   async function save() {
     setBusy("save");
     setMessage(null);
     try {
-      const response = await fetch(`/api/settings/review?account=${encodeURIComponent(account!)}`, {
-        method: "PUT",
-        body: JSON.stringify(settingsFor(form!)),
-        headers: { "Content-Type": "application/json" },
-      });
+      const response = await fetch(
+        `/api/settings/review?account=${encodeURIComponent(account!)}`,
+        {
+          method: "PUT",
+          body: JSON.stringify(settingsFor(form!)),
+          headers: { "Content-Type": "application/json" },
+        },
+      );
       const body = await response.json().catch(() => ({}));
       if (!response.ok) {
         setMessage({ tone: "error", text: body.error ?? "Save failed" });
@@ -263,7 +326,10 @@ export default function ReviewSettings() {
       setData({ ...data!, ...body });
       setForm(formFor(body.settings, data!.defaultProfile));
       setDirty(false);
-      setMessage({ tone: "ok", text: "Saved. The next review uses these settings." });
+      setMessage({
+        tone: "ok",
+        text: "Saved. The next review uses these settings.",
+      });
     } catch {
       setMessage({ tone: "error", text: "Unable to reach the server" });
     } finally {
@@ -275,9 +341,12 @@ export default function ReviewSettings() {
     setBusy("reset");
     setMessage(null);
     try {
-      const response = await fetch(`/api/settings/review?account=${encodeURIComponent(account!)}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `/api/settings/review?account=${encodeURIComponent(account!)}`,
+        {
+          method: "DELETE",
+        },
+      );
       const body = await response.json().catch(() => ({}));
       if (!response.ok) {
         setMessage({ tone: "error", text: body.error ?? "Reset failed" });
@@ -295,23 +364,32 @@ export default function ReviewSettings() {
   }
 
   const maxFindingsValid =
-    form.maxFindings === "" || (Number(form.maxFindings) >= 1 && Number(form.maxFindings) <= 100);
+    form.maxFindings === "" ||
+    (Number(form.maxFindings) >= 1 && Number(form.maxFindings) <= 100);
 
   return (
     <div className="bg-bg-panel border border-bg-border rounded-xl p-5 space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-sm font-semibold text-text-primary">Review settings</h2>
+          <h2 className="text-sm font-semibold text-text-primary">
+            Review settings
+          </h2>
           <p className={clsx(hintClass, "mt-0.5")}>
             Apply to every repository of the selected account. A{" "}
-            <code className="font-mono">{data.repoConfigFiles[0]}</code> on a repository&apos;s base branch adds to
-            them.
+            <code className="font-mono">{data.repoConfigFiles[0]}</code> on a
+            repository&apos;s base branch adds to them.
           </p>
         </div>
         {accounts.length > 1 && (
           <div className="flex items-center gap-2">
             {selected?.avatarUrl && (
-              <Image src={selected.avatarUrl} alt="" width={20} height={20} className="rounded-full" />
+              <Image
+                src={selected.avatarUrl}
+                alt=""
+                width={20}
+                height={20}
+                className="rounded-full"
+              />
             )}
             <select
               aria-label="Account"
@@ -332,7 +410,8 @@ export default function ReviewSettings() {
 
       {data.updatedBy && data.updatedAt && (
         <p className={hintClass}>
-          Last saved by @{data.updatedBy} on {new Date(data.updatedAt).toLocaleString()}
+          Last saved by @{data.updatedBy} on{" "}
+          {new Date(data.updatedAt).toLocaleString()}
         </p>
       )}
 
@@ -357,10 +436,17 @@ export default function ReviewSettings() {
                 )}
               >
                 <span className="flex items-center gap-1.5 text-xs font-semibold text-text-primary">
-                  <Icon size={13} className={active ? "text-accent-violet" : "text-text-muted"} />
+                  <Icon
+                    size={13}
+                    className={
+                      active ? "text-accent-violet" : "text-text-muted"
+                    }
+                  />
                   {data.profiles[id].label}
                 </span>
-                <span className="block text-xs text-text-secondary">{data.profiles[id].description}</span>
+                <span className="block text-xs text-text-secondary">
+                  {data.profiles[id].description}
+                </span>
               </button>
             );
           })}
@@ -377,26 +463,39 @@ export default function ReviewSettings() {
           onChange={(event) => update({ guidelines: event.target.value })}
           rows={6}
           maxLength={8000}
-          placeholder={"- Use the shared logger, never console.log, in services.\n- Every database query goes through the repository layer.\n- Public functions need a doc comment."}
+          placeholder={
+            "- Use the shared logger, never console.log, in services.\n- Every database query goes through the repository layer.\n- Public functions need a doc comment."
+          }
           className={clsx(inputClass, "resize-y")}
         />
 
         <div className="space-y-2">
           <p className={labelClass}>Path instructions</p>
           {form.pathInstructions.map((entry, index) => (
-            <div key={index} className="rounded-lg border border-bg-border bg-bg-base p-2 space-y-2">
+            <div
+              key={index}
+              className="rounded-lg border border-bg-border bg-bg-base p-2 space-y-2"
+            >
               <div className="flex gap-2">
                 <input
                   aria-label="Path glob"
                   value={entry.path}
-                  onChange={(event) => updatePath(index, { path: event.target.value })}
+                  onChange={(event) =>
+                    updatePath(index, { path: event.target.value })
+                  }
                   placeholder="src/api/**"
                   className={inputClass}
                   spellCheck={false}
                 />
                 <button
                   aria-label="Remove path instruction"
-                  onClick={() => update({ pathInstructions: form.pathInstructions.filter((_, i) => i !== index) })}
+                  onClick={() =>
+                    update({
+                      pathInstructions: form.pathInstructions.filter(
+                        (_, i) => i !== index,
+                      ),
+                    })
+                  }
                   className="shrink-0 px-2 text-text-muted hover:text-status-red transition-colors"
                 >
                   <Trash2 size={13} />
@@ -405,7 +504,9 @@ export default function ReviewSettings() {
               <textarea
                 aria-label="Instructions for this path"
                 value={entry.instructions}
-                onChange={(event) => updatePath(index, { instructions: event.target.value })}
+                onChange={(event) =>
+                  updatePath(index, { instructions: event.target.value })
+                }
                 rows={2}
                 maxLength={2000}
                 placeholder="Every handler validates its input with zod and checks the caller's permissions."
@@ -415,7 +516,14 @@ export default function ReviewSettings() {
           ))}
           {form.pathInstructions.length < 25 && (
             <button
-              onClick={() => update({ pathInstructions: [...form.pathInstructions, { path: "", instructions: "" }] })}
+              onClick={() =>
+                update({
+                  pathInstructions: [
+                    ...form.pathInstructions,
+                    { path: "", instructions: "" },
+                  ],
+                })
+              }
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono text-text-secondary border border-bg-border rounded-lg hover:bg-bg-hover transition-colors"
             >
               <Plus size={12} /> Add path instruction
@@ -424,37 +532,59 @@ export default function ReviewSettings() {
         </div>
       </Section>
 
-      <Section title="Review style" hint="How much a review says and how it says it.">
+      <Section
+        title="Review style"
+        hint="How much a review says and how it says it."
+      >
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
-            <label className={labelClass} htmlFor="review-min-severity">Minimum severity</label>
+            <label className={labelClass} htmlFor="review-min-severity">
+              Minimum severity
+            </label>
             <select
               id="review-min-severity"
               value={form.minSeverity}
-              onChange={(event) => update({ minSeverity: event.target.value as Severity | "" })}
+              onChange={(event) =>
+                update({ minSeverity: event.target.value as Severity | "" })
+              }
               className={clsx(inputClass, "appearance-none")}
             >
               <option value="">Profile default ({preset.minSeverity})</option>
               {SEVERITIES.map((severity) => (
-                <option key={severity} value={severity}>{severity}</option>
+                <option key={severity} value={severity}>
+                  {severity}
+                </option>
               ))}
             </select>
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className={labelClass} htmlFor="review-max-findings">Max findings per review</label>
+            <label className={labelClass} htmlFor="review-max-findings">
+              Max findings per review
+            </label>
             <input
               id="review-max-findings"
               inputMode="numeric"
               value={form.maxFindings}
-              onChange={(event) => update({ maxFindings: event.target.value.replace(/[^0-9]/g, "") })}
+              onChange={(event) =>
+                update({
+                  maxFindings: event.target.value.replace(/[^0-9]/g, ""),
+                })
+              }
               placeholder={`Profile default (${preset.maxFindings})`}
-              className={clsx(inputClass, !maxFindingsValid && "border-status-red/60")}
+              className={clsx(
+                inputClass,
+                !maxFindingsValid && "border-status-red/60",
+              )}
             />
-            {!maxFindingsValid && <p className="text-xs text-status-red">Between 1 and 100.</p>}
+            {!maxFindingsValid && (
+              <p className="text-xs text-status-red">Between 1 and 100.</p>
+            )}
           </div>
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className={labelClass} htmlFor="review-tone">Tone</label>
+          <label className={labelClass} htmlFor="review-tone">
+            Tone
+          </label>
           <input
             id="review-tone"
             value={form.tone}
@@ -488,19 +618,30 @@ export default function ReviewSettings() {
           label="Set the Lorica commit status"
           hint="Needs the GitHub App's “Commit statuses: Read and write” permission."
         />
-        <div className={clsx("grid gap-3 sm:grid-cols-2", !form.mergeGate && "opacity-50")}>
+        <div
+          className={clsx(
+            "grid gap-3 sm:grid-cols-2",
+            !form.mergeGate && "opacity-50",
+          )}
+        >
           <div className="flex flex-col gap-1.5">
-            <label className={labelClass} htmlFor="review-block-on">Block merging on</label>
+            <label className={labelClass} htmlFor="review-block-on">
+              Block merging on
+            </label>
             <select
               id="review-block-on"
               value={form.blockOn}
               disabled={!form.mergeGate}
-              onChange={(event) => update({ blockOn: event.target.value as BlockLevel })}
+              onChange={(event) =>
+                update({ blockOn: event.target.value as BlockLevel })
+              }
               className={clsx(inputClass, "appearance-none")}
             >
               {SEVERITIES.map((severity) => (
                 <option key={severity} value={severity}>
-                  {severity === "critical" ? "critical findings" : `${severity} severity or worse`}
+                  {severity === "critical"
+                    ? "critical findings"
+                    : `${severity} severity or worse`}
                 </option>
               ))}
               <option value="none">no severity (guidelines only)</option>
@@ -515,7 +656,10 @@ export default function ReviewSettings() {
         </div>
       </Section>
 
-      <Section title="Workflow" hint="Which pull requests get reviewed, and which files.">
+      <Section
+        title="Workflow"
+        hint="Which pull requests get reviewed, and which files."
+      >
         <div className="space-y-2.5">
           <Toggle
             checked={form.autoReview}
@@ -539,13 +683,30 @@ export default function ReviewSettings() {
         <div className="grid gap-3 sm:grid-cols-2">
           {(
             [
-              ["baseBranches", "Base branches", "main, release/*", "Empty reviews pull requests into any branch."],
-              ["ignoreTitleKeywords", "Skip titles containing", "WIP, [skip review]", "Case-insensitive."],
-              ["ignoreAuthors", "Skip authors", "dependabot[bot], renovate[bot]", "GitHub logins."],
+              [
+                "baseBranches",
+                "Base branches",
+                "main, release/*",
+                "Empty reviews pull requests into any branch.",
+              ],
+              [
+                "ignoreTitleKeywords",
+                "Skip titles containing",
+                "WIP, [skip review]",
+                "Case-insensitive.",
+              ],
+              [
+                "ignoreAuthors",
+                "Skip authors",
+                "dependabot[bot], renovate[bot]",
+                "GitHub logins.",
+              ],
             ] as const
           ).map(([key, label, placeholder, hint]) => (
             <div key={key} className="flex flex-col gap-1.5">
-              <label className={labelClass} htmlFor={`review-${key}`}>{label}</label>
+              <label className={labelClass} htmlFor={`review-${key}`}>
+                {label}
+              </label>
               <input
                 id={`review-${key}`}
                 value={form[key]}
@@ -559,7 +720,9 @@ export default function ReviewSettings() {
           ))}
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className={labelClass} htmlFor="review-exclude">Exclude paths</label>
+          <label className={labelClass} htmlFor="review-exclude">
+            Exclude paths
+          </label>
           <textarea
             id="review-exclude"
             value={form.excludePaths}
@@ -570,7 +733,8 @@ export default function ReviewSettings() {
             spellCheck={false}
           />
           <p className={hintClass}>
-            One glob per line. Lockfiles, generated, vendored and binary files are always skipped.
+            One glob per line. Lockfiles, generated, vendored and binary files
+            are always skipped.
           </p>
         </div>
       </Section>
@@ -593,7 +757,12 @@ export default function ReviewSettings() {
           </button>
         )}
         {message && (
-          <p className={clsx("text-xs font-mono", message.tone === "ok" ? "text-status-green" : "text-status-red")}>
+          <p
+            className={clsx(
+              "text-xs font-mono",
+              message.tone === "ok" ? "text-status-green" : "text-status-red",
+            )}
+          >
             {message.text}
           </p>
         )}
@@ -605,8 +774,9 @@ export default function ReviewSettings() {
         </summary>
         <div className="space-y-2 px-3 pb-3">
           <p className={hintClass}>
-            Commit this to a repository to version its review settings with the code. It is read from the branch a pull
-            request targets, so a pull request cannot change its own review. Shows the saved settings.
+            Commit this to a repository to version its review settings with the
+            code. It is read from the branch a pull request targets, so a pull
+            request cannot change its own review. Shows the saved settings.
           </p>
           <pre className="overflow-x-auto rounded-md border border-bg-border bg-bg-panel p-3 text-xs font-mono text-text-primary">
             {data.yaml}

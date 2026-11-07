@@ -45,12 +45,15 @@ export async function assertSafeBaseUrl(
     throw new Error("Base URL must use http or https");
   }
   if (url.username || url.password) {
-    throw new Error("Base URL must not contain credentials; use the API key field");
+    throw new Error(
+      "Base URL must not contain credentials; use the API key field",
+    );
   }
 
   const allowPrivate =
     env.LLM_ALLOW_PRIVATE_BASE_URLS === "true" ||
-    (env.LLM_ALLOW_PRIVATE_BASE_URLS !== "false" && env.NODE_ENV !== "production");
+    (env.LLM_ALLOW_PRIVATE_BASE_URLS !== "false" &&
+      env.NODE_ENV !== "production");
   if (allowPrivate) return;
 
   const hostname = url.hostname.replace(/^\[|\]$/g, "");

@@ -14,7 +14,7 @@ export async function createExpense(req, res) {
 
   return res.json({ amount });
 }
-`
+`,
 );
 
 const root = result?.tree?.rootNode();
@@ -23,7 +23,7 @@ function walk(node: any, depth = 0) {
   const indent = "  ".repeat(depth);
 
   console.log(
-    `${indent}${node.kind()} [${node.startPosition().row + 1}:${node.startPosition().column}]`
+    `${indent}${node.kind()} [${node.startPosition().row + 1}:${node.startPosition().column}]`,
   );
 
   for (let i = 0; i < node.childCount(); i++) {

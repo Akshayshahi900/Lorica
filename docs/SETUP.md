@@ -82,36 +82,36 @@ The dashboard requests `read:user`, `user:email`, `repo`, and `read:org` scopes.
 
 ## Configuration
 
-| Variable | Required | Used by | Description |
-| --- | --- | --- | --- |
-| `DATABASE_URL` | Yes | API, worker, Prisma | PostgreSQL connection string. |
-| `REDIS_URL` | Yes | API, worker | Redis connection used by BullMQ. Defaults to `redis://localhost:6379` only when omitted. |
-| `NEO4J_URI` | Yes | Worker | Neo4j Bolt endpoint. |
-| `NEO4J_USER` | Yes | Worker | Neo4j username. |
-| `NEO4J_PASSWORD` | Yes | Worker | Neo4j password. |
-| `WEBHOOK_SECRET` | Yes | API | Shared secret used to validate `X-Hub-Signature-256`. |
-| `GITHUB_APP_ID` | Yes | API, worker | GitHub App ID. The API uses it to redeliver failed webhooks. |
-| `GITHUB_PRIVATE_KEY_PATH` | Yes | Worker | Path to the GitHub App PEM private key. |
-| `OPENROUTER_API_KEY` | Yes | Worker | API key for structured LLM reviews. |
-| `LLM_MODEL` | No | Worker | OpenRouter model ID; must support JSON-schema output. Defaults to `nvidia/nemotron-3-ultra-550b-a55b:free`. |
-| `LLM_SETTINGS_ENCRYPTION_KEY` | For custom models | API, worker | Encrypts API keys users save under **Settings → Review model**. Use the same value on both services (e.g. `openssl rand -base64 32`); changing it invalidates saved keys. |
-| `LLM_ALLOW_PRIVATE_BASE_URLS` | No | API, worker | `true` lets saved models point at private or loopback addresses (Ollama, llama.cpp on your network). Allowed by default outside production; blocked in production unless set. |
-| `REVIEW_DIFF_TOKENS_PER_CHUNK` | No | Worker | Estimated diff tokens per LLM request. Larger PRs are split into several requests. Defaults to `16000`. |
-| `REVIEW_TRACE_TOKENS_PER_CHUNK` | No | Worker | Estimated graph-trace tokens per LLM request. Defaults to `3000`. |
-| `REVIEW_MAX_CHUNKS` | No | Worker | Maximum LLM requests per review; changes beyond this are listed as not fully reviewed. Defaults to `8`. |
-| `REVIEW_MAX_DESCRIPTION_CHARS` | No | Worker | PR description characters sent to the model. Defaults to `2000`. |
-| `API_ACCESS_TOKEN` | Production | API | Shared token required for `/api/*` routes in production. |
-| `LORICA_API_URL` | Yes | Web | Server-only base URL for the Express API. |
-| `LORICA_WORKER_URL` | No | API, Web | Worker service URL; accepted PR webhooks and dashboard visits request its `/health` endpoint to wake it. |
-| `LORICA_API_TOKEN` | Production | Web | Must equal `API_ACCESS_TOKEN`. |
-| `WEB_ORIGIN` | Recommended | API | Comma-separated CORS allowlist; defaults to `http://localhost:3001`. |
-| `PORT` | No | API | API listener port; defaults to `5000`. |
-| `GITHUB_ID` / `GITHUB_SECRET` | Yes | Web | GitHub OAuth client credentials. |
-| `NEXTAUTH_SECRET` | Yes | Web | Secret used to sign NextAuth JWTs. |
-| `NEXTAUTH_URL` | Yes | Web | Canonical dashboard URL. |
-| `NEXT_PUBLIC_GITHUB_APP_NAME` | Recommended | Web | GitHub App slug used by the install experience. |
-| `INDEX_QUEUE_NAME` | No | Worker | Code-index queue name; defaults to `code-index`. Useful for isolated smoke tests. |
-| `LOG_INDEX_DETAILS`, `LOG_INDEX_AST`, `LOG_CODE_GRAPH` | No | Worker | Set to `true` to increase code-indexer diagnostics. |
+| Variable                                               | Required          | Used by             | Description                                                                                                                                                                   |
+| ------------------------------------------------------ | ----------------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`                                         | Yes               | API, worker, Prisma | PostgreSQL connection string.                                                                                                                                                 |
+| `REDIS_URL`                                            | Yes               | API, worker         | Redis connection used by BullMQ. Defaults to `redis://localhost:6379` only when omitted.                                                                                      |
+| `NEO4J_URI`                                            | Yes               | Worker              | Neo4j Bolt endpoint.                                                                                                                                                          |
+| `NEO4J_USER`                                           | Yes               | Worker              | Neo4j username.                                                                                                                                                               |
+| `NEO4J_PASSWORD`                                       | Yes               | Worker              | Neo4j password.                                                                                                                                                               |
+| `WEBHOOK_SECRET`                                       | Yes               | API                 | Shared secret used to validate `X-Hub-Signature-256`.                                                                                                                         |
+| `GITHUB_APP_ID`                                        | Yes               | API, worker         | GitHub App ID. The API uses it to redeliver failed webhooks.                                                                                                                  |
+| `GITHUB_PRIVATE_KEY_PATH`                              | Yes               | Worker              | Path to the GitHub App PEM private key.                                                                                                                                       |
+| `OPENROUTER_API_KEY`                                   | Yes               | Worker              | API key for structured LLM reviews.                                                                                                                                           |
+| `LLM_MODEL`                                            | No                | Worker              | OpenRouter model ID; must support JSON-schema output. Defaults to `nvidia/nemotron-3-ultra-550b-a55b:free`.                                                                   |
+| `LLM_SETTINGS_ENCRYPTION_KEY`                          | For custom models | API, worker         | Encrypts API keys users save under **Settings → Review model**. Use the same value on both services (e.g. `openssl rand -base64 32`); changing it invalidates saved keys.     |
+| `LLM_ALLOW_PRIVATE_BASE_URLS`                          | No                | API, worker         | `true` lets saved models point at private or loopback addresses (Ollama, llama.cpp on your network). Allowed by default outside production; blocked in production unless set. |
+| `REVIEW_DIFF_TOKENS_PER_CHUNK`                         | No                | Worker              | Estimated diff tokens per LLM request. Larger PRs are split into several requests. Defaults to `16000`.                                                                       |
+| `REVIEW_TRACE_TOKENS_PER_CHUNK`                        | No                | Worker              | Estimated graph-trace tokens per LLM request. Defaults to `3000`.                                                                                                             |
+| `REVIEW_MAX_CHUNKS`                                    | No                | Worker              | Maximum LLM requests per review; changes beyond this are listed as not fully reviewed. Defaults to `8`.                                                                       |
+| `REVIEW_MAX_DESCRIPTION_CHARS`                         | No                | Worker              | PR description characters sent to the model. Defaults to `2000`.                                                                                                              |
+| `API_ACCESS_TOKEN`                                     | Production        | API                 | Shared token required for `/api/*` routes in production.                                                                                                                      |
+| `LORICA_API_URL`                                       | Yes               | Web                 | Server-only base URL for the Express API.                                                                                                                                     |
+| `LORICA_WORKER_URL`                                    | No                | API, Web            | Worker service URL; accepted PR webhooks and dashboard visits request its `/health` endpoint to wake it.                                                                      |
+| `LORICA_API_TOKEN`                                     | Production        | Web                 | Must equal `API_ACCESS_TOKEN`.                                                                                                                                                |
+| `WEB_ORIGIN`                                           | Recommended       | API                 | Comma-separated CORS allowlist; defaults to `http://localhost:3001`.                                                                                                          |
+| `PORT`                                                 | No                | API                 | API listener port; defaults to `5000`.                                                                                                                                        |
+| `GITHUB_ID` / `GITHUB_SECRET`                          | Yes               | Web                 | GitHub OAuth client credentials.                                                                                                                                              |
+| `NEXTAUTH_SECRET`                                      | Yes               | Web                 | Secret used to sign NextAuth JWTs.                                                                                                                                            |
+| `NEXTAUTH_URL`                                         | Yes               | Web                 | Canonical dashboard URL.                                                                                                                                                      |
+| `NEXT_PUBLIC_GITHUB_APP_NAME`                          | Recommended       | Web                 | GitHub App slug used by the install experience.                                                                                                                               |
+| `INDEX_QUEUE_NAME`                                     | No                | Worker              | Code-index queue name; defaults to `code-index`. Useful for isolated smoke tests.                                                                                             |
+| `LOG_INDEX_DETAILS`, `LOG_INDEX_AST`, `LOG_CODE_GRAPH` | No                | Worker              | Set to `true` to increase code-indexer diagnostics.                                                                                                                           |
 
 ### Review models
 
@@ -119,20 +119,20 @@ Reviews use the deployment's OpenRouter model (`LLM_MODEL`) unless a user picks 
 
 ## Development
 
-| Command | Description |
-| --- | --- |
-| `pnpm dev` | Start the web app, API, and workers through Turborepo. |
-| `pnpm build` | Build all configured workspaces. |
-| `pnpm check-types` | Run workspace type checks where defined. |
-| `pnpm lint` | Run workspace lint scripts where defined. |
-| `pnpm format` | Format TypeScript, TSX, and Markdown files with Prettier. |
-| `pnpm test` | Run unit tests. |
-| `pnpm test:integration` | Run webhook intake and review processing tests against PostgreSQL and Redis. |
-| `pnpm test:index` | Run the code-indexer smoke test; requires Redis and a usable Git repository. |
-| `(cd packages/db && pnpm exec prisma migrate dev)` | Create and apply a development migration. |
-| `(cd packages/db && pnpm exec prisma migrate deploy)` | Apply existing migrations without creating a new one. |
-| `(cd packages/db && pnpm exec prisma generate)` | Regenerate the Prisma client. |
-| `(cd packages/db && pnpm exec prisma studio)` | Open Prisma Studio. |
+| Command                                               | Description                                                                  |
+| ----------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `pnpm dev`                                            | Start the web app, API, and workers through Turborepo.                       |
+| `pnpm build`                                          | Build all configured workspaces.                                             |
+| `pnpm check-types`                                    | Run workspace type checks where defined.                                     |
+| `pnpm lint`                                           | Run workspace lint scripts where defined.                                    |
+| `pnpm format`                                         | Format TypeScript, TSX, and Markdown files with Prettier.                    |
+| `pnpm test`                                           | Run unit tests.                                                              |
+| `pnpm test:integration`                               | Run webhook intake and review processing tests against PostgreSQL and Redis. |
+| `pnpm test:index`                                     | Run the code-indexer smoke test; requires Redis and a usable Git repository. |
+| `(cd packages/db && pnpm exec prisma migrate dev)`    | Create and apply a development migration.                                    |
+| `(cd packages/db && pnpm exec prisma migrate deploy)` | Apply existing migrations without creating a new one.                        |
+| `(cd packages/db && pnpm exec prisma generate)`       | Regenerate the Prisma client.                                                |
+| `(cd packages/db && pnpm exec prisma studio)`         | Open Prisma Studio.                                                          |
 
 `pnpm test:integration` truncates tables, so it refuses to run unless `DATABASE_URL` names a database containing `test`. Locally:
 

@@ -24,7 +24,10 @@ const emptyToUndefined = (value: unknown) =>
 const SettingsInputSchema = z.object({
   provider: z.enum(LLM_PROVIDERS),
   model: z.string().trim().min(1).max(200),
-  baseUrl: z.preprocess(emptyToUndefined, z.string().trim().url().max(500).optional()),
+  baseUrl: z.preprocess(
+    emptyToUndefined,
+    z.string().trim().url().max(500).optional(),
+  ),
   // Omitted or empty: keep the stored key (same provider only).
   apiKey: z.preprocess(emptyToUndefined, z.string().trim().max(500).optional()),
   clearApiKey: z.boolean().optional(),
@@ -69,7 +72,12 @@ function resolveConfig(body: unknown, stored: StoredRow | null): LlmConfig {
   const input = parsed.data;
 
   let apiKey = input.apiKey;
-  if (!apiKey && !input.clearApiKey && stored?.apiKeyCiphertext && stored.provider === input.provider) {
+  if (
+    !apiKey &&
+    !input.clearApiKey &&
+    stored?.apiKeyCiphertext &&
+    stored.provider === input.provider
+  ) {
     apiKey = configFromStoredSettings(stored).apiKey;
   }
   if (PROVIDERS[input.provider].apiKey === "required" && !apiKey) {
@@ -93,7 +101,9 @@ function fail(res: Response, stage: string, error: unknown) {
     return res.status(400).json({ error: error.message });
   }
   const errorType = error instanceof Error ? error.name : "unknown";
-  console.error(`[api] stage=model_settings.${stage}.failed error_type=${errorType}`);
+  console.error(
+    `[api] stage=model_settings.${stage}.failed error_type=${errorType}`,
+  );
   return res.status(500).json({ error: "Failed to process model settings" });
 }
 
@@ -144,14 +154,17 @@ export const saveModelSettings = async (req: Request, res: Response) => {
     const config = resolveConfig(req.body, stored);
 
     // Fail before spending a test review on a key that cannot be stored.
-    const apiKeyCiphertext = config.apiKey ? encryptSecret(config.apiKey) : null;
+    const apiKeyCiphertext = config.apiKey
+      ? encryptSecret(config.apiKey)
+      : null;
 
     // Every review for this owner will use this model, so only a model that
     // can produce reviews is saved.
     const report = await checkModelCapability(config);
     if (report.verdict === "unsupported") {
       return res.status(422).json({
-        error: "This model cannot produce Lorica reviews; settings were not saved.",
+        error:
+          "This model cannot produce Lorica reviews; settings were not saved.",
         report,
       });
     }
@@ -174,9 +187,13 @@ export const saveModelSettings = async (req: Request, res: Response) => {
     );
     return res.json({ settings: present(saved), report });
   } catch (error) {
-    if (error instanceof Error && /LLM_SETTINGS_ENCRYPTION_KEY/.test(error.message)) {
+    if (
+      error instanceof Error &&
+      /LLM_SETTINGS_ENCRYPTION_KEY/.test(error.message)
+    ) {
       return res.status(503).json({
-        error: "The server cannot store API keys: LLM_SETTINGS_ENCRYPTION_KEY is not configured.",
+        error:
+          "The server cannot store API keys: LLM_SETTINGS_ENCRYPTION_KEY is not configured.",
       });
     }
     return fail(res, "save", error);

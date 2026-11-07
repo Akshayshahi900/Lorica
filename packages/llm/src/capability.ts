@@ -37,14 +37,23 @@ type ModelInfo = {
   structuredOutputs: boolean | null;
 };
 
-const UNKNOWN: ModelInfo = { found: null, contextWindow: null, structuredOutputs: null };
+const UNKNOWN: ModelInfo = {
+  found: null,
+  contextWindow: null,
+  structuredOutputs: null,
+};
 
 function positive(value: unknown): number | null {
   const number = Number(value);
   return Number.isFinite(number) && number > 0 ? Math.floor(number) : null;
 }
 
-async function getJson(url: string, config: LlmConfig, signal: AbortSignal, init: RequestInit = {}) {
+async function getJson(
+  url: string,
+  config: LlmConfig,
+  signal: AbortSignal,
+  init: RequestInit = {},
+) {
   const response = await fetch(url, {
     ...init,
     redirect: "error",
@@ -54,39 +63,59 @@ async function getJson(url: string, config: LlmConfig, signal: AbortSignal, init
       "Content-Type": "application/json",
     },
   });
-  return { status: response.status, body: response.ok ? await response.json() : null };
+  return {
+    status: response.status,
+    body: response.ok ? await response.json() : null,
+  };
 }
 
 /** Best-effort model metadata. Never throws; the live probe is authoritative. */
-async function lookupModelInfo(config: LlmConfig, signal: AbortSignal): Promise<ModelInfo> {
+async function lookupModelInfo(
+  config: LlmConfig,
+  signal: AbortSignal,
+): Promise<ModelInfo> {
   const base = baseUrlFor(config);
   try {
     switch (config.provider) {
       case "openrouter": {
         const { body } = await getJson(`${base}/models`, config, signal);
-        const model = body?.data?.find((entry: any) => entry.id === config.model);
+        const model = body?.data?.find(
+          (entry: any) => entry.id === config.model,
+        );
         if (!body) return UNKNOWN;
         if (!model) return { ...UNKNOWN, found: false };
         const parameters: string[] = model.supported_parameters ?? [];
         return {
           found: true,
-          contextWindow: positive(model.top_provider?.context_length ?? model.context_length),
+          contextWindow: positive(
+            model.top_provider?.context_length ?? model.context_length,
+          ),
           structuredOutputs:
-            parameters.includes("structured_outputs") || parameters.includes("response_format"),
+            parameters.includes("structured_outputs") ||
+            parameters.includes("response_format"),
         };
       }
       case "anthropic": {
-        const client = new Anthropic({ apiKey: config.apiKey, baseURL: config.baseUrl });
+        const client = new Anthropic({
+          apiKey: config.apiKey,
+          baseURL: config.baseUrl,
+        });
         try {
-          const model = await client.models.retrieve(config.model, {}, { signal });
+          const model = await client.models.retrieve(
+            config.model,
+            {},
+            { signal },
+          );
           return {
             found: true,
             contextWindow: positive(model.max_input_tokens),
             structuredOutputs:
-              (model.capabilities as any)?.structured_outputs?.supported ?? null,
+              (model.capabilities as any)?.structured_outputs?.supported ??
+              null,
           };
         } catch (error) {
-          if (error instanceof Anthropic.NotFoundError) return { ...UNKNOWN, found: false };
+          if (error instanceof Anthropic.NotFoundError)
+            return { ...UNKNOWN, found: false };
           return UNKNOWN;
         }
       }
@@ -102,7 +131,9 @@ async function lookupModelInfo(config: LlmConfig, signal: AbortSignal): Promise<
       case "huggingface": {
         const { body } = await getJson(`${base}/models`, config, signal);
         if (!body) return UNKNOWN;
-        const model = body.data?.find((entry: any) => entry.id === config.model);
+        const model = body.data?.find(
+          (entry: any) => entry.id === config.model,
+        );
         if (!model) return { ...UNKNOWN, found: false };
         const providers: any[] = (model.providers ?? []).filter(
           (provider: any) => provider.status !== "error",
@@ -119,14 +150,19 @@ async function lookupModelInfo(config: LlmConfig, signal: AbortSignal): Promise<
         };
       }
       case "ollama": {
-        const { status, body } = await getJson(`${base}/api/show`, config, signal, {
-          method: "POST",
-          body: JSON.stringify({ model: config.model }),
-        });
+        const { status, body } = await getJson(
+          `${base}/api/show`,
+          config,
+          signal,
+          {
+            method: "POST",
+            body: JSON.stringify({ model: config.model }),
+          },
+        );
         if (status === 404) return { ...UNKNOWN, found: false };
         if (!body) return UNKNOWN;
-        const contextEntry = Object.entries(body.model_info ?? {}).find(([key]) =>
-          key.endsWith(".context_length"),
+        const contextEntry = Object.entries(body.model_info ?? {}).find(
+          ([key]) => key.endsWith(".context_length"),
         );
         return {
           found: true,
@@ -141,7 +177,8 @@ async function lookupModelInfo(config: LlmConfig, signal: AbortSignal): Promise<
           models.find((entry) => entry.id === config.model) ??
           // llama.cpp serves one model whatever name a request uses.
           (models.length === 1 ? models[0] : undefined);
-        if (!model) return models.length > 0 ? { ...UNKNOWN, found: false } : UNKNOWN;
+        if (!model)
+          return models.length > 0 ? { ...UNKNOWN, found: false } : UNKNOWN;
         return {
           found: true,
           contextWindow: positive(
@@ -194,7 +231,10 @@ const PROBE_CONTEXT: ReviewContext = {
       ].join("\n"),
     },
   ],
-  graph: { indexedCommit: "1111111111111111111111111111111111111111", traces: [] },
+  graph: {
+    indexedCommit: "1111111111111111111111111111111111111111",
+    traces: [],
+  },
 };
 
 function describeError(error: unknown, config: LlmConfig): string {
@@ -299,11 +339,8 @@ export async function checkModelCapability(
     info.contextWindow && config.contextWindow
       ? Math.min(info.contextWindow, config.contextWindow)
       : (config.contextWindow ?? info.contextWindow);
-  const contextWindowSource: CapabilityReport["contextWindowSource"] = config.contextWindow
-    ? "user"
-    : info.contextWindow
-      ? "provider"
-      : "unknown";
+  const contextWindowSource: CapabilityReport["contextWindowSource"] =
+    config.contextWindow ? "user" : info.contextWindow ? "provider" : "unknown";
   const minimum = minimumContextWindow();
   const recommended = recommendedContextWindow();
   const tokens = (value: number) => `${Math.round(value / 1000)}K tokens`;
@@ -340,7 +377,9 @@ export async function checkModelCapability(
   const started = Date.now();
   let latencyMs: number | null = null;
   try {
-    const result = await callLLM(PROBE_CONTEXT, REVIEW_PROMPT, config, { signal });
+    const result = await callLLM(PROBE_CONTEXT, REVIEW_PROMPT, config, {
+      signal,
+    });
     latencyMs = Date.now() - started;
     checks.push({
       id: "connection",
@@ -384,7 +423,8 @@ export async function checkModelCapability(
     const invalidOutput =
       !(error instanceof LlmRequestError) &&
       error instanceof Error &&
-      (error.name === "ZodError" || /invalid JSON|empty response/.test(error.message));
+      (error.name === "ZodError" ||
+        /invalid JSON|empty response/.test(error.message));
     if (invalidOutput) {
       checks.push({
         id: "connection",
@@ -396,7 +436,8 @@ export async function checkModelCapability(
         id: "output",
         label: "Structured output",
         status: "fail",
-        detail: "The model's answer was not valid review JSON. Choose a model that supports structured (JSON schema) output.",
+        detail:
+          "The model's answer was not valid review JSON. Choose a model that supports structured (JSON schema) output.",
       });
     } else {
       checks.push({

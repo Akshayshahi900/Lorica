@@ -41,7 +41,9 @@ export async function recordPullRequestEvent(
   payload: any,
 ): Promise<PullRequestEventResult> {
   const headSha: string = payload.pull_request.head.sha;
-  const eventUpdatedAt = new Date(payload.pull_request.updated_at ?? Date.now());
+  const eventUpdatedAt = new Date(
+    payload.pull_request.updated_at ?? Date.now(),
+  );
 
   try {
     return await prisma.$transaction(

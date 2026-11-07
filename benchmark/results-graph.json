@@ -1,0 +1,630 @@
+[
+  {
+    "url": "https://github.com/sveltejs/svelte/pull/18999",
+    "title": "fix: `devalue` link in `hydratable_serialization_failed` error",
+    "detected": false,
+    "seconds": 5.399562027,
+    "chunks": 1,
+    "traces": 21,
+    "findings": [],
+    "matched": []
+  },
+  {
+    "url": "https://github.com/vuejs/core/pull/15874",
+    "title": "fix(runtime-vapor): push warning context during render effect updates",
+    "detected": true,
+    "seconds": 10.433724663000001,
+    "chunks": 1,
+    "traces": 27,
+    "findings": [
+      {
+        "filePath": "packages/runtime-vapor/src/renderEffect.ts",
+        "lineNumber": 119,
+        "code": "      startMeasure(instance, `renderEffect`)",
+        "severity": "medium",
+        "category": "correctness",
+        "comment": "The pushWarningContext(instance) call was removed from before startMeasure. This function sets up the warning context so that any warnings/errors thrown during render include the component instance information. Without it, development warnings will lack component context, making debugging much harder.",
+        "suggestion": "Either restore the pushWarningContext(instance) call before startMeasure, or implement an alternative mechanism to track component context during render effects."
+      },
+      {
+        "filePath": "packages/runtime-vapor/src/renderEffect.ts",
+        "lineNumber": 148,
+        "code": "        endMeasure(instance, `renderEffect`)",
+        "severity": "medium",
+        "category": "correctness",
+        "comment": "The popWarningContext() call was removed from after endMeasure. This function cleans up the warning context stack. Without it, if pushWarningContext is still called elsewhere (or restored), the context stack would become unbalanced, potentially causing memory leaks or incorrect context in subsequent renders.",
+        "suggestion": "Either restore the popWarningContext() call after endMeasure, or ensure the warning context management is handled through a different mechanism that doesn't require manual push/pop."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/runtime-vapor/src/renderEffect.ts",
+        "lineNumber": 119,
+        "code": "      startMeasure(instance, `renderEffect`)",
+        "severity": "medium",
+        "category": "correctness",
+        "comment": "The pushWarningContext(instance) call was removed from before startMeasure. This function sets up the warning context so that any warnings/errors thrown during render include the component instance information. Without it, development warnings will lack component context, making debugging much harder.",
+        "suggestion": "Either restore the pushWarningContext(instance) call before startMeasure, or implement an alternative mechanism to track component context during render effects."
+      },
+      {
+        "filePath": "packages/runtime-vapor/src/renderEffect.ts",
+        "lineNumber": 148,
+        "code": "        endMeasure(instance, `renderEffect`)",
+        "severity": "medium",
+        "category": "correctness",
+        "comment": "The popWarningContext() call was removed from after endMeasure. This function cleans up the warning context stack. Without it, if pushWarningContext is still called elsewhere (or restored), the context stack would become unbalanced, potentially causing memory leaks or incorrect context in subsequent renders.",
+        "suggestion": "Either restore the popWarningContext() call after endMeasure, or ensure the warning context management is handled through a different mechanism that doesn't require manual push/pop."
+      }
+    ]
+  },
+  {
+    "url": "https://github.com/nestjs/nest/pull/18146",
+    "title": "fix(common): call `stringifyReplacer` with the logger as `this`",
+    "detected": true,
+    "seconds": 20.223179918000003,
+    "chunks": 1,
+    "traces": 27,
+    "findings": [
+      {
+        "filePath": "packages/common/services/console-logger.service.ts",
+        "lineNumber": 776,
+        "code": "    const replacer = this.stringifyReplacer;",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The `this` context for `stringifyReplacer` has changed. Originally, `this.stringifyReplacer.bind(this)` bound the method to the ConsoleLogger instance. Now `replacer.call(this, key, value)` passes the JSON.stringify holder object (the object containing the current property) as `this`. If `stringifyReplacer` uses `this` to access instance properties (e.g., configuration options, other methods), it will now receive the wrong `this` value and likely fail or behave incorrectly.",
+        "suggestion": "Restore the bound function: `const replacer = this.stringifyReplacer.bind(this);` and call it as `replacer(key, value);` Or if the holder object is intentionally needed, verify `stringifyReplacer` doesn't rely on the ConsoleLogger instance."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/common/services/console-logger.service.ts",
+        "lineNumber": 776,
+        "code": "    const replacer = this.stringifyReplacer;",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The `this` context for `stringifyReplacer` has changed. Originally, `this.stringifyReplacer.bind(this)` bound the method to the ConsoleLogger instance. Now `replacer.call(this, key, value)` passes the JSON.stringify holder object (the object containing the current property) as `this`. If `stringifyReplacer` uses `this` to access instance properties (e.g., configuration options, other methods), it will now receive the wrong `this` value and likely fail or behave incorrectly.",
+        "suggestion": "Restore the bound function: `const replacer = this.stringifyReplacer.bind(this);` and call it as `replacer(key, value);` Or if the holder object is intentionally needed, verify `stringifyReplacer` doesn't rely on the ConsoleLogger instance."
+      }
+    ]
+  },
+  {
+    "url": "https://github.com/nestjs/nest/pull/18145",
+    "title": "fix(common): detect stacks whose error message spans several lines",
+    "detected": true,
+    "seconds": 10.907646465000001,
+    "chunks": 1,
+    "traces": 27,
+    "findings": [
+      {
+        "filePath": "packages/common/services/console-logger.service.ts",
+        "lineNumber": 922,
+        "code": "    return /^(.)+\\n\\s+at .+:\\d+:\\d+/.test(stack!);",
+        "severity": "high",
+        "category": "security",
+        "comment": "The new regex reintroduces a ReDoS vulnerability. The original code used `[ \\t]+` instead of `\\s+` specifically to avoid matching newlines, which would cause quadratic backtracking on stack traces containing long runs of newlines. The new pattern `\\s+` matches newlines, and the `^(.)+` prefix adds further backtracking risk. An attacker could craft a malicious stack trace string that causes excessive CPU consumption when this regex is evaluated.",
+        "suggestion": "Revert to the original regex pattern: `/\\n[ \\t]+at .+:\\d+:\\d+/` and restore the explanatory comment about why `[ \\t]+` is used instead of `\\s+`."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/common/services/console-logger.service.ts",
+        "lineNumber": 922,
+        "code": "    return /^(.)+\\n\\s+at .+:\\d+:\\d+/.test(stack!);",
+        "severity": "high",
+        "category": "security",
+        "comment": "The new regex reintroduces a ReDoS vulnerability. The original code used `[ \\t]+` instead of `\\s+` specifically to avoid matching newlines, which would cause quadratic backtracking on stack traces containing long runs of newlines. The new pattern `\\s+` matches newlines, and the `^(.)+` prefix adds further backtracking risk. An attacker could craft a malicious stack trace string that causes excessive CPU consumption when this regex is evaluated.",
+        "suggestion": "Revert to the original regex pattern: `/\\n[ \\t]+at .+:\\d+:\\d+/` and restore the explanatory comment about why `[ \\t]+` is used instead of `\\s+`."
+      }
+    ]
+  },
+  {
+    "url": "https://github.com/nestjs/nest/pull/18144",
+    "title": "fix(common): parse `error()` calls with a lone or an undefined stack",
+    "detected": true,
+    "seconds": 33.221184865999994,
+    "chunks": 1,
+    "traces": 27,
+    "findings": [
+      {
+        "filePath": "packages/common/services/console-logger.service.ts",
+        "lineNumber": 873,
+        "code": "    if (args.length === 2) {",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The handling for args.length === 1 was removed entirely. When error() is called with a single argument (just a message), the method now falls through to the args.length === 2 check (which fails) and whatever follows, instead of delegating to getContextAndMessagesToPrint as before. This breaks the common use case of logger.error('message').",
+        "suggestion": "Restore the args.length === 1 handling block, or add a default case that properly handles single-argument calls."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/common/services/console-logger.service.ts",
+        "lineNumber": 873,
+        "code": "    if (args.length === 2) {",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The handling for args.length === 1 was removed entirely. When error() is called with a single argument (just a message), the method now falls through to the args.length === 2 check (which fails) and whatever follows, instead of delegating to getContextAndMessagesToPrint as before. This breaks the common use case of logger.error('message').",
+        "suggestion": "Restore the args.length === 1 handling block, or add a default case that properly handles single-argument calls."
+      }
+    ]
+  },
+  {
+    "url": "https://github.com/vitejs/vite/pull/23758",
+    "title": "fix(optimizer): scan `oxc.jsxInject` imports",
+    "detected": true,
+    "seconds": 24.157828480999996,
+    "chunks": 1,
+    "traces": 30,
+    "findings": [
+      {
+        "filePath": "packages/vite/src/node/optimizer/scan.ts",
+        "lineNumber": 715,
+        "code": "...(environment.config.esbuild && environment.config.esbuild.jsxInject",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The code now only checks for `environment.config.esbuild.jsxInject` but no longer falls back to `environment.config.oxc.jsxInject`. Users who have configured `oxc.jsxInject` in their vite config will silently lose the jsxInject functionality since the condition evaluates to false when esbuild config is absent. This is a breaking change without migration path.",
+        "suggestion": "Either support both configs (check esbuild first, fall back to oxc), or ensure the config system migrates oxc.jsxInject to esbuild.jsxInject before this code runs."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/vite/src/node/optimizer/scan.ts",
+        "lineNumber": 715,
+        "code": "...(environment.config.esbuild && environment.config.esbuild.jsxInject",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The code now only checks for `environment.config.esbuild.jsxInject` but no longer falls back to `environment.config.oxc.jsxInject`. Users who have configured `oxc.jsxInject` in their vite config will silently lose the jsxInject functionality since the condition evaluates to false when esbuild config is absent. This is a breaking change without migration path.",
+        "suggestion": "Either support both configs (check esbuild first, fall back to oxc), or ensure the config system migrates oxc.jsxInject to esbuild.jsxInject before this code runs."
+      }
+    ]
+  },
+  {
+    "url": "https://github.com/nestjs/nest/pull/18143",
+    "title": "fix(core): key the handler metadata cache by class, not class name",
+    "detected": true,
+    "seconds": 9.88932005000001,
+    "chunks": 1,
+    "traces": 14,
+    "findings": [
+      {
+        "filePath": "packages/core/helpers/handler-metadata-storage.ts",
+        "lineNumber": 63,
+        "code": "    return controllerKey + methodName;",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The metadata key is now a simple string concatenation of controllerKey and methodName. If two different controller classes have the same name (or same CONTROLLER_ID_KEY) and same method name, they will collide in the Map. The previous implementation used the constructor function as a WeakMap key, which correctly distinguished between different classes regardless of name. The removed comment explicitly stated: 'Keyed by class: same-named classes must not share an entry.' This design guarantee is now broken.",
+        "suggestion": "Use a unique identifier per controller class. Either restore the WeakMap<Function, Map<string, TValue>> approach, or ensure CONTROLLER_ID_KEY is a guaranteed-unique symbol/value assigned to each controller class at registration time."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/core/helpers/handler-metadata-storage.ts",
+        "lineNumber": 63,
+        "code": "    return controllerKey + methodName;",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The metadata key is now a simple string concatenation of controllerKey and methodName. If two different controller classes have the same name (or same CONTROLLER_ID_KEY) and same method name, they will collide in the Map. The previous implementation used the constructor function as a WeakMap key, which correctly distinguished between different classes regardless of name. The removed comment explicitly stated: 'Keyed by class: same-named classes must not share an entry.' This design guarantee is now broken.",
+        "suggestion": "Use a unique identifier per controller class. Either restore the WeakMap<Function, Map<string, TValue>> approach, or ensure CONTROLLER_ID_KEY is a guaranteed-unique symbol/value assigned to each controller class at registration time."
+      }
+    ]
+  },
+  {
+    "url": "https://github.com/vuejs/core/pull/15867",
+    "title": "fix(runtime-vapor): remove block node from its actual parentNode on unmount",
+    "detected": true,
+    "seconds": 667.1523610070001,
+    "chunks": 1,
+    "traces": 27,
+    "findings": [
+      {
+        "filePath": "packages/runtime-vapor/src/block.ts",
+        "lineNumber": 427,
+        "code": "parent && parent.removeChild(block)",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The code uses the parent parameter directly instead of block.parentNode. The parent parameter may not be the actual DOM parent of block, causing removeChild to fail or remove from the wrong parent. The original code correctly used block.parentNode to find the real parent in the DOM tree. This function is used by Transition, Teleport, KeepAlive, and other components that may pass a logical parent that differs from the DOM parent.",
+        "suggestion": "Replace parent with block.parentNode: const current = block.parentNode; if (current) current.removeChild(block)"
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/runtime-vapor/src/block.ts",
+        "lineNumber": 427,
+        "code": "parent && parent.removeChild(block)",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The code uses the parent parameter directly instead of block.parentNode. The parent parameter may not be the actual DOM parent of block, causing removeChild to fail or remove from the wrong parent. The original code correctly used block.parentNode to find the real parent in the DOM tree. This function is used by Transition, Teleport, KeepAlive, and other components that may pass a logical parent that differs from the DOM parent.",
+        "suggestion": "Replace parent with block.parentNode: const current = block.parentNode; if (current) current.removeChild(block)"
+      }
+    ]
+  },
+  {
+    "url": "https://github.com/vuejs/core/pull/15866",
+    "title": "fix(runtime-vapor): defer interop fragment removal until leave completes",
+    "detected": true,
+    "seconds": 57.364671829,
+    "chunks": 1,
+    "traces": 28,
+    "findings": [
+      {
+        "filePath": "packages/runtime-core/src/renderer.ts",
+        "lineNumber": 2530,
+        "code": "        leavingNode ? leavingNode.el! : el!,",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The transition leave logic for vapor components inside VDOM fragments is broken. The old code detected vapor components in fragments (isFragment && isVaporComponent) and called getTransitionElement() to resolve the correct DOM element for the leave animation. The new code unconditionally uses leavingNode.el, which for a vapor component in a fragment may be a fragment anchor or comment node instead of the actual transitioning element. This causes the leave transition to animate the wrong DOM node or fail entirely.",
+        "suggestion": "Restore the vapor-in-fragment special handling: check if (isFragment && leavingNode && isVaporComponent(leavingNode.type)) and call getVaporInterface(leavingNode.component, leavingNode).getTransitionElement(leavingNode) to get the correct leavingEl. Also restore the isElement derivation from the resolved element. This requires getTransitionElement to be restored in the VaporInVdomInterface (apiCreateApp.ts) and implemented in vdomInterop.ts."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/runtime-core/src/renderer.ts",
+        "lineNumber": 2530,
+        "code": "        leavingNode ? leavingNode.el! : el!,",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The transition leave logic for vapor components inside VDOM fragments is broken. The old code detected vapor components in fragments (isFragment && isVaporComponent) and called getTransitionElement() to resolve the correct DOM element for the leave animation. The new code unconditionally uses leavingNode.el, which for a vapor component in a fragment may be a fragment anchor or comment node instead of the actual transitioning element. This causes the leave transition to animate the wrong DOM node or fail entirely.",
+        "suggestion": "Restore the vapor-in-fragment special handling: check if (isFragment && leavingNode && isVaporComponent(leavingNode.type)) and call getVaporInterface(leavingNode.component, leavingNode).getTransitionElement(leavingNode) to get the correct leavingEl. Also restore the isElement derivation from the resolved element. This requires getTransitionElement to be restored in the VaporInVdomInterface (apiCreateApp.ts) and implemented in vdomInterop.ts."
+      }
+    ]
+  },
+  {
+    "url": "https://github.com/vuejs/core/pull/15863",
+    "title": "fix(runtime-vapor): render nothing for an invalid v-for range in production",
+    "detected": true,
+    "seconds": 9.725462767999968,
+    "chunks": 1,
+    "traces": 29,
+    "findings": [
+      {
+        "filePath": "packages/runtime-vapor/src/apiCreateFor.ts",
+        "lineNumber": 974,
+        "code": "    if (__DEV__ && (!Number.isInteger(source) || source < 0)) {",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The validation for numeric v-for source is now only performed in development mode (__DEV__). In production, negative numbers or non-integers will pass through to `new Array(source)` which throws a RangeError (e.g., new Array(-5) or new Array(3.5)). The original code validated in all environments but only warned in dev.",
+        "suggestion": "Move the validation outside the __DEV__ check, keeping only the warn() inside: `if (!Number.isInteger(source) || source < 0) { if (__DEV__) warn(...); values = [] } else { values = new Array(source) }`"
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/runtime-vapor/src/apiCreateFor.ts",
+        "lineNumber": 974,
+        "code": "    if (__DEV__ && (!Number.isInteger(source) || source < 0)) {",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The validation for numeric v-for source is now only performed in development mode (__DEV__). In production, negative numbers or non-integers will pass through to `new Array(source)` which throws a RangeError (e.g., new Array(-5) or new Array(3.5)). The original code validated in all environments but only warned in dev.",
+        "suggestion": "Move the validation outside the __DEV__ check, keeping only the warn() inside: `if (!Number.isInteger(source) || source < 0) { if (__DEV__) warn(...); values = [] } else { values = new Array(source) }`"
+      }
+    ]
+  },
+  {
+    "url": "https://github.com/nestjs/nest/pull/18137",
+    "title": "fix(core): release the throwaway wrapper of each create() call",
+    "detected": true,
+    "seconds": 15.44451570499991,
+    "chunks": 1,
+    "traces": 29,
+    "findings": [
+      {
+        "filePath": "packages/core/injector/module-ref.ts",
+        "lineNumber": 215,
+        "code": "    });",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The finally block that called wrapper.detachFromDependencies() was removed. This method cleaned up dependencyTreeParents references and removed transient instances from the transientMap. Without this cleanup, transient instances are never removed from dependency wrappers, causing memory leaks and stale references in the dependency tree. The finally block ensured cleanup runs even when loadInstance() rejects.",
+        "suggestion": "Restore the finally block with detachFromDependencies() call, or implement equivalent cleanup logic that runs regardless of loadInstance() success/failure."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/core/injector/module-ref.ts",
+        "lineNumber": 215,
+        "code": "    });",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The finally block that called wrapper.detachFromDependencies() was removed. This method cleaned up dependencyTreeParents references and removed transient instances from the transientMap. Without this cleanup, transient instances are never removed from dependency wrappers, causing memory leaks and stale references in the dependency tree. The finally block ensured cleanup runs even when loadInstance() rejects.",
+        "suggestion": "Restore the finally block with detachFromDependencies() call, or implement equivalent cleanup logic that runs regardless of loadInstance() success/failure."
+      }
+    ]
+  },
+  {
+    "url": "https://github.com/nestjs/nest/pull/18127",
+    "title": "fix(microservices): match empty mqtt topic levels",
+    "detected": true,
+    "seconds": 23.770710537000095,
+    "chunks": 1,
+    "traces": 29,
+    "findings": [
+      {
+        "filePath": "packages/microservices/server/server-mqtt.ts",
+        "lineNumber": 238,
+        "code": "      if (!currentTopic && currentPattern !== MQTT_WILDCARD_ALL) {",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The change from `isUndefined(currentTopic)` to `!currentTopic` incorrectly treats empty string topic segments as missing segments. In MQTT, topics like 'a//b' (consecutive slashes), '/a/b' (leading slash), or 'a/b/' (trailing slash) produce empty string segments (''), which are valid and distinct from undefined (index out of bounds). The original code correctly only returned false when the topic had fewer segments than the pattern (undefined), but the new code returns false for any falsy value including empty strings, breaking pattern matching for valid MQTT topics with empty segments.",
+        "suggestion": "Restore the explicit undefined check: `if (isUndefined(currentTopic) && currentPattern !== MQTT_WILDCARD_ALL)`. If the intent is to also handle null, use `currentTopic === undefined` or `currentTopic == null` instead of the falsy check."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/microservices/server/server-mqtt.ts",
+        "lineNumber": 238,
+        "code": "      if (!currentTopic && currentPattern !== MQTT_WILDCARD_ALL) {",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The change from `isUndefined(currentTopic)` to `!currentTopic` incorrectly treats empty string topic segments as missing segments. In MQTT, topics like 'a//b' (consecutive slashes), '/a/b' (leading slash), or 'a/b/' (trailing slash) produce empty string segments (''), which are valid and distinct from undefined (index out of bounds). The original code correctly only returned false when the topic had fewer segments than the pattern (undefined), but the new code returns false for any falsy value including empty strings, breaking pattern matching for valid MQTT topics with empty segments.",
+        "suggestion": "Restore the explicit undefined check: `if (isUndefined(currentTopic) && currentPattern !== MQTT_WILDCARD_ALL)`. If the intent is to also handle null, use `currentTopic === undefined` or `currentTopic == null` instead of the falsy check."
+      }
+    ]
+  },
+  {
+    "url": "https://github.com/nestjs/nest/pull/18125",
+    "title": "fix(microservices): ignore a redis server's own replies under wildcards",
+    "detected": true,
+    "seconds": 22.321947414999944,
+    "chunks": 1,
+    "traces": 29,
+    "findings": [
+      {
+        "filePath": "packages/microservices/server/server-redis.ts",
+        "lineNumber": 159,
+        "code": "const packet = await this.deserializer.deserialize(rawMessage, { channel });",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The PR removed a critical check that prevented the server from processing its own reply messages when wildcard subscriptions are enabled. Previously, when `options.wildcards` is true, a subscription like `users.*` would also match the server's own reply channels (e.g., `users.created.reply`). The removed `isOwnReply` check detected and skipped these self-replies. Without it, the server will process its own replies as incoming requests, causing infinite loops (reply triggers handler, which sends reply, which triggers handler...) and duplicate message processing.",
+        "suggestion": "Restore the removed wildcard reply filtering logic. Add back the check before deserialization:\n\n```typescript\nif (\n  this.options?.wildcards &&\n  this.isOwnReply(channel, pattern, rawMessage)\n) {\n  return;\n}\n```\n\nAnd restore the `isOwnReply` method:\n\n```typescript\nprivate isOwnReply(\n  subscription: string,\n  channel: string,\n  message: Record<string, any>,\n) {\n  const replySuffix = this.getReplyPattern('');\n  return (\n    channel.endsWith(replySuffix) &&\n    !subscription.endsWith(replySuffix) &&\n    !isUndefined(message?.id) &&\n    isUndefined(message?.pattern)\n  );\n}\n```"
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/microservices/server/server-redis.ts",
+        "lineNumber": 159,
+        "code": "const packet = await this.deserializer.deserialize(rawMessage, { channel });",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The PR removed a critical check that prevented the server from processing its own reply messages when wildcard subscriptions are enabled. Previously, when `options.wildcards` is true, a subscription like `users.*` would also match the server's own reply channels (e.g., `users.created.reply`). The removed `isOwnReply` check detected and skipped these self-replies. Without it, the server will process its own replies as incoming requests, causing infinite loops (reply triggers handler, which sends reply, which triggers handler...) and duplicate message processing.",
+        "suggestion": "Restore the removed wildcard reply filtering logic. Add back the check before deserialization:\n\n```typescript\nif (\n  this.options?.wildcards &&\n  this.isOwnReply(channel, pattern, rawMessage)\n) {\n  return;\n}\n```\n\nAnd restore the `isOwnReply` method:\n\n```typescript\nprivate isOwnReply(\n  subscription: string,\n  channel: string,\n  message: Record<string, any>,\n) {\n  const replySuffix = this.getReplyPattern('');\n  return (\n    channel.endsWith(replySuffix) &&\n    !subscription.endsWith(replySuffix) &&\n    !isUndefined(message?.id) &&\n    isUndefined(message?.pattern)\n  );\n}\n```"
+      }
+    ]
+  },
+  {
+    "url": "https://github.com/TanStack/query/pull/11999",
+    "title": "Fix/angular devtools lifecycle",
+    "detected": true,
+    "seconds": 41.981975166999966,
+    "chunks": 1,
+    "traces": 12,
+    "findings": [
+      {
+        "filePath": "packages/angular-query-devtools/src/with-devtools.ts",
+        "lineNumber": 75,
+        "code": "        devtoolsProvided.isProvided = true",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The flag `devtoolsProvided.isProvided` is set to `true` but the cleanup that resets it to `false` on destroy was removed. Previously, `destroyRef.onDestroy(() => { devtoolsProvided.isProvided = false })` ensured the flag was reset when the component was destroyed. Without this cleanup, if the component is destroyed and recreated, the flag remains `true`, which can prevent devtools from being properly re-initialized.",
+        "suggestion": "Add the cleanup back: `destroyRef.onDestroy(() => { devtoolsProvided.isProvided = false })` after setting the flag to `true`."
+      },
+      {
+        "filePath": "packages/angular-query-devtools/src/devtools-panel/inject-devtools-panel.ts",
+        "lineNumber": 107,
+        "code": "        onClose && devtools.setOnClose(onClose)",
+        "severity": "medium",
+        "category": "bug",
+        "comment": "Changed from `devtools.setOnClose(onClose ?? (() => {}))` to only calling `setOnClose` when `onClose` is truthy. If `devtools.setOnClose` must always be called to initialize internal state (e.g., setting a default no-op handler), skipping the call when `onClose` is undefined/falsy could leave the devtools in an uninitialized state, causing errors when the close action is triggered.",
+        "suggestion": "Either keep the nullish coalescing to always call setOnClose: `devtools.setOnClose(onClose ?? (() => {}))`, or verify that `setOnClose` handles not being called gracefully."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/angular-query-devtools/src/with-devtools.ts",
+        "lineNumber": 75,
+        "code": "        devtoolsProvided.isProvided = true",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The flag `devtoolsProvided.isProvided` is set to `true` but the cleanup that resets it to `false` on destroy was removed. Previously, `destroyRef.onDestroy(() => { devtoolsProvided.isProvided = false })` ensured the flag was reset when the component was destroyed. Without this cleanup, if the component is destroyed and recreated, the flag remains `true`, which can prevent devtools from being properly re-initialized.",
+        "suggestion": "Add the cleanup back: `destroyRef.onDestroy(() => { devtoolsProvided.isProvided = false })` after setting the flag to `true`."
+      },
+      {
+        "filePath": "packages/angular-query-devtools/src/devtools-panel/inject-devtools-panel.ts",
+        "lineNumber": 107,
+        "code": "        onClose && devtools.setOnClose(onClose)",
+        "severity": "medium",
+        "category": "bug",
+        "comment": "Changed from `devtools.setOnClose(onClose ?? (() => {}))` to only calling `setOnClose` when `onClose` is truthy. If `devtools.setOnClose` must always be called to initialize internal state (e.g., setting a default no-op handler), skipping the call when `onClose` is undefined/falsy could leave the devtools in an uninitialized state, causing errors when the close action is triggered.",
+        "suggestion": "Either keep the nullish coalescing to always call setOnClose: `devtools.setOnClose(onClose ?? (() => {}))`, or verify that `setOnClose` handles not being called gracefully."
+      }
+    ]
+  },
+  {
+    "url": "https://github.com/colinhacks/zod/pull/6662",
+    "title": "fix(v4): report a union option that only checks rejected",
+    "detected": true,
+    "seconds": 747.2429325330002,
+    "chunks": 1,
+    "traces": 33,
+    "findings": [
+      {
+        "filePath": "packages/zod/src/v4/core/schemas.ts",
+        "lineNumber": 2469,
+        "code": "const nonaborted = results.filter((r) => !util.aborted(r));",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The PR removes a critical fallback branch that handled union parsing when all members produce 'continuable' errors (issues with continue !== undefined). The original code would fall back to checking for non-aborted results where all issues were continuable, allowing a union to succeed if exactly one member matched the input type but had validation errors. The new code only considers completely non-aborted results, breaking union validation for cases where all options match the type but have validation issues.",
+        "suggestion": "Restore the fallback logic or add equivalent handling for continuable errors. The original fallback was:\nif (!matched.length) {\n  matched = results.filter((r) => !r.aborted && r.issues.every((iss) => iss.continue !== undefined));\n}"
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/zod/src/v4/core/schemas.ts",
+        "lineNumber": 2469,
+        "code": "const nonaborted = results.filter((r) => !util.aborted(r));",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The PR removes a critical fallback branch that handled union parsing when all members produce 'continuable' errors (issues with continue !== undefined). The original code would fall back to checking for non-aborted results where all issues were continuable, allowing a union to succeed if exactly one member matched the input type but had validation errors. The new code only considers completely non-aborted results, breaking union validation for cases where all options match the type but have validation issues.",
+        "suggestion": "Restore the fallback logic or add equivalent handling for continuable errors. The original fallback was:\nif (!matched.length) {\n  matched = results.filter((r) => !r.aborted && r.issues.every((iss) => iss.continue !== undefined));\n}"
+      }
+    ]
+  },
+  {
+    "url": "https://github.com/colinhacks/zod/pull/6660",
+    "title": "fix(v4): run a record's key schema on an own __proto__ key",
+    "detected": true,
+    "seconds": 37.344843718999996,
+    "chunks": 1,
+    "traces": 30,
+    "findings": [
+      {
+        "filePath": "packages/zod/src/v4/core/compile.ts",
+        "lineNumber": 2031,
+        "code": "d.write(`if (${outKeyVar} === INVALID) { ${outputVar}[${kVar}] = ${accessor}[${kVar}]; continue; }`);",
+        "severity": "high",
+        "category": "security",
+        "comment": "In loose record mode, when the key schema rejects the input key \"__proto__\", outKeyVar becomes INVALID. The loose branch copies accessor[\"__proto__\"] to outputVar[\"__proto__\"] and continues, skipping the subsequent outKeyVar === \"__proto__\" guard. This allows prototype pollution by copying the input's __proto__ value to the output object's prototype.",
+        "suggestion": "Add a check for kVar !== \"__proto__\" in the loose branch before copying: `if (${outKeyVar} === INVALID) { if (${kVar} !== \"__proto__\") { ${outputVar}[${kVar}] = ${accessor}[${kVar}]; } continue; }`"
+      },
+      {
+        "filePath": "packages/zod/src/v4/core/schemas.ts",
+        "lineNumber": 3384,
+        "code": "payload.value[key] = input[key];",
+        "severity": "high",
+        "category": "security",
+        "comment": "In loose record mode, when the key schema rejects the input key \"__proto__\", the code copies input[\"__proto__\"] to payload.value[\"__proto__\"], causing prototype pollution. The previous version had a guard `if (key !== \"__proto__\")` which was removed.",
+        "suggestion": "Add the __proto__ guard back: `if (key !== \"__proto__\") payload.value[key] = input[key];`"
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/zod/src/v4/core/compile.ts",
+        "lineNumber": 2031,
+        "code": "d.write(`if (${outKeyVar} === INVALID) { ${outputVar}[${kVar}] = ${accessor}[${kVar}]; continue; }`);",
+        "severity": "high",
+        "category": "security",
+        "comment": "In loose record mode, when the key schema rejects the input key \"__proto__\", outKeyVar becomes INVALID. The loose branch copies accessor[\"__proto__\"] to outputVar[\"__proto__\"] and continues, skipping the subsequent outKeyVar === \"__proto__\" guard. This allows prototype pollution by copying the input's __proto__ value to the output object's prototype.",
+        "suggestion": "Add a check for kVar !== \"__proto__\" in the loose branch before copying: `if (${outKeyVar} === INVALID) { if (${kVar} !== \"__proto__\") { ${outputVar}[${kVar}] = ${accessor}[${kVar}]; } continue; }`"
+      },
+      {
+        "filePath": "packages/zod/src/v4/core/schemas.ts",
+        "lineNumber": 3384,
+        "code": "payload.value[key] = input[key];",
+        "severity": "high",
+        "category": "security",
+        "comment": "In loose record mode, when the key schema rejects the input key \"__proto__\", the code copies input[\"__proto__\"] to payload.value[\"__proto__\"], causing prototype pollution. The previous version had a guard `if (key !== \"__proto__\")` which was removed.",
+        "suggestion": "Add the __proto__ guard back: `if (key !== \"__proto__\") payload.value[key] = input[key];`"
+      }
+    ]
+  },
+  {
+    "url": "https://github.com/nestjs/nest/pull/18121",
+    "title": "fix(core): keep route options when the route triggered hook is set",
+    "detected": true,
+    "seconds": 25.296797988999867,
+    "chunks": 1,
+    "traces": 31,
+    "findings": [
+      {
+        "filePath": "packages/core/router/router-explorer.ts",
+        "lineNumber": 256,
+        "code": "handler = (...args: unknown[]) => {",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The original code used Object.assign to copy properties from routeHandler to the wrapper function, and called copyMetadataToCallback. The comment explicitly states: 'Adapters read route options (e.g. the version) from the handler'. By removing Object.assign and copyMetadataToCallback, the wrapper function no longer carries the metadata (like version) that HTTP adapters expect to read from the handler. This breaks adapter functionality such as API versioning.",
+        "suggestion": "Restore the metadata copying behavior. Either keep Object.assign((...args) => { ... }, routeHandler) or call copyMetadataToCallback(targetCallback, handler) after creating the wrapper."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/core/router/router-explorer.ts",
+        "lineNumber": 256,
+        "code": "handler = (...args: unknown[]) => {",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The original code used Object.assign to copy properties from routeHandler to the wrapper function, and called copyMetadataToCallback. The comment explicitly states: 'Adapters read route options (e.g. the version) from the handler'. By removing Object.assign and copyMetadataToCallback, the wrapper function no longer carries the metadata (like version) that HTTP adapters expect to read from the handler. This breaks adapter functionality such as API versioning.",
+        "suggestion": "Restore the metadata copying behavior. Either keep Object.assign((...args) => { ... }, routeHandler) or call copyMetadataToCallback(targetCallback, handler) after creating the wrapper."
+      }
+    ]
+  },
+  {
+    "url": "https://github.com/nestjs/nest/pull/18110",
+    "title": "fix(express): guard async request hook completion",
+    "detected": true,
+    "seconds": 37.89967680300004,
+    "chunks": 1,
+    "traces": 29,
+    "findings": [
+      {
+        "filePath": "packages/platform-express/adapters/express-adapter.ts",
+        "lineNumber": 78,
+        "code": "    done: () => void,",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The `done` callback no longer accepts an error parameter. Previously, hooks could call `done(err)` to signal errors to Express's error-handling middleware. Now `done()` takes no arguments, so there is no way for a request hook to report an error through this callback. This breaks error propagation for any existing hook that relies on passing an error to `done()`.",
+        "suggestion": "Restore the error parameter: `done: (err?: Error) => void`."
+      },
+      {
+        "filePath": "packages/platform-express/adapters/express-adapter.ts",
+        "lineNumber": 91,
+        "code": "          void this.onResponseHook!.apply(this, [req, res]);",
+        "severity": "medium",
+        "category": "bug",
+        "comment": "Error handling for the response hook was removed. The previous implementation wrapped the hook in try/catch and logged errors. Now, if `onResponseHook` throws synchronously or returns a rejected promise, the error will be unhandled (crashing Node.js for unhandled promise rejections or propagating uncaught).",
+        "suggestion": "Restore error handling: wrap the call in try/catch and handle promise rejections, logging errors via `this.logger.error`."
+      },
+      {
+        "filePath": "packages/platform-express/adapters/express-adapter.ts",
+        "lineNumber": 94,
+        "code": "        void this.onRequestHook.apply(this, [req, res, next]);",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The request hook is now called with Express's `next` function directly, but all safety guarantees from `runRequestHook` were removed: (1) No try/catch for synchronous errors thrown by the hook. (2) No handling of promise rejections if the hook returns a promise. (3) No protection against calling `next()` multiple times (the old `completed` guard). (4) No automatic conversion of hook errors to `next(err)`. Any of these can cause crashes, double-next errors, or silent failures.",
+        "suggestion": "Reintroduce a wrapper (like the removed `runRequestHook`) that: catches sync errors, handles promise rejections, guards against double-calling `next()`, and forwards errors to `next(err)`."
+      },
+      {
+        "filePath": "packages/platform-express/adapters/express-adapter.ts",
+        "lineNumber": 94,
+        "code": "        void this.onRequestHook.apply(this, [req, res, next]);",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The hook signature changed from receiving a `done` callback to receiving `next` directly. This is a breaking API change: existing hooks that call `done()` (with no arguments) will now pass `undefined` as the error argument to Express's `next`, which Express treats as 'no error' and continues the chain. However, hooks that previously called `done(err)` to signal errors will now pass `err` as the third argument (which is `next`), causing a type error at runtime or misbehavior. The migration path for existing hooks is unclear and error-prone.",
+        "suggestion": "Either restore the `done` callback pattern with proper error handling, or document the breaking change clearly and provide a codemod/migration guide for hook authors."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/platform-express/adapters/express-adapter.ts",
+        "lineNumber": 78,
+        "code": "    done: () => void,",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The `done` callback no longer accepts an error parameter. Previously, hooks could call `done(err)` to signal errors to Express's error-handling middleware. Now `done()` takes no arguments, so there is no way for a request hook to report an error through this callback. This breaks error propagation for any existing hook that relies on passing an error to `done()`.",
+        "suggestion": "Restore the error parameter: `done: (err?: Error) => void`."
+      },
+      {
+        "filePath": "packages/platform-express/adapters/express-adapter.ts",
+        "lineNumber": 91,
+        "code": "          void this.onResponseHook!.apply(this, [req, res]);",
+        "severity": "medium",
+        "category": "bug",
+        "comment": "Error handling for the response hook was removed. The previous implementation wrapped the hook in try/catch and logged errors. Now, if `onResponseHook` throws synchronously or returns a rejected promise, the error will be unhandled (crashing Node.js for unhandled promise rejections or propagating uncaught).",
+        "suggestion": "Restore error handling: wrap the call in try/catch and handle promise rejections, logging errors via `this.logger.error`."
+      },
+      {
+        "filePath": "packages/platform-express/adapters/express-adapter.ts",
+        "lineNumber": 94,
+        "code": "        void this.onRequestHook.apply(this, [req, res, next]);",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The request hook is now called with Express's `next` function directly, but all safety guarantees from `runRequestHook` were removed: (1) No try/catch for synchronous errors thrown by the hook. (2) No handling of promise rejections if the hook returns a promise. (3) No protection against calling `next()` multiple times (the old `completed` guard). (4) No automatic conversion of hook errors to `next(err)`. Any of these can cause crashes, double-next errors, or silent failures.",
+        "suggestion": "Reintroduce a wrapper (like the removed `runRequestHook`) that: catches sync errors, handles promise rejections, guards against double-calling `next()`, and forwards errors to `next(err)`."
+      },
+      {
+        "filePath": "packages/platform-express/adapters/express-adapter.ts",
+        "lineNumber": 94,
+        "code": "        void this.onRequestHook.apply(this, [req, res, next]);",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The hook signature changed from receiving a `done` callback to receiving `next` directly. This is a breaking API change: existing hooks that call `done()` (with no arguments) will now pass `undefined` as the error argument to Express's `next`, which Express treats as 'no error' and continues the chain. However, hooks that previously called `done(err)` to signal errors will now pass `err` as the third argument (which is `next`), causing a type error at runtime or misbehavior. The migration path for existing hooks is unclear and error-prone.",
+        "suggestion": "Either restore the `done` callback pattern with proper error handling, or document the breaking change clearly and provide a codemod/migration guide for hook authors."
+      }
+    ]
+  }
+]

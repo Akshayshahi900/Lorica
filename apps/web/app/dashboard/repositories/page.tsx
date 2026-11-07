@@ -12,10 +12,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 
-import {
-  fetchPullRequests,
-  PullRequestRecord,
-} from "@/lib/pull-requests";
+import { fetchPullRequests, PullRequestRecord } from "@/lib/pull-requests";
 
 type RepositorySummary = {
   name: string;
@@ -77,11 +74,7 @@ export default function RepositoriesPage() {
         fullName.split("/").pop() ??
         "Unknown";
 
-      const findings =
-        item.commentCount ??
-        item.comments ??
-        item.findings ??
-        0;
+      const findings = item.commentCount ?? item.comments ?? item.findings ?? 0;
 
       const reviewedAt =
         item.reviewedAt ??
@@ -99,8 +92,7 @@ export default function RepositoriesPage() {
         if (
           reviewedAt &&
           (!existing.lastReviewed ||
-            new Date(reviewedAt) >
-              new Date(existing.lastReviewed))
+            new Date(reviewedAt) > new Date(existing.lastReviewed))
         ) {
           existing.lastReviewed = reviewedAt;
         }
@@ -116,7 +108,7 @@ export default function RepositoriesPage() {
     }
 
     return Array.from(map.values()).sort(
-      (a, b) => b.prsReviewed - a.prsReviewed
+      (a, b) => b.prsReviewed - a.prsReviewed,
     );
   }, [pullRequests]);
 
@@ -142,9 +134,7 @@ export default function RepositoriesPage() {
               {loading
                 ? "Loading repositories..."
                 : `${repositories.length} ${
-                    repositories.length === 1
-                      ? "repository"
-                      : "repositories"
+                    repositories.length === 1 ? "repository" : "repositories"
                   } connected`}
             </p>
           </div>
@@ -209,10 +199,7 @@ export default function RepositoriesPage() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <div className="flex items-center gap-2">
-                <GitPullRequest
-                  size={15}
-                  className="text-accent-violet"
-                />
+                <GitPullRequest size={15} className="text-accent-violet" />
 
                 <h2 className="text-sm font-semibold text-text-primary">
                   Add another repository
@@ -220,8 +207,8 @@ export default function RepositoriesPage() {
               </div>
 
               <p className="text-xs text-text-muted mt-1.5 max-w-xl">
-                Connect another GitHub repository and let Lorica review its
-                pull requests automatically.
+                Connect another GitHub repository and let Lorica review its pull
+                requests automatically.
               </p>
             </div>
 
@@ -243,21 +230,14 @@ export default function RepositoriesPage() {
    REPOSITORY CARD
 ================================================================ */
 
-function RepositoryCard({
-  repository,
-}: {
-  repository: RepositorySummary;
-}) {
+function RepositoryCard({ repository }: { repository: RepositorySummary }) {
   return (
     <div className="group rounded-xl border border-bg-border bg-bg-panel p-5 hover:border-accent-violet/30 transition-colors">
       {/* Top */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-3 min-w-0">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-bg-border bg-bg-base">
-            <FolderGit2
-              size={16}
-              className="text-accent-violet"
-            />
+            <FolderGit2 size={16} className="text-accent-violet" />
           </div>
 
           <div className="min-w-0">
@@ -272,10 +252,7 @@ function RepositoryCard({
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0 rounded-md border border-status-green/20 bg-status-green/5 px-2 py-1">
-          <CheckCircle2
-            size={11}
-            className="text-status-green"
-          />
+          <CheckCircle2 size={11} className="text-status-green" />
 
           <span className="text-[10px] font-mono text-status-green">
             enabled
@@ -321,15 +298,13 @@ function RepositoryCard({
       <div className="flex items-center justify-between mt-5 pt-4 border-t border-bg-border">
         <span className="text-[10px] font-mono text-text-muted">
           {repository.lastReviewed
-            ? `Last reviewed ${formatRelativeTime(
-                repository.lastReviewed
-              )}`
+            ? `Last reviewed ${formatRelativeTime(repository.lastReviewed)}`
             : "No reviews yet"}
         </span>
 
         <Link
           href={`/dashboard/pulls?repository=${encodeURIComponent(
-            repository.fullName
+            repository.fullName,
           )}`}
           className="inline-flex items-center gap-1 text-xs font-mono text-accent-violet opacity-80 group-hover:opacity-100 transition-opacity"
         >
@@ -349,10 +324,7 @@ function EmptyRepositories() {
   return (
     <div className="rounded-xl border border-dashed border-bg-border bg-bg-panel px-6 py-14 text-center">
       <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-lg border border-bg-border bg-bg-base">
-        <FolderGit2
-          size={18}
-          className="text-text-muted"
-        />
+        <FolderGit2 size={18} className="text-text-muted" />
       </div>
 
       <h2 className="text-sm font-semibold text-text-primary mt-4">
@@ -360,8 +332,8 @@ function EmptyRepositories() {
       </h2>
 
       <p className="text-xs text-text-muted max-w-sm mx-auto mt-1.5 leading-relaxed">
-        Connect a GitHub repository to start automatically reviewing your
-        pull requests with Lorica.
+        Connect a GitHub repository to start automatically reviewing your pull
+        requests with Lorica.
       </p>
 
       <Link

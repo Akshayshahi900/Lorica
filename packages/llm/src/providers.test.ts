@@ -20,7 +20,9 @@ const context: ReviewContext = {
     headSha: "head",
     event: "fresh",
   },
-  changedFiles: [{ filePath: "src/a.ts", status: "modified", patch: "@@ -1 +1 @@\n-a\n+b" }],
+  changedFiles: [
+    { filePath: "src/a.ts", status: "modified", patch: "@@ -1 +1 @@\n-a\n+b" },
+  ],
   graph: { indexedCommit: "head", traces: [] },
 };
 
@@ -40,12 +42,18 @@ const realFetch = globalThis.fetch;
 const env = { ...process.env };
 
 function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json" },
+  });
 }
 
 beforeEach(() => {
   calls = [];
-  globalThis.fetch = (async (url: string, init: RequestInit & { body?: string }) => {
+  globalThis.fetch = (async (
+    url: string,
+    init: RequestInit & { body?: string },
+  ) => {
     const call = { url: String(url), init };
     calls.push(call);
     return respond(call);
@@ -62,23 +70,43 @@ describe("default model", () => {
     process.env.OPENROUTER_API_KEY = "or-key";
     delete process.env.LLM_MODEL;
     respond = () =>
-      json({ choices: [{ message: { content: JSON.stringify({ summary: "ok", reviews: [] }) } }] });
+      json({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({ summary: "ok", reviews: [] }),
+            },
+          },
+        ],
+      });
 
     await callLLM(context, "PROMPT");
 
     assert.equal(calls.length, 1);
-    assert.equal(calls[0]!.url, "https://openrouter.ai/api/v1/chat/completions");
-    assert.equal((calls[0]!.init.headers as Record<string, string>).Authorization, "Bearer or-key");
+    assert.equal(
+      calls[0]!.url,
+      "https://openrouter.ai/api/v1/chat/completions",
+    );
+    assert.equal(
+      (calls[0]!.init.headers as Record<string, string>).Authorization,
+      "Bearer or-key",
+    );
     const body = JSON.parse(calls[0]!.init.body!);
     assert.equal(body.model, DEFAULT_LLM_MODEL);
     assert.equal(body.temperature, 0);
     assert.equal(body.response_format.json_schema.strict, true);
-    assert.equal(body.response_format.json_schema.schema.$schema, "https://json-schema.org/draft/2020-12/schema");
+    assert.equal(
+      body.response_format.json_schema.schema.$schema,
+      "https://json-schema.org/draft/2020-12/schema",
+    );
   });
 
   it("still requires OPENROUTER_API_KEY", async () => {
     delete process.env.OPENROUTER_API_KEY;
-    await assert.rejects(callLLM(context, "PROMPT"), /OPENROUTER_API_KEY is not set/);
+    await assert.rejects(
+      callLLM(context, "PROMPT"),
+      /OPENROUTER_API_KEY is not set/,
+    );
   });
 });
 
@@ -86,21 +114,38 @@ describe("custom models", () => {
   it("sends OpenAI a strict schema without temperature", async () => {
     respond = () =>
       json({
-        choices: [{ message: { content: JSON.stringify({ summary: "ok", reviews: [{ ...finding, suggestion: null }] }) } }],
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                summary: "ok",
+                reviews: [{ ...finding, suggestion: null }],
+              }),
+            },
+          },
+        ],
       });
 
-    const result = await callLLM(context, "PROMPT", { provider: "openai", model: "gpt-5", apiKey: "sk" });
+    const result = await callLLM(context, "PROMPT", {
+      provider: "openai",
+      model: "gpt-5",
+      apiKey: "sk",
+    });
 
     assert.equal(calls[0]!.url, "https://api.openai.com/v1/chat/completions");
     const body = JSON.parse(calls[0]!.init.body!);
     assert.equal(body.temperature, undefined);
-    const item = body.response_format.json_schema.schema.properties.reviews.items;
+    const item =
+      body.response_format.json_schema.schema.properties.reviews.items;
     assert.ok(item.required.includes("suggestion"));
     assert.equal(result.reviews[0]!.suggestion, undefined);
   });
 
   it("calls Ollama's native API with a context size that fits the request", async () => {
-    respond = () => json({ message: { content: JSON.stringify({ summary: "ok", reviews: [] }) } });
+    respond = () =>
+      json({
+        message: { content: JSON.stringify({ summary: "ok", reviews: [] }) },
+      });
 
     await callLLM(context, "PROMPT", {
       provider: "ollama",
@@ -112,7 +157,10 @@ describe("custom models", () => {
     const body = JSON.parse(calls[0]!.init.body!);
     assert.equal(body.options.num_ctx, 8_192);
     assert.equal(body.format.type, "object");
-    assert.equal(calls[0]!.init.headers && "Authorization" in calls[0]!.init.headers, false);
+    assert.equal(
+      calls[0]!.init.headers && "Authorization" in calls[0]!.init.headers,
+      false,
+    );
   });
 
   it("requires a key for hosted providers", async () => {
@@ -136,10 +184,18 @@ describe("stored settings", () => {
     const stored = encryptSecret("sk-live", keyEnv);
     assert.ok(!stored.includes("sk-live"));
     assert.equal(decryptSecret(stored, keyEnv), "sk-live");
-    assert.throws(() => decryptSecret(stored, { LLM_SETTINGS_ENCRYPTION_KEY: "other" }));
+    assert.throws(() =>
+      decryptSecret(stored, { LLM_SETTINGS_ENCRYPTION_KEY: "other" }),
+    );
     assert.equal(
       configFromStoredSettings(
-        { provider: "openai", model: "gpt-5", baseUrl: null, apiKeyCiphertext: stored, contextWindow: 128_000 },
+        {
+          provider: "openai",
+          model: "gpt-5",
+          baseUrl: null,
+          apiKeyCiphertext: stored,
+          contextWindow: 128_000,
+        },
         keyEnv,
       ).apiKey,
       "sk-live",
@@ -154,16 +210,26 @@ describe("stored settings", () => {
 describe("base URL safety", () => {
   it("blocks private addresses in production unless allowed", async () => {
     await assert.rejects(
-      assertSafeBaseUrl("http://169.254.169.254/v1", { NODE_ENV: "production" }),
+      assertSafeBaseUrl("http://169.254.169.254/v1", {
+        NODE_ENV: "production",
+      }),
       /private network/,
     );
-    await assert.rejects(assertSafeBaseUrl("http://127.0.0.1:11434", { NODE_ENV: "production" }), /private/);
+    await assert.rejects(
+      assertSafeBaseUrl("http://127.0.0.1:11434", { NODE_ENV: "production" }),
+      /private/,
+    );
     await assertSafeBaseUrl("http://127.0.0.1:11434", {
       NODE_ENV: "production",
       LLM_ALLOW_PRIVATE_BASE_URLS: "true",
     });
-    await assertSafeBaseUrl("http://localhost:11434", { NODE_ENV: "development" });
-    await assert.rejects(assertSafeBaseUrl("file:///etc/passwd", {}), /http or https/);
+    await assertSafeBaseUrl("http://localhost:11434", {
+      NODE_ENV: "development",
+    });
+    await assert.rejects(
+      assertSafeBaseUrl("file:///etc/passwd", {}),
+      /http or https/,
+    );
   });
 });
 
@@ -178,7 +244,18 @@ describe("capability check", () => {
     respond = ({ url }) =>
       url.endsWith("/models")
         ? json({ data: [{ id: "local", meta: { n_ctx_train: 131_072 } }] })
-        : json({ choices: [{ message: { content: JSON.stringify({ summary: "bug", reviews: [finding] }) } }] });
+        : json({
+            choices: [
+              {
+                message: {
+                  content: JSON.stringify({
+                    summary: "bug",
+                    reviews: [finding],
+                  }),
+                },
+              },
+            ],
+          });
 
     const report = await checkModelCapability(config);
     assert.equal(report.verdict, "ready");
@@ -189,7 +266,15 @@ describe("capability check", () => {
     respond = ({ url }) =>
       url.endsWith("/models")
         ? json({ data: [{ id: "local", meta: { n_ctx_train: 4_096 } }] })
-        : json({ choices: [{ message: { content: JSON.stringify({ summary: "fine", reviews: [] }) } }] });
+        : json({
+            choices: [
+              {
+                message: {
+                  content: JSON.stringify({ summary: "fine", reviews: [] }),
+                },
+              },
+            ],
+          });
 
     const report = await checkModelCapability(config);
     assert.equal(report.verdict, "unsupported");
@@ -209,9 +294,13 @@ describe("capability check", () => {
   });
 
   it("explains a rejected API key", async () => {
-    respond = ({ url }) => (url.endsWith("/models") ? json({}, 401) : json({ error: "bad key" }, 401));
+    respond = ({ url }) =>
+      url.endsWith("/models") ? json({}, 401) : json({ error: "bad key" }, 401);
 
     const report = await checkModelCapability({ ...config, apiKey: "wrong" });
-    assert.match(report.checks.find((c) => c.id === "connection")!.detail, /rejected the API key/);
+    assert.match(
+      report.checks.find((c) => c.id === "connection")!.detail,
+      /rejected the API key/,
+    );
   });
 });

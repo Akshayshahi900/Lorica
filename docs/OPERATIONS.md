@@ -11,13 +11,13 @@ How Lorica guarantees delivery, recovers from failures, and scales. Back to the 
 
 ## Service responsibilities
 
-| Component | Responsibility | Scaling notes |
-| --- | --- | --- |
-| API | Verifies webhooks, persists state, and exposes dashboard data. | Scale horizontally behind a load balancer; all instances need the same secrets. |
-| Worker | Runs review and code-index jobs. | Run separately from the API in production. It has review concurrency of 2 and code-index concurrency of 2 per process. |
-| PostgreSQL | Stores repositories, pull requests, and review-job state. | Back up regularly and use managed storage in production. |
-| Redis | BullMQ transport for review and index attempts. | Losing review data is recoverable: the dispatcher re-sends due jobs from PostgreSQL. |
-| Neo4j | Stores a PR-scoped graph keyed by repository URL and `pull/<PR number>`. | Persist data and secure Bolt access; graph refresh replaces only the relevant PR graph. |
+| Component  | Responsibility                                                           | Scaling notes                                                                                                          |
+| ---------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| API        | Verifies webhooks, persists state, and exposes dashboard data.           | Scale horizontally behind a load balancer; all instances need the same secrets.                                        |
+| Worker     | Runs review and code-index jobs.                                         | Run separately from the API in production. It has review concurrency of 2 and code-index concurrency of 2 per process. |
+| PostgreSQL | Stores repositories, pull requests, and review-job state.                | Back up regularly and use managed storage in production.                                                               |
+| Redis      | BullMQ transport for review and index attempts.                          | Losing review data is recoverable: the dispatcher re-sends due jobs from PostgreSQL.                                   |
+| Neo4j      | Stores a PR-scoped graph keyed by repository URL and `pull/<PR number>`. | Persist data and secure Bolt access; graph refresh replaces only the relevant PR graph.                                |
 
 `GET /health` is the API liveness endpoint and returns `OK`. Neo4j credentials, GitHub App credentials, and the LLM key must be available to every worker replica.
 
@@ -40,24 +40,24 @@ PostgreSQL, not Redis, is the source of truth for reviews. Redis only carries at
 
 ## Recovery
 
-| Failure | Recovery |
-| --- | --- |
-| API asleep or failing when GitHub delivers | GitHub does not retry webhooks. On boot and on `POST /api/internal/reconcile`, the API redelivers `pull_request` deliveries from the last three days that never got a `2xx` (up to six attempts each) and wakes the worker if reviews are owed. `.github/workflows/reconcile.yml` calls it every two hours using the repository secrets `LORICA_API_URL` and `LORICA_API_TOKEN`. |
-| Database asleep | The intake transaction is retried three times before returning `500`, which the reconciler then redelivers. |
-| Redis down | The job is already stored. The worker's dispatcher re-sends due jobs every minute and runs them in-process when Redis is unreachable. |
-| Worker crashes, redeploys or sleeps mid-review | The lease (renewed every minute) lapses within three minutes and the job is claimed again. |
-| Transient failure (LLM, GitHub, Neo4j) | Retried from the database after 1, 2, 5, 15, 30, 60, 120 and 240 minutes (nine attempts). A 404/410 from GitHub fails the job at once. A new event for the commit restarts a failed review. |
-| Worker would sleep while a retry waits | While reviews are owed, the worker requests its own `RENDER_EXTERNAL_URL` to stay up on Render's free tier. |
+| Failure                                        | Recovery                                                                                                                                                                                                                                                                                                                                                                         |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| API asleep or failing when GitHub delivers     | GitHub does not retry webhooks. On boot and on `POST /api/internal/reconcile`, the API redelivers `pull_request` deliveries from the last three days that never got a `2xx` (up to six attempts each) and wakes the worker if reviews are owed. `.github/workflows/reconcile.yml` calls it every two hours using the repository secrets `LORICA_API_URL` and `LORICA_API_TOKEN`. |
+| Database asleep                                | The intake transaction is retried three times before returning `500`, which the reconciler then redelivers.                                                                                                                                                                                                                                                                      |
+| Redis down                                     | The job is already stored. The worker's dispatcher re-sends due jobs every minute and runs them in-process when Redis is unreachable.                                                                                                                                                                                                                                            |
+| Worker crashes, redeploys or sleeps mid-review | The lease (renewed every minute) lapses within three minutes and the job is claimed again.                                                                                                                                                                                                                                                                                       |
+| Transient failure (LLM, GitHub, Neo4j)         | Retried from the database after 1, 2, 5, 15, 30, 60, 120 and 240 minutes (nine attempts). A 404/410 from GitHub fails the job at once. A new event for the commit restarts a failed review.                                                                                                                                                                                      |
+| Worker would sleep while a retry waits         | While reviews are owed, the worker requests its own `RENDER_EXTERNAL_URL` to stay up on Render's free tier.                                                                                                                                                                                                                                                                      |
 
 ## HTTP API
 
-| Method and path | Authentication | Description |
-| --- | --- | --- |
-| `GET /health` | None | Returns `OK` when the Express process is running. |
-| `POST /webhooks/github` | GitHub HMAC signature | Accepts GitHub App webhooks. Only supported `pull_request` actions enqueue work. |
-| `GET /api/pulls?owner=<login>` | `x-lorica-api-token` in production | Returns recorded pull requests for the requested owner, newest first, with repository data and the latest review job. |
+| Method and path                                     | Authentication                     | Description                                                                                                                                  |
+| --------------------------------------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /health`                                       | None                               | Returns `OK` when the Express process is running.                                                                                            |
+| `POST /webhooks/github`                             | GitHub HMAC signature              | Accepts GitHub App webhooks. Only supported `pull_request` actions enqueue work.                                                             |
+| `GET /api/pulls?owner=<login>`                      | `x-lorica-api-token` in production | Returns recorded pull requests for the requested owner, newest first, with repository data and the latest review job.                        |
 | `GET/PUT/DELETE /api/settings/review?owner=<login>` | `x-lorica-api-token` in production | Reads, saves (a `.lorica.yaml`-shaped JSON body) or resets an owner's review settings. The dashboard authorizes the owner before calling it. |
-| `POST /api/internal/reconcile` | `x-lorica-api-token` in production | Redelivers failed `pull_request` webhooks and wakes the worker when reviews are owed. |
+| `POST /api/internal/reconcile`                      | `x-lorica-api-token` in production | Redelivers failed `pull_request` webhooks and wakes the worker when reviews are owed.                                                        |
 
 The dashboard calls `GET /api/pulls` through its authenticated Next.js route (`apps/web/app/api/pulls/route.ts`), so the shared API token never reaches browser code. In non-production environments the API allows `/api/*` requests without `API_ACCESS_TOKEN` to simplify local setup. Production returns `503` for those routes until the token is configured.
 

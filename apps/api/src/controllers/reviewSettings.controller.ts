@@ -22,7 +22,9 @@ function actorOf(req: Request): string | null {
   return typeof actor === "string" && actor.trim() ? actor.trim() : null;
 }
 
-function present(row: { config: unknown; updatedBy: string | null; updatedAt: Date } | null) {
+function present(
+  row: { config: unknown; updatedBy: string | null; updatedAt: Date } | null,
+) {
   // A row saved under an older schema reads as no settings rather than failing.
   const parsed = row ? ReviewSettingsSchema.safeParse(row.config) : null;
   const settings: ReviewSettings | null = parsed?.success ? parsed.data : null;
@@ -37,7 +39,9 @@ function present(row: { config: unknown; updatedBy: string | null; updatedAt: Da
 
 function fail(res: Response, stage: string, error: unknown) {
   const errorType = error instanceof Error ? error.name : "unknown";
-  console.error(`[api] stage=review_settings.${stage}.failed error_type=${errorType}`);
+  console.error(
+    `[api] stage=review_settings.${stage}.failed error_type=${errorType}`,
+  );
   return res.status(500).json({ error: "Failed to process review settings" });
 }
 

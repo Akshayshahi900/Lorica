@@ -16,7 +16,11 @@ describe("resolving review settings", () => {
       fixPrompt: true,
       postMergeActions: true,
     });
-    assert.deepEqual(settings.mergeGate, { enabled: true, blockOn: "high", enforceGuidelines: true });
+    assert.deepEqual(settings.mergeGate, {
+      enabled: true,
+      blockOn: "high",
+      enforceGuidelines: true,
+    });
     assert.equal(settings.workflow.autoReview, true);
     assert.equal(settings.workflow.reviewDrafts, true);
     assert.equal(settings.workflow.reviewOnPush, true);
@@ -30,23 +34,36 @@ describe("resolving review settings", () => {
         tone: "Friendly.",
         excludePaths: ["docs/**"],
         pathInstructions: [{ path: "src/**", instructions: "Org rule." }],
-        workflow: { baseBranches: ["main"], ignoreAuthors: ["Renovate[bot]"], reviewDrafts: false },
+        workflow: {
+          baseBranches: ["main"],
+          ignoreAuthors: ["Renovate[bot]"],
+          reviewDrafts: false,
+        },
       },
       {
         profile: "quiet",
         guidelines: "Repo: no default exports.",
         excludePaths: ["docs/**", "e2e/**"],
         pathInstructions: [{ path: "src/db/**", instructions: "Repo rule." }],
-        workflow: { baseBranches: ["develop"], ignoreAuthors: ["dependabot[bot]"] },
+        workflow: {
+          baseBranches: ["develop"],
+          ignoreAuthors: ["dependabot[bot]"],
+        },
       },
     ]);
     assert.equal(settings.profile, "quiet");
     assert.equal(settings.tone, "Friendly.");
-    assert.deepEqual(settings.guidelines, ["Org: use the shared logger.", "Repo: no default exports."]);
+    assert.deepEqual(settings.guidelines, [
+      "Org: use the shared logger.",
+      "Repo: no default exports.",
+    ]);
     assert.deepEqual(settings.excludePaths, ["docs/**", "e2e/**"]);
     assert.equal(settings.pathInstructions.length, 2);
     assert.deepEqual(settings.workflow.baseBranches, ["develop"]);
-    assert.deepEqual(settings.workflow.ignoreAuthors, ["renovate[bot]", "dependabot[bot]"]);
+    assert.deepEqual(settings.workflow.ignoreAuthors, [
+      "renovate[bot]",
+      "dependabot[bot]",
+    ]);
     assert.equal(settings.workflow.reviewDrafts, false);
     // The final profile's preset fills in limits nobody set.
     assert.equal(settings.style.minSeverity, "high");
@@ -58,14 +75,23 @@ describe("the merge gate settings", () => {
   it("lets the repository override the owner's gate", () => {
     const settings = resolveReviewSettings([
       { mergeGate: { blockOn: "medium", enforceGuidelines: false } },
-      { mergeGate: { blockOn: "critical" }, style: { postMergeActions: false } },
+      {
+        mergeGate: { blockOn: "critical" },
+        style: { postMergeActions: false },
+      },
     ]);
-    assert.deepEqual(settings.mergeGate, { enabled: true, blockOn: "critical", enforceGuidelines: false });
+    assert.deepEqual(settings.mergeGate, {
+      enabled: true,
+      blockOn: "critical",
+      enforceGuidelines: false,
+    });
     assert.equal(settings.style.postMergeActions, false);
   });
 
   it("rejects an unknown block level in a config file", () => {
-    assert.ok("error" in parseRepoReviewConfig("mergeGate:\n  blockOn: severe\n"));
+    assert.ok(
+      "error" in parseRepoReviewConfig("mergeGate:\n  blockOn: severe\n"),
+    );
   });
 });
 

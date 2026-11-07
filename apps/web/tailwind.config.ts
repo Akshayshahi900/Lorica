@@ -62,8 +62,7 @@ const config: Config = {
       // ANIMATION
       // ─────────────────────────────────────────
       animation: {
-        pulse_slow:
-          "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        pulse_slow: "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
       },
 
       // ─────────────────────────────────────────

@@ -101,33 +101,26 @@ export function Sidebar({ session }: { session: Session }) {
             </p>
 
             <nav className="space-y-0.5">
-              {WORKSPACE_NAV.map(
-                ({ href, icon: Icon, label }) => {
-                  const active = isActive(href);
+              {WORKSPACE_NAV.map(({ href, icon: Icon, label }) => {
+                const active = isActive(href);
 
-                  return (
-                    <Link
-                      key={href}
-                      href={href}
-                      className={clsx(
-                        "flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-all duration-100 border",
-                        active
-                          ? "bg-accent-violet-glow text-accent-violet border-accent-violet/20"
-                          : "text-text-secondary hover:bg-bg-hover hover:text-text-primary border-transparent"
-                      )}
-                    >
-                      <Icon
-                        size={14}
-                        className="flex-shrink-0"
-                      />
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={clsx(
+                      "flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-all duration-100 border",
+                      active
+                        ? "bg-accent-violet-glow text-accent-violet border-accent-violet/20"
+                        : "text-text-secondary hover:bg-bg-hover hover:text-text-primary border-transparent",
+                    )}
+                  >
+                    <Icon size={14} className="flex-shrink-0" />
 
-                      <span className="font-mono text-xs">
-                        {label}
-                      </span>
-                    </Link>
-                  );
-                }
-              )}
+                    <span className="font-mono text-xs">{label}</span>
+                  </Link>
+                );
+              })}
             </nav>
           </div>
 
@@ -138,33 +131,26 @@ export function Sidebar({ session }: { session: Session }) {
             </p>
 
             <nav className="space-y-0.5">
-              {CONFIG_NAV.map(
-                ({ href, icon: Icon, label }) => {
-                  const active = isActive(href);
+              {CONFIG_NAV.map(({ href, icon: Icon, label }) => {
+                const active = isActive(href);
 
-                  return (
-                    <Link
-                      key={href}
-                      href={href}
-                      className={clsx(
-                        "flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-all duration-100 border",
-                        active
-                          ? "bg-accent-violet-glow text-accent-violet border-accent-violet/20"
-                          : "text-text-secondary hover:bg-bg-hover hover:text-text-primary border-transparent"
-                      )}
-                    >
-                      <Icon
-                        size={14}
-                        className="flex-shrink-0"
-                      />
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={clsx(
+                      "flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-all duration-100 border",
+                      active
+                        ? "bg-accent-violet-glow text-accent-violet border-accent-violet/20"
+                        : "text-text-secondary hover:bg-bg-hover hover:text-text-primary border-transparent",
+                    )}
+                  >
+                    <Icon size={14} className="flex-shrink-0" />
 
-                      <span className="font-mono text-xs">
-                        {label}
-                      </span>
-                    </Link>
-                  );
-                }
-              )}
+                    <span className="font-mono text-xs">{label}</span>
+                  </Link>
+                );
+              })}
             </nav>
           </div>
 
@@ -216,9 +202,7 @@ export function Sidebar({ session }: { session: Session }) {
           </div>
 
           <button
-            onClick={() =>
-              signOut({ callbackUrl: "/" })
-            }
+            onClick={() => signOut({ callbackUrl: "/" })}
             className="w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-xs text-text-muted hover:text-status-red hover:bg-bg-hover transition-all duration-100 font-mono border border-transparent hover:border-status-red/20"
           >
             <LogOut size={12} />
@@ -231,28 +215,26 @@ export function Sidebar({ session }: { session: Session }) {
           MOBILE NAVIGATION
       ========================================================= */}
       <nav className="lg:hidden fixed bottom-0 inset-x-0 z-20 border-t border-bg-border bg-bg-panel/95 backdrop-blur px-2 py-2 grid grid-cols-4 gap-1 safe-area-bottom">
-        {MOBILE_NAV.map(
-          ({ href, icon: Icon, label }) => {
-            const active = isActive(href);
+        {MOBILE_NAV.map(({ href, icon: Icon, label }) => {
+          const active = isActive(href);
 
-            return (
-              <Link
-                key={href}
-                href={href}
-                aria-label={label}
-                className={clsx(
-                  "flex min-h-12 flex-col items-center justify-center gap-1 rounded-lg text-[10px] font-mono transition-colors",
-                  active
-                    ? "bg-accent-violet-glow text-accent-violet"
-                    : "text-text-muted hover:text-text-secondary"
-                )}
-              >
-                <Icon size={16} />
-                <span>{label}</span>
-              </Link>
-            );
-          }
-        )}
+          return (
+            <Link
+              key={href}
+              href={href}
+              aria-label={label}
+              className={clsx(
+                "flex min-h-12 flex-col items-center justify-center gap-1 rounded-lg text-[10px] font-mono transition-colors",
+                active
+                  ? "bg-accent-violet-glow text-accent-violet"
+                  : "text-text-muted hover:text-text-secondary",
+              )}
+            >
+              <Icon size={16} />
+              <span>{label}</span>
+            </Link>
+          );
+        })}
       </nav>
     </>
   );

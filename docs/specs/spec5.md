@@ -68,18 +68,22 @@ The model input has this shape:
     "headSha": "...",
     "event": "fresh"
   },
-  "changedFiles": [{ "filePath": "src/x.ts", "status": "modified", "patch": "@@ ..." }],
+  "changedFiles": [
+    { "filePath": "src/x.ts", "status": "modified", "patch": "@@ ..." }
+  ],
   "graph": {
     "indexedCommit": "...",
-    "traces": [{
-      "changedFile": "src/x.ts",
-      "symbol": "handler",
-      "direction": "depends_on",
-      "relationship": "CALLS",
-      "relatedFile": "src/y.ts",
-      "relatedSymbol": "validate",
-      "evidence": "src/x.ts uses validate via CALLS"
-    }]
+    "traces": [
+      {
+        "changedFile": "src/x.ts",
+        "symbol": "handler",
+        "direction": "depends_on",
+        "relationship": "CALLS",
+        "relatedFile": "src/y.ts",
+        "relatedSymbol": "validate",
+        "evidence": "src/x.ts uses validate via CALLS"
+      }
+    ]
   }
 }
 ```
@@ -100,16 +104,16 @@ behavior or report unrelated pre-existing defects.
 
 ## Files changed
 
-| File | Responsibility |
-| --- | --- |
-| `apps/worker/src/diff.worker.ts` | Fetches PR metadata/diff, refreshes the exact-SHA graph, assembles context, and calls Ollama. |
-| `apps/worker/src/codeIndex.worker.ts` | Exposes exact-SHA clone/index refresh for review jobs and index jobs. |
-| `apps/worker/src/neo4j.ts` | Reads bounded, typed graph traces for changed paths. |
-| `packages/context/src/reviewContext.ts` | Pure, validated context assembly. |
-| `packages/types/src/types.ts` | Zod input and graph-trace schemas. |
-| `packages/vcs/src/github/fetchDiff.ts` | Retrieves authoritative PR metadata. |
-| `packages/vcs/src/github/octokit.ts` | Retrieves a short-lived installation clone token. |
-| `packages/llm/src/client.ts`, `prompt.ts` | Sends the structured context and uses the stricter evidence policy. |
+| File                                      | Responsibility                                                                                |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `apps/worker/src/diff.worker.ts`          | Fetches PR metadata/diff, refreshes the exact-SHA graph, assembles context, and calls Ollama. |
+| `apps/worker/src/codeIndex.worker.ts`     | Exposes exact-SHA clone/index refresh for review jobs and index jobs.                         |
+| `apps/worker/src/neo4j.ts`                | Reads bounded, typed graph traces for changed paths.                                          |
+| `packages/context/src/reviewContext.ts`   | Pure, validated context assembly.                                                             |
+| `packages/types/src/types.ts`             | Zod input and graph-trace schemas.                                                            |
+| `packages/vcs/src/github/fetchDiff.ts`    | Retrieves authoritative PR metadata.                                                          |
+| `packages/vcs/src/github/octokit.ts`      | Retrieves a short-lived installation clone token.                                             |
+| `packages/llm/src/client.ts`, `prompt.ts` | Sends the structured context and uses the stricter evidence policy.                           |
 
 ## Verification
 

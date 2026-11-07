@@ -8,11 +8,11 @@ Each account (a user, or an organization its admins manage) configures reviews u
 
 Profiles set the reviewer's posture:
 
-| Profile | Reports | Default floor / cap |
-| --- | --- | --- |
-| `quiet` | Only high-confidence critical and high severity bugs and security issues. | `high` / 5 |
-| `chill` | Concrete defects of any severity; no style or preference comments. The default. | `low` / 20 |
-| `assertive` | Defects plus maintainability: naming, readability, duplication, missing tests, dead code. | `low` / 40 |
+| Profile     | Reports                                                                                   | Default floor / cap |
+| ----------- | ----------------------------------------------------------------------------------------- | ------------------- |
+| `quiet`     | Only high-confidence critical and high severity bugs and security issues.                 | `high` / 5          |
+| `chill`     | Concrete defects of any severity; no style or preference comments. The default.           | `low` / 20          |
+| `assertive` | Defects plus maintainability: naming, readability, duplication, missing tests, dead code. | `low` / 40          |
 
 The severity floor and finding cap are enforced after the model answers, so they hold whatever the model returns; the review summary says how many findings were hidden.
 
@@ -27,24 +27,24 @@ guidelines: |
 pathInstructions:
   - path: "src/api/**"
     instructions: Every handler validates its input with zod and checks permissions.
-excludePaths: ["**/*.test.ts", "migrations/**"]   # on top of lockfiles, generated, vendored, binaries
+excludePaths: ["**/*.test.ts", "migrations/**"] # on top of lockfiles, generated, vendored, binaries
 tone: Brief and friendly.
 workflow:
-  autoReview: true            # false: this repository is not reviewed
-  reviewDrafts: false         # drafts are reviewed when marked ready for review
-  reviewOnPush: true          # false: only opened, reopened and ready-for-review
-  baseBranches: ["main", "release/*"]   # empty: any base branch
+  autoReview: true # false: this repository is not reviewed
+  reviewDrafts: false # drafts are reviewed when marked ready for review
+  reviewOnPush: true # false: only opened, reopened and ready-for-review
+  baseBranches: ["main", "release/*"] # empty: any base branch
   ignoreTitleKeywords: ["WIP", "[skip review]"]
   ignoreAuthors: ["dependabot[bot]"]
 style:
-  minSeverity: medium         # defaults to the profile's
-  maxFindings: 10             # defaults to the profile's
-  fixPrompt: true             # the copyable "fix with your AI assistant" prompt
-  postMergeActions: true      # the "After merging" checklist
+  minSeverity: medium # defaults to the profile's
+  maxFindings: 10 # defaults to the profile's
+  fixPrompt: true # the copyable "fix with your AI assistant" prompt
+  postMergeActions: true # the "After merging" checklist
 mergeGate:
-  enabled: true               # set the "Lorica" commit status
-  blockOn: high               # critical | high | medium | low | none
-  enforceGuidelines: true     # any guideline violation blocks merging
+  enabled: true # set the "Lorica" commit status
+  blockOn: high # critical | high | medium | low | none
+  enforceGuidelines: true # any guideline violation blocks merging
 ```
 
 ## Behavior

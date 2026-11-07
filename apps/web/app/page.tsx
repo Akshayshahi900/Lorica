@@ -98,8 +98,7 @@ export default function LandingPage() {
               AI code reviews that{" "}
               <span
                 style={{
-                  background:
-                    "linear-gradient(135deg, #7C6AF7, #9B8AFA)",
+                  background: "linear-gradient(135deg, #7C6AF7, #9B8AFA)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                   backgroundClip: "text",
@@ -111,8 +110,8 @@ export default function LandingPage() {
 
             {/* Description */}
             <p className="max-w-2xl mx-auto text-center text-text-secondary text-base md:text-lg leading-relaxed mb-9">
-              Lorica analyzes your pull requests with repository context to
-              find bugs, security issues, and risky changes before they reach
+              Lorica analyzes your pull requests with repository context to find
+              bugs, security issues, and risky changes before they reach
               production.
             </p>
 
@@ -145,10 +144,7 @@ export default function LandingPage() {
                   className="flex items-center gap-3 text-left bg-bg-panel border border-bg-border rounded-lg px-4 py-3 hover:border-accent-violet/30 transition-colors"
                 >
                   <div className="flex-shrink-0">
-                    <Icon
-                      size={15}
-                      className="text-accent-violet"
-                    />
+                    <Icon size={15} className="text-accent-violet" />
                   </div>
 
                   <div className="min-w-0">
@@ -166,9 +162,7 @@ export default function LandingPage() {
             {/* CTA */}
             <div className="max-w-xl mx-auto">
               <button
-                onClick={() =>
-                  signIn("github", { callbackUrl: "/dashboard" })
-                }
+                onClick={() => signIn("github", { callbackUrl: "/dashboard" })}
                 className="group w-full flex items-center justify-center gap-2.5 bg-text-primary text-bg-base font-semibold py-3.5 px-5 rounded-lg hover:bg-white transition-all duration-150 text-sm"
               >
                 <Github size={17} />
@@ -243,10 +237,7 @@ export default function LandingPage() {
                   {/* Suggestion */}
                   <div className="border border-accent-violet/20 rounded-lg p-4 bg-bg-base">
                     <div className="flex items-center gap-2 mb-3">
-                      <Zap
-                        size={13}
-                        className="text-accent-violet"
-                      />
+                      <Zap size={13} className="text-accent-violet" />
 
                       <span className="font-mono text-xs text-text-secondary">
                         Suggested fix
@@ -271,18 +262,14 @@ export default function LandingPage() {
                   </div>
 
                   <div className="border border-bg-border rounded-lg p-3">
-                    <div className="font-mono text-lg text-text-primary">
-                      3
-                    </div>
+                    <div className="font-mono text-lg text-text-primary">3</div>
                     <div className="text-[10px] text-text-muted mt-1">
                       Issues found
                     </div>
                   </div>
 
                   <div className="border border-bg-border rounded-lg p-3">
-                    <div className="font-mono text-lg text-text-primary">
-                      2
-                    </div>
+                    <div className="font-mono text-lg text-text-primary">2</div>
                     <div className="text-[10px] text-text-muted mt-1">
                       Suggestions
                     </div>

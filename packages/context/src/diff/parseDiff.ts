@@ -1,9 +1,9 @@
 // apps/api/src/github/parseDiff.ts
-import parseDiff from 'parse-diff';
-import type { FileDiff } from '../../types/types';
+import parseDiff from "parse-diff";
+import type { FileDiff } from "../../types/types";
 
 export interface DiffChange {
-  type: 'add' | 'del' | 'normal';
+  type: "add" | "del" | "normal";
   lineNumber?: number;
   oldLineNumber?: number;
   content: string;
@@ -17,8 +17,7 @@ export function parseFileDiffs(files: FileDiff[]): ParsedFileDiff[] {
   return files
     .filter((f) => f.patch)
     .map((f) => {
-      const wrapped =
-        `diff --git a/${f.filePath} b/${f.filePath}\n${f.patch}`;
+      const wrapped = `diff --git a/${f.filePath} b/${f.filePath}\n${f.patch}`;
 
       const [parsed] = parseDiff(wrapped);
 

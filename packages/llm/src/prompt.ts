@@ -1,4 +1,7 @@
-import type { PathInstruction, ReviewProfile } from "../../types/src/reviewSettings";
+import type {
+  PathInstruction,
+  ReviewProfile,
+} from "../../types/src/reviewSettings";
 
 export const REVIEW_PROMPT = `
 You are an expert code reviewer.
@@ -249,7 +252,10 @@ export function buildReviewPrompt({
   enforceGuidelines = false,
   postMergeActions = false,
 }: ReviewPromptOptions): string {
-  const sections = [REVIEW_PROMPT.trim(), section("REVIEW PROFILE", PROFILE_INSTRUCTIONS[profile])];
+  const sections = [
+    REVIEW_PROMPT.trim(),
+    section("REVIEW PROFILE", PROFILE_INSTRUCTIONS[profile]),
+  ];
 
   if (guidelines.length > 0) {
     sections.push(
@@ -281,7 +287,10 @@ ${guidelines.join("\n\n")}
         `Apply each instruction only to changed files matching its glob.
 
 ${pathInstructions
-  .map(({ path, instructions }) => `<instructions path="${path}">\n${instructions}\n</instructions>`)
+  .map(
+    ({ path, instructions }) =>
+      `<instructions path="${path}">\n${instructions}\n</instructions>`,
+  )
   .join("\n\n")}`,
       ),
     );
@@ -289,7 +298,10 @@ ${pathInstructions
 
   if (tone) {
     sections.push(
-      section("TONE", `Write each "comment" and "suggestion" in this tone:\n\n${tone}`),
+      section(
+        "TONE",
+        `Write each "comment" and "suggestion" in this tone:\n\n${tone}`,
+      ),
     );
   }
 

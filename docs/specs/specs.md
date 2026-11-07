@@ -16,10 +16,10 @@ Lorica uses a compact dark interface aimed at developers who need to scan review
 
 ## Responsive layout
 
-| Viewport | Navigation | Content behavior |
-| --- | --- | --- |
-| Below `lg` | Fixed bottom navigation with four icon-and-label items. | Pages include bottom padding so controls and tables remain reachable. Tables scroll horizontally rather than clipping data. |
-| `lg` and above | Sticky, 224px left sidebar with account controls. | Main content grows fluidly, capped at 1152px. |
+| Viewport       | Navigation                                              | Content behavior                                                                                                            |
+| -------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Below `lg`     | Fixed bottom navigation with four icon-and-label items. | Pages include bottom padding so controls and tables remain reachable. Tables scroll horizontally rather than clipping data. |
+| `lg` and above | Sticky, 224px left sidebar with account controls.       | Main content grows fluidly, capped at 1152px.                                                                               |
 
 Interactive controls display a violet keyboard-focus ring. External PR links are always visible on touch-sized layouts and appear on row hover on desktop.
 

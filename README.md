@@ -88,19 +88,19 @@ Lorica is **live**: install the hosted GitHub App and it starts reviewing right 
 - **Validated LLM output.** The model must return JSON that passes a Zod schema before anything is posted. Severity floors and finding caps are enforced after the model answers, so they hold regardless of what it returns.
 - **Token-aware chunking.** Lockfiles, generated and vendored files are filtered out, and large PRs are split into chunks sized to the selected model's context window.
 - **Bring your own model.** Users can pick OpenRouter, OpenAI, Anthropic, Hugging Face, Ollama or any OpenAI-compatible server. Saving runs a test review and rejects models that can't produce valid review JSON. API keys are encrypted at rest.
-- **Configurable as code.** A `.lorica.yaml` read from the PR's *base* commit layers on top of organization settings, so a PR can't loosen its own review.
+- **Configurable as code.** A `.lorica.yaml` read from the PR's _base_ commit layers on top of organization settings, so a PR can't loosen its own review.
 
 ## Benchmark
 
 Lorica was tested on **27 real bugs** from 7 popular open-source projects (Vue, NestJS, Vite, Svelte, Zod, TanStack Query, React Router). Each case is a merged bug-fix PR with its patch reversed, so the diff reintroduces the bug the maintainers fixed. The PR title, description and tests are withheld so nothing gives the bug away.
 
-| Metric | Result |
-| --- | --- |
+| Metric                                                | Result            |
+| ----------------------------------------------------- | ----------------- |
 | Bugs identified (finding describes the actual defect) | **22 / 27 (81%)** |
-| Bugs flagged (finding on the buggy lines) | 26 / 27 (96%) |
-| Valid structured responses | 27 / 27 (100%) |
-| Median review time | 33s |
-| Findings per review | 1.4 on average |
+| Bugs flagged (finding on the buggy lines)             | 26 / 27 (96%)     |
+| Valid structured responses                            | 27 / 27 (100%)    |
+| Median review time                                    | 33s               |
+| Findings per review                                   | 1.4 on average    |
 
 These results use the free default model with graph context off, so they measure the diff-only pipeline. Every case, the method and its caveats are in [benchmark/REPORT.md](benchmark/REPORT.md). Reproduce with `pnpm benchmark collect && pnpm benchmark run && pnpm benchmark judge`.
 

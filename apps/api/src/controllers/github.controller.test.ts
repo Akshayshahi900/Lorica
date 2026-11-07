@@ -13,9 +13,15 @@ describe("GitHub webhook signature verification", () => {
   });
 
   it("rejects a changed body, secret, malformed signature, or wrong prefix", () => {
-    assert.equal(verifySignature(Buffer.from(`${body} `), signature, secret), false);
+    assert.equal(
+      verifySignature(Buffer.from(`${body} `), signature, secret),
+      false,
+    );
     assert.equal(verifySignature(body, signature, "wrong-secret"), false);
-    assert.equal(verifySignature(body, "sha1=" + signature.slice(7), secret), false);
+    assert.equal(
+      verifySignature(body, "sha1=" + signature.slice(7), secret),
+      false,
+    );
     assert.equal(verifySignature(body, "sha256=bad", secret), false);
   });
 });

@@ -38,21 +38,29 @@ export function PRTable({ rows }: { rows: PRRow[] }) {
       <table className="w-full min-w-[680px] text-sm">
         <thead>
           <tr className="border-b border-bg-border">
-            {["Repository", "Pull Request", "Comments", "Status", "Reviewed", ""].map(
-              (h) => (
-                <th
-                  key={h}
-                  className="text-left text-xs font-mono text-text-muted uppercase tracking-wider py-2.5 px-3 first:pl-0"
-                >
-                  {h}
-                </th>
-              )
-            )}
+            {[
+              "Repository",
+              "Pull Request",
+              "Comments",
+              "Status",
+              "Reviewed",
+              "",
+            ].map((h) => (
+              <th
+                key={h}
+                className="text-left text-xs font-mono text-text-muted uppercase tracking-wider py-2.5 px-3 first:pl-0"
+              >
+                {h}
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody className="divide-y divide-bg-border">
           {rows.map((row) => (
-            <tr key={row.id} className="group hover:bg-bg-hover/60 transition-colors">
+            <tr
+              key={row.id}
+              className="group hover:bg-bg-hover/60 transition-colors"
+            >
               <td className="py-3 px-3 pl-0">
                 <span className="font-mono text-xs text-accent-violet bg-accent-violet-glow px-2 py-0.5 rounded border border-accent-violet/20">
                   {row.repo}
@@ -75,7 +83,7 @@ export function PRTable({ rows }: { rows: PRRow[] }) {
                 <span
                   className={clsx(
                     "inline-flex items-center px-2 py-0.5 rounded border text-xs font-mono",
-                    STATUS_STYLES[row.status]
+                    STATUS_STYLES[row.status],
                   )}
                   title={row.statusDetail}
                 >
