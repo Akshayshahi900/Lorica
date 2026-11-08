@@ -92,17 +92,19 @@ Lorica is **live**: install the hosted GitHub App and it starts reviewing right 
 
 ## Benchmark
 
-Lorica was tested on **27 real bugs** from 7 popular open-source projects (Vue, NestJS, Vite, Svelte, Zod, TanStack Query, React Router). Each case is a merged bug-fix PR with its patch reversed, so the diff reintroduces the bug the maintainers fixed. The PR title, description and tests are withheld so nothing gives the bug away.
+Lorica was tested on **97 real bugs** from 10 popular open-source projects (Svelte, Vue, NestJS, Vite, TanStack Query, Hono, React Router, Zod, Axios, tRPC). It ran the same pipeline as production, with the diff plus code-graph context. Each case is a merged bug-fix PR with its patch reversed, so the diff reintroduces the bug the maintainers fixed. The PR title, description and tests are withheld, so nothing gives the bug away.
 
-| Metric                                                | Result            |
-| ----------------------------------------------------- | ----------------- |
-| Bugs identified (finding describes the actual defect) | **22 / 27 (81%)** |
-| Bugs flagged (finding on the buggy lines)             | 26 / 27 (96%)     |
-| Valid structured responses                            | 27 / 27 (100%)    |
-| Median review time                                    | 33s               |
-| Findings per review                                   | 1.4 on average    |
+| Metric                                                     | Result                |
+| ---------------------------------------------------------- | --------------------- |
+| Bugs identified (a judge model confirms the actual defect) | _judging in progress_ |
+| Bugs flagged (finding within 3 lines of the bug)           | **86 / 97 (89%)**     |
+| Valid structured responses                                 | 97 / 97 (100%)        |
+| Median review time                                         | 20.6s                 |
+| Median time to index a commit into the code graph          | 26.5s                 |
+| Graph traces per review                                    | median 27             |
+| Prompt tokens removed by file filtering                    | 24%                   |
 
-These results use the free default model with graph context off, so they measure the diff-only pipeline. Every case, the method and its caveats are in [benchmark/REPORT.md](benchmark/REPORT.md). Reproduce with `pnpm benchmark collect && pnpm benchmark run && pnpm benchmark judge`.
+A one-time comparison on 27 of these bugs reviewed them with the diff alone, without the code graph. With the graph, the median review time was 23.0s instead of 32.7s, for the same flag rate. These results use the free model `nvidia/nemotron-3-ultra-550b-a55b`. Every case, the method and its caveats are in [benchmark/REPORT.md](benchmark/REPORT.md). Reproduce with `pnpm benchmark run`.
 
 ## How it works
 

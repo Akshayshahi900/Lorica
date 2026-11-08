@@ -3,9 +3,10 @@
  *
  *   pnpm benchmark run               the whole benchmark in one command: collects and
  *                                    indexes cases if needed, reviews them with diff +
- *                                    graph context (production), judges the findings,
- *                                    then does the same with the diff alone for
- *                                    comparison, and writes benchmark/REPORT.md
+ *                                    graph context (production), judges the findings
+ *                                    and writes benchmark/REPORT.md
+ *   pnpm benchmark run --diff        also reviews and judges the cases with the diff
+ *                                    alone, for the graph vs diff-only comparison
  *
  * Single steps:
  *
@@ -618,13 +619,15 @@ async function review(mode: Mode): Promise<boolean> {
 
 /**
  * Collects and indexes when needed, then reviews and judges with graph context
- * (production) and with the diff alone (comparison), and writes the report.
- * The steps share the daily quota, so each starts only once the one before it
- * has finished; a rerun continues from the first unfinished step.
+ * (production) and writes the report. With --diff it also reviews and judges
+ * with the diff alone, for the comparison section. The steps share the daily
+ * quota, so each starts only once the one before it has finished; a rerun
+ * continues from the first unfinished step.
  */
 async function run() {
+  const withDiff = process.argv.includes("--diff");
   console.log(
-    `[run] model ${process.env.LLM_MODEL ?? DEFAULT_LLM_MODEL}; steps: review graph, judge graph, review diff, judge diff, report`,
+    `[run] model ${process.env.LLM_MODEL ?? DEFAULT_LLM_MODEL}; steps: review graph, judge graph, ${withDiff ? "review diff, judge diff, " : ""}report`,
   );
   if (!fs.existsSync(CASES_FILE)) await collect();
   const graphs = readJson<Record<string, GraphEntry>>(GRAPHS_FILE, {});
@@ -632,8 +635,7 @@ async function run() {
   const steps = [
     () => review("graph"),
     () => judge("graph"),
-    () => review("diff"),
-    () => judge("diff"),
+    ...(withDiff ? [() => review("diff"), () => judge("diff")] : []),
   ];
   for (const step of steps) if (!(await step())) break;
   report();
@@ -772,7 +774,7 @@ function comparisonSection(
   return `
 ## Comparison: with graph vs diff only
 
-The ${graph.length} cases reviewed both with graph context and with the diff alone, without code-graph evidence.
+A one-time comparison on the ${graph.length} cases also reviewed with the diff alone, without code-graph evidence (\`pnpm benchmark run --diff\`).
 
 | Metric | With graph | Diff only |
 | --- | --- | --- |
