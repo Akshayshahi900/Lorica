@@ -119,7 +119,7 @@
         "suggestion": "Revert to the original regex pattern: `/\\n[ \\t]+at .+:\\d+:\\d+/` and restore the explanatory comment about why `[ \\t]+` is used instead of `\\s+`."
       }
     ],
-    "confirmed": false
+    "confirmed": true
   },
   {
     "url": "https://github.com/nestjs/nest/pull/18144",
@@ -274,7 +274,7 @@
         "suggestion": "Restore the vapor-in-fragment special handling: check if (isFragment && leavingNode && isVaporComponent(leavingNode.type)) and call getVaporInterface(leavingNode.component, leavingNode).getTransitionElement(leavingNode) to get the correct leavingEl. Also restore the isElement derivation from the resolved element. This requires getTransitionElement to be restored in the VaporInVdomInterface (apiCreateApp.ts) and implemented in vdomInterop.ts."
       }
     ],
-    "confirmed": false
+    "confirmed": true
   },
   {
     "url": "https://github.com/vuejs/core/pull/15863",
@@ -305,7 +305,7 @@
         "suggestion": "Move the validation outside the __DEV__ check, keeping only the warn() inside: `if (!Number.isInteger(source) || source < 0) { if (__DEV__) warn(...); values = [] } else { values = new Array(source) }`"
       }
     ],
-    "confirmed": false
+    "confirmed": true
   },
   {
     "url": "https://github.com/nestjs/nest/pull/18137",
@@ -447,7 +447,7 @@
         "suggestion": "Either keep the nullish coalescing to always call setOnClose: `devtools.setOnClose(onClose ?? (() => {}))`, or verify that `setOnClose` handles not being called gracefully."
       }
     ],
-    "confirmed": false
+    "confirmed": true
   },
   {
     "url": "https://github.com/colinhacks/zod/pull/6662",
@@ -478,7 +478,7 @@
         "suggestion": "Restore the fallback logic or add equivalent handling for continuable errors. The original fallback was:\nif (!matched.length) {\n  matched = results.filter((r) => !r.aborted && r.issues.every((iss) => iss.continue !== undefined));\n}"
       }
     ],
-    "confirmed": false
+    "confirmed": true
   },
   {
     "url": "https://github.com/colinhacks/zod/pull/6660",
@@ -558,7 +558,7 @@
         "suggestion": "Restore the metadata copying behavior. Either keep Object.assign((...args) => { ... }, routeHandler) or call copyMetadataToCallback(targetCallback, handler) after creating the wrapper."
       }
     ],
-    "confirmed": false
+    "confirmed": true
   },
   {
     "url": "https://github.com/nestjs/nest/pull/18110",
@@ -1523,7 +1523,7 @@
         "suggestion": "Either restore the scope capture and active check, or document why the branch scope check is no longer needed. If the scope should be preserved, use: let scope = getCurrentScope(); onMounted(() => { if (scope?.active) scope.run(inOnce ? () => withOnce(cb) : cb); })"
       }
     ],
-    "confirmed": false
+    "confirmed": true
   },
   {
     "url": "https://github.com/TanStack/query/pull/11935",
@@ -1736,7 +1736,7 @@
         "suggestion": "Restore the guard to explicitly disable chunkImportMap for bundled dev mode: `if (isBundledDev) { merged.chunkImportMap = false }`. The test exclusion in vitest.config.e2e.ts should be removed once chunkImportMap is properly implemented and tested for bundled dev mode."
       }
     ],
-    "confirmed": false
+    "confirmed": true
   },
   {
     "url": "https://github.com/vitejs/vite/pull/23684",
@@ -2043,7 +2043,7 @@
         "suggestion": "If this function is part of the public API, restore the export. If intentionally made private, ensure no external consumers exist and consider adding a deprecation notice if this was a public API."
       }
     ],
-    "confirmed": false
+    "confirmed": true
   },
   {
     "url": "https://github.com/vitejs/vite/pull/23653",
@@ -3069,7 +3069,7 @@
         "suggestion": "Restore the validation logic that checks for `children` snippet conflicts, or add a new validation that ensures `let:` directives are only used where they can actually receive values from slot/snippet parameters."
       }
     ],
-    "confirmed": false
+    "confirmed": true
   },
   {
     "url": "https://github.com/sveltejs/svelte/pull/18872",
@@ -3100,7 +3100,7 @@
         "suggestion": "Restore the check for both 'a' and 'area' elements: `!((node.name === 'a' || node.name === 'area') && !attribute_map.has('href'))`"
       }
     ],
-    "confirmed": false
+    "confirmed": true
   },
   {
     "url": "https://github.com/TanStack/query/pull/11590",
@@ -3357,7 +3357,7 @@
         "suggestion": "Restore the explicit type parameter and explicit undefined check: const data = context.client.getQueryData<TData>(context.queryKey); return data === undefined ? initialValue : data"
       }
     ],
-    "confirmed": false
+    "confirmed": true
   },
   {
     "url": "https://github.com/TanStack/query/pull/11509",

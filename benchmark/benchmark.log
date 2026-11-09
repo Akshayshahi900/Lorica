@@ -608,3 +608,378 @@ A one-time comparison on the 27 cases also reviewed with the diff alone, without
 
 
 [report] wrote /home/akshay/Code/projects/Lorica/benchmark/REPORT.md
+
+=== 2026-11-08T06:19:09.803Z pnpm benchmark judge --rejudge ===
+[judge:graph] 2/97 CONFIRMED https://github.com/vuejs/core/pull/15874
+[judge:graph] 3/97 CONFIRMED https://github.com/nestjs/nest/pull/18146
+[judge:graph] 4/97 CONFIRMED https://github.com/nestjs/nest/pull/18145
+[judge:graph] 5/97 CONFIRMED https://github.com/nestjs/nest/pull/18144
+[judge:graph] 6/97 CONFIRMED https://github.com/vitejs/vite/pull/23758
+[judge:graph] 7/97 CONFIRMED https://github.com/nestjs/nest/pull/18143
+[judge:graph] 8/97 CONFIRMED https://github.com/vuejs/core/pull/15867
+[judge:graph] 9/97 CONFIRMED https://github.com/vuejs/core/pull/15866
+[judge:graph] 10/97 CONFIRMED https://github.com/vuejs/core/pull/15863
+[judge:graph] 11/97 CONFIRMED https://github.com/nestjs/nest/pull/18137
+[judge:graph] 12/97 CONFIRMED https://github.com/nestjs/nest/pull/18127
+[judge:graph] 13/97 CONFIRMED https://github.com/nestjs/nest/pull/18125
+[judge:graph] 14/97 CONFIRMED https://github.com/TanStack/query/pull/11999
+[judge:graph] 15/97 CONFIRMED https://github.com/colinhacks/zod/pull/6662
+[judge:graph] 16/97 CONFIRMED https://github.com/colinhacks/zod/pull/6660
+[judge:graph] 17/97 CONFIRMED https://github.com/nestjs/nest/pull/18121
+[judge:graph] 18/97 CONFIRMED https://github.com/nestjs/nest/pull/18110
+[judge:graph] 19/97 CONFIRMED https://github.com/nestjs/nest/pull/18109
+[judge:graph] 20/97 CONFIRMED https://github.com/nestjs/nest/pull/18104
+[judge:graph] 21/97 CONFIRMED https://github.com/vuejs/core/pull/15850
+[judge:graph] 22/97 CONFIRMED https://github.com/nestjs/nest/pull/18101
+[judge:graph] 23/97 CONFIRMED https://github.com/nestjs/nest/pull/18100
+[judge:graph] 24/97 CONFIRMED https://github.com/nestjs/nest/pull/18095
+[judge:graph] 25/97 CONFIRMED https://github.com/remix-run/react-router/pull/15620
+[judge:graph] 26/97 CONFIRMED https://github.com/vuejs/core/pull/15846
+[judge:graph] 27/97 CONFIRMED https://github.com/vuejs/core/pull/15844
+[judge:graph] 28/97 CONFIRMED https://github.com/nestjs/nest/pull/18154
+[judge:graph] 29/97 CONFIRMED https://github.com/vitejs/vite/pull/23728
+[judge:graph] 30/97 CONFIRMED https://github.com/vuejs/core/pull/15841
+[judge:graph] 31/97 CONFIRMED https://github.com/honojs/hono/pull/5547
+[judge:graph] 32/97 CONFIRMED https://github.com/vuejs/core/pull/15839
+
+[judge:graph] OpenRouter's free daily limit is reached after 32/97 cases. Run "pnpm benchmark judge --rejudge" again after the daily reset (00:00 UTC) to continue.
+
+# Lorica benchmark
+
+Run 2026-11-08 with model `nvidia/nemotron-3-ultra-550b-a55b:free` and the `chill` profile. 90 of 90 real bugs from 10 open-source repositories reviewed with diff + code-graph context, as in production. Reproduce with `pnpm benchmark run`.
+
+## Results (diff + code graph)
+
+| Metric | Value |
+| --- | --- |
+| Real bugs identified (finding describes the fixed defect) | not judged yet (32 / 90 judged) |
+| Real bugs flagged (finding within 3 lines of the defect) | 86 / 90 (96%) |
+| Valid structured responses | 90 / 90 (100%) |
+| Review time, median | 23.0s |
+| Review time, p90 | 288.2s |
+| Findings per review, mean | 1.4 |
+| Graph traces per review | median 27, max 40 |
+| Indexing the buggy commit (clone, parse, persist to Neo4j), median | 26.5s over 97 commits |
+| Prompt tokens removed by file filtering | 24% (116,471 → 88,443 est. tokens over 40 PRs; 12 PRs had files filtered) |
+
+## Comparison: with graph vs diff only
+
+A one-time comparison on the 27 cases also reviewed with the diff alone, without code-graph evidence (`pnpm benchmark run --diff`).
+
+| Metric | With graph | Diff only |
+| --- | --- | --- |
+| Real bugs identified | **26 / 27 (96%)** | **22 / 27 (81%)** |
+| Real bugs flagged | 26 / 27 (96%) | 26 / 27 (96%) |
+| Review time, median | 23.0s | 32.7s |
+| Findings per review, mean | 1.5 | 1.4 |
+
+- Identified only with the graph: 5. Identified only without it: 1.
+
+
+[report] wrote /home/akshay/Code/projects/Lorica/benchmark/REPORT.md
+
+=== 2026-11-09T10:36:18.197Z pnpm benchmark run ===
+[run] model nvidia/nemotron-3-ultra-550b-a55b:free; steps: review graph, judge graph, report
+[judge:graph] 33/97 CONFIRMED https://github.com/vuejs/core/pull/15835
+[judge:graph] 34/97 CONFIRMED https://github.com/TanStack/query/pull/11945
+[judge:graph] 35/97 CONFIRMED https://github.com/vuejs/core/pull/15834
+[judge:graph] 36/97 CONFIRMED https://github.com/vitejs/vite/pull/23713
+[judge:graph] 37/97 CONFIRMED https://github.com/vuejs/core/pull/15830
+[judge:graph] 38/97 CONFIRMED https://github.com/vuejs/core/pull/15828
+[judge:graph] 39/97 CONFIRMED https://github.com/vuejs/core/pull/15826
+[judge:graph] 40/97 CONFIRMED https://github.com/vuejs/core/pull/15822
+[judge:graph] 41/97 CONFIRMED https://github.com/TanStack/query/pull/11935
+[judge:graph] 43/97 CONFIRMED https://github.com/vitejs/vite/pull/23698
+[judge:graph] 44/97 CONFIRMED https://github.com/vitejs/vite/pull/23694
+[judge:graph] 45/97 CONFIRMED https://github.com/vitejs/vite/pull/23689
+[judge:graph] 47/97 CONFIRMED https://github.com/vitejs/vite/pull/23685
+[judge:graph] 48/97 CONFIRMED https://github.com/vitejs/vite/pull/23684
+[judge:graph] 49/97 CONFIRMED https://github.com/vitejs/vite/pull/23683
+[judge:graph] 50/97 CONFIRMED https://github.com/colinhacks/zod/pull/6652
+[judge:graph] 51/97 CONFIRMED https://github.com/sveltejs/svelte/pull/18949
+[judge:graph] 52/97 CONFIRMED https://github.com/sveltejs/svelte/pull/18944
+[judge:graph] 53/97 CONFIRMED https://github.com/vitejs/vite/pull/23673
+[judge:graph] 54/97 CONFIRMED https://github.com/vitejs/vite/pull/23667
+[judge:graph] 55/97 CONFIRMED https://github.com/vitejs/vite/pull/23653
+[judge:graph] 56/97 CONFIRMED https://github.com/sveltejs/svelte/pull/18933
+[judge:graph] 57/97 CONFIRMED https://github.com/sveltejs/svelte/pull/18931
+[judge:graph] 58/97 CONFIRMED https://github.com/axios/axios/pull/11294
+[judge:graph] 60/97 CONFIRMED https://github.com/sveltejs/svelte/pull/18925
+[judge:graph] 61/97 CONFIRMED https://github.com/sveltejs/svelte/pull/18921
+[judge:graph] 62/97 CONFIRMED https://github.com/honojs/hono/pull/5514
+[judge:graph] 63/97 CONFIRMED https://github.com/honojs/hono/pull/5513
+[judge:graph] 64/97 CONFIRMED https://github.com/honojs/hono/pull/5510
+[judge:graph] 65/97 CONFIRMED https://github.com/vitejs/vite/pull/23643
+[judge:graph] 66/97 CONFIRMED https://github.com/sveltejs/svelte/pull/18908
+[judge:graph] 68/97 CONFIRMED https://github.com/sveltejs/svelte/pull/18900
+[judge:graph] 69/97 CONFIRMED https://github.com/sveltejs/svelte/pull/18899
+[judge:graph] 70/97 CONFIRMED https://github.com/TanStack/query/pull/11796
+[judge:graph] 71/97 CONFIRMED https://github.com/honojs/hono/pull/5488
+[judge:graph] 72/97 CONFIRMED https://github.com/honojs/hono/pull/5487
+[judge:graph] 73/97 CONFIRMED https://github.com/honojs/hono/pull/5476
+[judge:graph] 74/97 CONFIRMED https://github.com/honojs/hono/pull/5475
+[judge:graph] 75/97 CONFIRMED https://github.com/sveltejs/svelte/pull/18886
+[judge:graph] 77/97 CONFIRMED https://github.com/TanStack/query/pull/11679
+[judge:graph] 78/97 CONFIRMED https://github.com/honojs/hono/pull/5446
+[judge:graph] 82/97 CONFIRMED https://github.com/sveltejs/svelte/pull/18879
+[judge:graph] 83/97 CONFIRMED https://github.com/sveltejs/svelte/pull/18878
+[judge:graph] 84/97 CONFIRMED https://github.com/sveltejs/svelte/pull/18873
+[judge:graph] 85/97 CONFIRMED https://github.com/sveltejs/svelte/pull/18872
+[judge:graph] 87/97 CONFIRMED https://github.com/remix-run/react-router/pull/15537
+[judge:graph] 89/97 CONFIRMED https://github.com/honojs/hono/pull/5426
+[judge:graph] 90/97 CONFIRMED https://github.com/honojs/hono/pull/5424
+[judge:graph] 91/97 CONFIRMED https://github.com/TanStack/query/pull/11524
+[judge:graph] 92/97 CONFIRMED https://github.com/trpc/trpc/pull/7604
+[judge:graph] 93/97 CONFIRMED https://github.com/TanStack/query/pull/11512
+[judge:graph] 94/97 CONFIRMED https://github.com/TanStack/query/pull/11510
+[judge:graph] 95/97 CONFIRMED https://github.com/TanStack/query/pull/11509
+
+[judge:graph] OpenRouter's free daily limit is reached after 95/97 cases. Run "pnpm benchmark run" again after the daily reset (00:00 UTC) to continue.
+
+# Lorica benchmark
+
+Run 2026-11-09 with model `nvidia/nemotron-3-ultra-550b-a55b:free` and the `chill` profile. 90 of 90 real bugs from 10 open-source repositories reviewed with diff + code-graph context, as in production. Reproduce with `pnpm benchmark run`.
+
+## Results (diff + code graph)
+
+| Metric | Value |
+| --- | --- |
+| Real bugs identified (finding describes the fixed defect) | not judged yet (88 / 90 judged) |
+| Real bugs flagged (finding within 3 lines of the defect) | 86 / 90 (96%) |
+| Valid structured responses | 90 / 90 (100%) |
+| Review time, median | 23.0s |
+| Review time, p90 | 288.2s |
+| Findings per review, mean | 1.4 |
+| Graph traces per review | median 27, max 40 |
+| Indexing the buggy commit (clone, parse, persist to Neo4j), median | 26.5s over 97 commits |
+| Prompt tokens removed by file filtering | 24% (116,471 → 88,443 est. tokens over 40 PRs; 12 PRs had files filtered) |
+
+## Comparison: with graph vs diff only
+
+A one-time comparison on the 27 cases also reviewed with the diff alone, without code-graph evidence (`pnpm benchmark run --diff`).
+
+| Metric | With graph | Diff only |
+| --- | --- | --- |
+| Real bugs identified | **26 / 27 (96%)** | **22 / 27 (81%)** |
+| Real bugs flagged | 26 / 27 (96%) | 26 / 27 (96%) |
+| Review time, median | 23.0s | 32.7s |
+| Findings per review, mean | 1.5 | 1.4 |
+
+- Identified only with the graph: 5. Identified only without it: 1.
+
+
+[report] wrote /home/akshay/Code/projects/Lorica/benchmark/REPORT.md
+
+=== 2026-11-09T10:51:10.449Z pnpm benchmark run ===
+[run] model nvidia/nemotron-3-ultra-550b-a55b:free; steps: review graph, judge graph, report
+
+[judge:graph] OpenRouter's free daily limit is reached after 95/97 cases. Run "pnpm benchmark run" again after the daily reset (00:00 UTC) to continue.
+
+# Lorica benchmark
+
+Run 2026-11-09 with model `nvidia/nemotron-3-ultra-550b-a55b:free` and the `chill` profile. 90 of 90 real bugs from 10 open-source repositories reviewed with diff + code-graph context, as in production. Reproduce with `pnpm benchmark run`.
+
+## Results (diff + code graph)
+
+| Metric | Value |
+| --- | --- |
+| Real bugs identified (finding describes the fixed defect) | not judged yet (88 / 90 judged) |
+| Real bugs flagged (finding within 3 lines of the defect) | 86 / 90 (96%) |
+| Valid structured responses | 90 / 90 (100%) |
+| Review time, median | 23.0s |
+| Review time, p90 | 288.2s |
+| Findings per review, mean | 1.4 |
+| Graph traces per review | median 27, max 40 |
+| Indexing the buggy commit (clone, parse, persist to Neo4j), median | 26.5s over 97 commits |
+| Prompt tokens removed by file filtering | 24% (116,471 → 88,443 est. tokens over 40 PRs; 12 PRs had files filtered) |
+
+## Comparison: with graph vs diff only
+
+A one-time comparison on the 27 cases also reviewed with the diff alone, without code-graph evidence (`pnpm benchmark run --diff`).
+
+| Metric | With graph | Diff only |
+| --- | --- | --- |
+| Real bugs identified | **26 / 27 (96%)** | **22 / 27 (81%)** |
+| Real bugs flagged | 26 / 27 (96%) | 26 / 27 (96%) |
+| Review time, median | 23.0s | 32.7s |
+| Findings per review, mean | 1.5 | 1.4 |
+
+- Identified only with the graph: 5. Identified only without it: 1.
+
+
+[report] wrote /home/akshay/Code/projects/Lorica/benchmark/REPORT.md
+
+=== 2026-11-09T10:51:29.747Z pnpm benchmark run ===
+[run] model nvidia/nemotron-3-ultra-550b-a55b:free; steps: review graph, judge graph, report
+[judge:graph] 96/97 CONFIRMED https://github.com/honojs/hono/pull/5391
+[judge:graph] 97/97 CONFIRMED https://github.com/remix-run/react-router/pull/15500
+
+# Lorica benchmark
+
+Run 2026-11-09 with model `nvidia/nemotron-3-ultra-550b-a55b:free` and the `chill` profile. 90 of 90 real bugs from 10 open-source repositories reviewed with diff + code-graph context, as in production. Reproduce with `pnpm benchmark run`.
+
+## Results (diff + code graph)
+
+| Metric | Value |
+| --- | --- |
+| Real bugs identified (finding describes the fixed defect) | **86 / 90 (96%)** |
+| Real bugs flagged (finding within 3 lines of the defect) | 86 / 90 (96%) |
+| Valid structured responses | 90 / 90 (100%) |
+| Review time, median | 23.0s |
+| Review time, p90 | 288.2s |
+| Findings per review, mean | 1.4 |
+| Graph traces per review | median 27, max 40 |
+| Indexing the buggy commit (clone, parse, persist to Neo4j), median | 26.5s over 97 commits |
+| Prompt tokens removed by file filtering | 24% (116,471 → 88,443 est. tokens over 40 PRs; 12 PRs had files filtered) |
+
+## Comparison: with graph vs diff only
+
+A one-time comparison on the 27 cases also reviewed with the diff alone, without code-graph evidence (`pnpm benchmark run --diff`).
+
+| Metric | With graph | Diff only |
+| --- | --- | --- |
+| Real bugs identified | **26 / 27 (96%)** | **22 / 27 (81%)** |
+| Real bugs flagged | 26 / 27 (96%) | 26 / 27 (96%) |
+| Review time, median | 23.0s | 32.7s |
+| Findings per review, mean | 1.5 | 1.4 |
+
+- Identified only with the graph: 5. Identified only without it: 1.
+
+
+[report] wrote /home/akshay/Code/projects/Lorica/benchmark/REPORT.md
+
+=== 2026-11-09T10:52:01.391Z pnpm benchmark run ===
+[run] model nvidia/nemotron-3-ultra-550b-a55b:free; steps: review graph, judge graph, report
+
+# Lorica benchmark
+
+Run 2026-11-09 with model `nvidia/nemotron-3-ultra-550b-a55b:free` and the `chill` profile. 90 of 90 real bugs from 10 open-source repositories reviewed with diff + code-graph context, as in production. Reproduce with `pnpm benchmark run`.
+
+## Results (diff + code graph)
+
+| Metric | Value |
+| --- | --- |
+| Real bugs identified (finding describes the fixed defect) | **86 / 90 (96%)** |
+| Real bugs flagged (finding within 3 lines of the defect) | 86 / 90 (96%) |
+| Valid structured responses | 90 / 90 (100%) |
+| Review time, median | 23.0s |
+| Review time, p90 | 288.2s |
+| Findings per review, mean | 1.4 |
+| Graph traces per review | median 27, max 40 |
+| Indexing the buggy commit (clone, parse, persist to Neo4j), median | 26.5s over 97 commits |
+| Prompt tokens removed by file filtering | 24% (116,471 → 88,443 est. tokens over 40 PRs; 12 PRs had files filtered) |
+
+## Comparison: with graph vs diff only
+
+A one-time comparison on the 27 cases also reviewed with the diff alone, without code-graph evidence (`pnpm benchmark run --diff`).
+
+| Metric | With graph | Diff only |
+| --- | --- | --- |
+| Real bugs identified | **26 / 27 (96%)** | **22 / 27 (81%)** |
+| Real bugs flagged | 26 / 27 (96%) | 26 / 27 (96%) |
+| Review time, median | 23.0s | 32.7s |
+| Findings per review, mean | 1.5 | 1.4 |
+
+- Identified only with the graph: 5. Identified only without it: 1.
+
+
+[report] wrote /home/akshay/Code/projects/Lorica/benchmark/REPORT.md
+
+=== 2026-11-09T10:52:10.237Z pnpm benchmark run ===
+[run] model nvidia/nemotron-3-ultra-550b-a55b:free; steps: review graph, judge graph, report
+
+# Lorica benchmark
+
+Run 2026-11-09 with model `nvidia/nemotron-3-ultra-550b-a55b:free` and the `chill` profile. 90 of 90 real bugs from 10 open-source repositories reviewed with diff + code-graph context, as in production. Reproduce with `pnpm benchmark run`.
+
+## Results (diff + code graph)
+
+| Metric | Value |
+| --- | --- |
+| Real bugs identified (finding describes the fixed defect) | **86 / 90 (96%)** |
+| Real bugs flagged (finding within 3 lines of the defect) | 86 / 90 (96%) |
+| Valid structured responses | 90 / 90 (100%) |
+| Review time, median | 23.0s |
+| Review time, p90 | 288.2s |
+| Findings per review, mean | 1.4 |
+| Graph traces per review | median 27, max 40 |
+| Indexing the buggy commit (clone, parse, persist to Neo4j), median | 26.5s over 97 commits |
+| Prompt tokens removed by file filtering | 24% (116,471 → 88,443 est. tokens over 40 PRs; 12 PRs had files filtered) |
+
+## Comparison: with graph vs diff only
+
+A one-time comparison on the 27 cases also reviewed with the diff alone, without code-graph evidence (`pnpm benchmark run --diff`).
+
+| Metric | With graph | Diff only |
+| --- | --- | --- |
+| Real bugs identified | **26 / 27 (96%)** | **22 / 27 (81%)** |
+| Real bugs flagged | 26 / 27 (96%) | 26 / 27 (96%) |
+| Review time, median | 23.0s | 32.7s |
+| Findings per review, mean | 1.5 | 1.4 |
+
+- Identified only with the graph: 5. Identified only without it: 1.
+
+
+[report] wrote /home/akshay/Code/projects/Lorica/benchmark/REPORT.md
+
+=== 2026-11-09T10:57:03.546Z pnpm benchmark judge --diff --rejudge ===
+[judge:diff] 1/27 CONFIRMED https://github.com/sveltejs/svelte/pull/18999
+[judge:diff] 2/27 CONFIRMED https://github.com/vuejs/core/pull/15874
+[judge:diff] 3/27 CONFIRMED https://github.com/nestjs/nest/pull/18146
+[judge:diff] 4/27 CONFIRMED https://github.com/nestjs/nest/pull/18145
+[judge:diff] 5/27 CONFIRMED https://github.com/nestjs/nest/pull/18144
+[judge:diff] 7/27 not confirmed https://github.com/nestjs/nest/pull/18143
+[judge:diff] 8/27 CONFIRMED https://github.com/vuejs/core/pull/15867
+[judge:diff] 9/27 CONFIRMED https://github.com/vuejs/core/pull/15866
+[judge:diff] 10/27 CONFIRMED https://github.com/vuejs/core/pull/15863
+[judge:diff] 11/27 CONFIRMED https://github.com/nestjs/nest/pull/18137
+[judge:diff] 12/27 CONFIRMED https://github.com/nestjs/nest/pull/18127
+[judge:diff] 13/27 CONFIRMED https://github.com/nestjs/nest/pull/18125
+[judge:diff] 14/27 CONFIRMED https://github.com/TanStack/query/pull/11999
+[judge:diff] 15/27 CONFIRMED https://github.com/colinhacks/zod/pull/6662
+[judge:diff] 16/27 CONFIRMED https://github.com/colinhacks/zod/pull/6660
+[judge:diff] 17/27 CONFIRMED https://github.com/nestjs/nest/pull/18121
+[judge:diff] 18/27 CONFIRMED https://github.com/nestjs/nest/pull/18110
+[judge:diff] 19/27 CONFIRMED https://github.com/nestjs/nest/pull/18109
+[judge:diff] 20/27 CONFIRMED https://github.com/nestjs/nest/pull/18104
+[judge:diff] 21/27 CONFIRMED https://github.com/vuejs/core/pull/15850
+[judge:diff] 22/27 CONFIRMED https://github.com/nestjs/nest/pull/18101
+[judge:diff] 23/27 CONFIRMED https://github.com/nestjs/nest/pull/18100
+[judge:diff] 24/27 CONFIRMED https://github.com/nestjs/nest/pull/18095
+[judge:diff] 25/27 CONFIRMED https://github.com/remix-run/react-router/pull/15620
+[judge:diff] 26/27 CONFIRMED https://github.com/vuejs/core/pull/15846
+[judge:diff] 27/27 CONFIRMED https://github.com/vuejs/core/pull/15844
+
+# Lorica benchmark
+
+Run 2026-11-09 with model `nvidia/nemotron-3-ultra-550b-a55b:free` and the `chill` profile. 90 of 90 real bugs from 10 open-source repositories reviewed with diff + code-graph context, as in production. Reproduce with `pnpm benchmark run`.
+
+## Results (diff + code graph)
+
+| Metric | Value |
+| --- | --- |
+| Real bugs identified (finding describes the fixed defect) | **86 / 90 (96%)** |
+| Real bugs flagged (finding within 3 lines of the defect) | 86 / 90 (96%) |
+| Valid structured responses | 90 / 90 (100%) |
+| Review time, median | 23.0s |
+| Review time, p90 | 288.2s |
+| Findings per review, mean | 1.4 |
+| Graph traces per review | median 27, max 40 |
+| Indexing the buggy commit (clone, parse, persist to Neo4j), median | 26.5s over 97 commits |
+| Prompt tokens removed by file filtering | 24% (116,471 → 88,443 est. tokens over 40 PRs; 12 PRs had files filtered) |
+
+## Comparison: with graph vs diff only
+
+A one-time comparison on the 27 cases also reviewed with the diff alone, without code-graph evidence (`pnpm benchmark run --diff`).
+
+| Metric | With graph | Diff only |
+| --- | --- | --- |
+| Real bugs identified | **26 / 27 (96%)** | **25 / 27 (93%)** |
+| Real bugs flagged | 26 / 27 (96%) | 26 / 27 (96%) |
+| Review time, median | 23.0s | 32.7s |
+| Findings per review, mean | 1.5 | 1.4 |
+
+- Identified only with the graph: 2. Identified only without it: 1.
+
+
+[report] wrote /home/akshay/Code/projects/Lorica/benchmark/REPORT.md

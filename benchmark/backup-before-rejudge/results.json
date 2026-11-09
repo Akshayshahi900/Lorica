@@ -1,0 +1,1027 @@
+[
+  {
+    "url": "https://github.com/sveltejs/svelte/pull/18999",
+    "title": "fix: `devalue` link in `hydratable_serialization_failed` error",
+    "detected": true,
+    "seconds": 9.737233687999998,
+    "chunks": 1,
+    "findings": [
+      {
+        "filePath": "packages/svelte/src/internal/server/errors.js",
+        "lineNumber": 75,
+        "code": " * `hydratable` can serialize anything [`uneval` from `devalue`](https://npmjs.com/package/uneval) can, plus Promises.",
+        "severity": "medium",
+        "category": "bug",
+        "comment": "The URL was changed from `https://npmjs.com/package/devalue` to `https://npmjs.com/package/uneval`. However, `uneval` is a function exported by the `devalue` npm package, not a separate package. The `uneval` package on npm (if it exists) is unrelated. This will cause the documentation and error messages to link to the wrong package.",
+        "suggestion": "Revert the URL to `https://npmjs.com/package/devalue` since that is the actual npm package that provides the `uneval` function."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/svelte/src/internal/server/errors.js",
+        "lineNumber": 75,
+        "code": " * `hydratable` can serialize anything [`uneval` from `devalue`](https://npmjs.com/package/uneval) can, plus Promises.",
+        "severity": "medium",
+        "category": "bug",
+        "comment": "The URL was changed from `https://npmjs.com/package/devalue` to `https://npmjs.com/package/uneval`. However, `uneval` is a function exported by the `devalue` npm package, not a separate package. The `uneval` package on npm (if it exists) is unrelated. This will cause the documentation and error messages to link to the wrong package.",
+        "suggestion": "Revert the URL to `https://npmjs.com/package/devalue` since that is the actual npm package that provides the `uneval` function."
+      }
+    ],
+    "confirmed": true
+  },
+  {
+    "url": "https://github.com/vuejs/core/pull/15874",
+    "title": "fix(runtime-vapor): push warning context during render effect updates",
+    "detected": true,
+    "seconds": 19.572958326,
+    "chunks": 1,
+    "findings": [
+      {
+        "filePath": "packages/runtime-vapor/src/renderEffect.ts",
+        "lineNumber": 119,
+        "code": "      startMeasure(instance, `renderEffect`)",
+        "severity": "medium",
+        "category": "correctness",
+        "comment": "The call to `pushWarningContext(instance)` was removed from the render effect's run method. This function establishes the component instance as the current warning context so that any warnings/errors emitted during rendering are attributed to the correct component. Without it, development-mode warnings during render will lose component context, making debugging significantly harder.",
+        "suggestion": "Restore the `pushWarningContext(instance)` call before `startMeasure` and the corresponding `popWarningContext()` call after `endMeasure`, or ensure an alternative warning context mechanism is in place."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/runtime-vapor/src/renderEffect.ts",
+        "lineNumber": 119,
+        "code": "      startMeasure(instance, `renderEffect`)",
+        "severity": "medium",
+        "category": "correctness",
+        "comment": "The call to `pushWarningContext(instance)` was removed from the render effect's run method. This function establishes the component instance as the current warning context so that any warnings/errors emitted during rendering are attributed to the correct component. Without it, development-mode warnings during render will lose component context, making debugging significantly harder.",
+        "suggestion": "Restore the `pushWarningContext(instance)` call before `startMeasure` and the corresponding `popWarningContext()` call after `endMeasure`, or ensure an alternative warning context mechanism is in place."
+      }
+    ],
+    "confirmed": true
+  },
+  {
+    "url": "https://github.com/nestjs/nest/pull/18146",
+    "title": "fix(common): call `stringifyReplacer` with the logger as `this`",
+    "detected": true,
+    "seconds": 33.765734804,
+    "chunks": 1,
+    "findings": [
+      {
+        "filePath": "packages/common/services/console-logger.service.ts",
+        "lineNumber": 778,
+        "code": "    const replacer = this.stringifyReplacer;",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The change from `this.stringifyReplacer.bind(this)` to `this.stringifyReplacer` combined with calling it via `replacer.call(this, key, value)` (line 783) changes the `this` context for `stringifyReplacer`. In the original code, `stringifyReplacer` received the ConsoleLogger instance as `this`. In the new code, it receives the object being stringified (the `this` from JSON.stringify's replacer callback). If `stringifyReplacer` accesses any instance properties or methods via `this`, it will now access the wrong object, likely causing undefined property errors or incorrect behavior.",
+        "suggestion": "Either keep the bound function: `const replacer = this.stringifyReplacer.bind(this);` and call as `replacer(key, value)`, or if you want to use the JSON.stringify context, ensure `stringifyReplacer` doesn't rely on the ConsoleLogger instance. Given the method is an instance method, the bound approach is likely correct."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/common/services/console-logger.service.ts",
+        "lineNumber": 778,
+        "code": "    const replacer = this.stringifyReplacer;",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The change from `this.stringifyReplacer.bind(this)` to `this.stringifyReplacer` combined with calling it via `replacer.call(this, key, value)` (line 783) changes the `this` context for `stringifyReplacer`. In the original code, `stringifyReplacer` received the ConsoleLogger instance as `this`. In the new code, it receives the object being stringified (the `this` from JSON.stringify's replacer callback). If `stringifyReplacer` accesses any instance properties or methods via `this`, it will now access the wrong object, likely causing undefined property errors or incorrect behavior.",
+        "suggestion": "Either keep the bound function: `const replacer = this.stringifyReplacer.bind(this);` and call as `replacer(key, value)`, or if you want to use the JSON.stringify context, ensure `stringifyReplacer` doesn't rely on the ConsoleLogger instance. Given the method is an instance method, the bound approach is likely correct."
+      }
+    ],
+    "confirmed": false
+  },
+  {
+    "url": "https://github.com/nestjs/nest/pull/18145",
+    "title": "fix(common): detect stacks whose error message spans several lines",
+    "detected": true,
+    "seconds": 69.36919183999998,
+    "chunks": 1,
+    "findings": [
+      {
+        "filePath": "packages/common/services/console-logger.service.ts",
+        "lineNumber": 921,
+        "code": "return /^(.)+nss+at .+://d+://d+/.test(stack!);",
+        "severity": "high",
+        "category": "security",
+        "comment": "The new regex reintroduces a catastrophic backtracking (ReDoS) vulnerability that the previous code explicitly avoided. The old comment warned: '`[ ]+` rather than `s+`, which also matches `n` and would make this unanchored search backtrack quadratically on long runs of newlines.' The new regex uses `s+` which matches newlines, enabling quadratic backtracking on malicious input with many newlines. Additionally, the `^(.)+` anchor requires the pattern to match from the start of the string, but stack traces typically begin with an error message, not a stack frame, so this will incorrectly return false for valid V8 stack traces.",
+        "suggestion": "Revert to the previous regex `//n[ ]+at .+://d+://d+/` which searches anywhere in the string and avoids the ReDoS vulnerability by not matching newlines in the whitespace prefix."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/common/services/console-logger.service.ts",
+        "lineNumber": 921,
+        "code": "return /^(.)+nss+at .+://d+://d+/.test(stack!);",
+        "severity": "high",
+        "category": "security",
+        "comment": "The new regex reintroduces a catastrophic backtracking (ReDoS) vulnerability that the previous code explicitly avoided. The old comment warned: '`[ ]+` rather than `s+`, which also matches `n` and would make this unanchored search backtrack quadratically on long runs of newlines.' The new regex uses `s+` which matches newlines, enabling quadratic backtracking on malicious input with many newlines. Additionally, the `^(.)+` anchor requires the pattern to match from the start of the string, but stack traces typically begin with an error message, not a stack frame, so this will incorrectly return false for valid V8 stack traces.",
+        "suggestion": "Revert to the previous regex `//n[ ]+at .+://d+://d+/` which searches anywhere in the string and avoids the ReDoS vulnerability by not matching newlines in the whitespace prefix."
+      }
+    ],
+    "confirmed": true
+  },
+  {
+    "url": "https://github.com/nestjs/nest/pull/18144",
+    "title": "fix(common): parse `error()` calls with a lone or an undefined stack",
+    "detected": true,
+    "seconds": 11.72396532300001,
+    "chunks": 1,
+    "findings": [
+      {
+        "filePath": "packages/common/services/console-logger.service.ts",
+        "lineNumber": 873,
+        "code": "  if (args.length === 2) {",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The handling for `args.length === 1` was removed entirely. When a single argument is passed, the function no longer returns the result from `getContextAndMessagesToPrint(args)` and will fall through to subsequent logic (or return undefined), breaking single-argument logging calls.",
+        "suggestion": "Restore the `if (args.length === 1)` branch that returns `{ ...this.getContextAndMessagesToPrint(args) }`."
+      },
+      {
+        "filePath": "packages/common/services/console-logger.service.ts",
+        "lineNumber": 875,
+        "code": "      if (this.isStackFormat(args[1])) {",
+        "severity": "medium",
+        "category": "bug",
+        "comment": "The condition was changed from `this.isStackFormat(args[1]) || isUndefined(args[1])` to only `this.isStackFormat(args[1])`. This removes explicit handling for `undefined` as the second argument. If callers pass `undefined` as the stack/context parameter (e.g., `logger.log('msg', undefined)`), it will no longer be treated as a valid stack format and may fall through to incorrect logic.",
+        "suggestion": "Add back the `|| isUndefined(args[1])` check if `undefined` should be accepted as a valid stack argument, or ensure callers never pass `undefined`."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/common/services/console-logger.service.ts",
+        "lineNumber": 873,
+        "code": "  if (args.length === 2) {",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The handling for `args.length === 1` was removed entirely. When a single argument is passed, the function no longer returns the result from `getContextAndMessagesToPrint(args)` and will fall through to subsequent logic (or return undefined), breaking single-argument logging calls.",
+        "suggestion": "Restore the `if (args.length === 1)` branch that returns `{ ...this.getContextAndMessagesToPrint(args) }`."
+      },
+      {
+        "filePath": "packages/common/services/console-logger.service.ts",
+        "lineNumber": 875,
+        "code": "      if (this.isStackFormat(args[1])) {",
+        "severity": "medium",
+        "category": "bug",
+        "comment": "The condition was changed from `this.isStackFormat(args[1]) || isUndefined(args[1])` to only `this.isStackFormat(args[1])`. This removes explicit handling for `undefined` as the second argument. If callers pass `undefined` as the stack/context parameter (e.g., `logger.log('msg', undefined)`), it will no longer be treated as a valid stack format and may fall through to incorrect logic.",
+        "suggestion": "Add back the `|| isUndefined(args[1])` check if `undefined` should be accepted as a valid stack argument, or ensure callers never pass `undefined`."
+      }
+    ],
+    "confirmed": false
+  },
+  {
+    "url": "https://github.com/vitejs/vite/pull/23758",
+    "title": "fix(optimizer): scan `oxc.jsxInject` imports",
+    "detected": false,
+    "seconds": 31.052096367999997,
+    "chunks": 1,
+    "findings": [],
+    "matched": [],
+    "confirmed": false
+  },
+  {
+    "url": "https://github.com/nestjs/nest/pull/18143",
+    "title": "fix(core): key the handler metadata cache by class, not class name",
+    "detected": true,
+    "seconds": 43.68426002499999,
+    "chunks": 1,
+    "findings": [
+      {
+        "filePath": "packages/core/helpers/handler-metadata-storage.ts",
+        "lineNumber": 63,
+        "code": "  private getMetadataKey(controller: Controller, methodName: string): string {",
+        "severity": "critical",
+        "category": "bug",
+        "comment": "The getMetadataKey method receives a controller class constructor (TKey extends Type<unknown>) but treats it as a Controller instance. It accesses controller.constructor which returns Function for any class, causing all controllers to generate keys like 'FunctionmethodName'. This creates massive key collisions where different controllers' methods overwrite each other's metadata.",
+        "suggestion": "Change the parameter type to TKey (or Type<unknown>) and use the controller directly instead of controller.constructor: const controllerKey = controller[CONTROLLER_ID_KEY] || controller.name;"
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/core/helpers/handler-metadata-storage.ts",
+        "lineNumber": 63,
+        "code": "  private getMetadataKey(controller: Controller, methodName: string): string {",
+        "severity": "critical",
+        "category": "bug",
+        "comment": "The getMetadataKey method receives a controller class constructor (TKey extends Type<unknown>) but treats it as a Controller instance. It accesses controller.constructor which returns Function for any class, causing all controllers to generate keys like 'FunctionmethodName'. This creates massive key collisions where different controllers' methods overwrite each other's metadata.",
+        "suggestion": "Change the parameter type to TKey (or Type<unknown>) and use the controller directly instead of controller.constructor: const controllerKey = controller[CONTROLLER_ID_KEY] || controller.name;"
+      }
+    ],
+    "confirmed": true
+  },
+  {
+    "url": "https://github.com/vuejs/core/pull/15867",
+    "title": "fix(runtime-vapor): remove block node from its actual parentNode on unmount",
+    "detected": true,
+    "seconds": 37.604634215,
+    "chunks": 1,
+    "findings": [
+      {
+        "filePath": "packages/runtime-vapor/src/block.ts",
+        "lineNumber": 427,
+        "code": "  } else {",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The condition changed from `else if (parent)` to `else`, and the implementation changed from using `block.parentNode` (the actual DOM parent) to using the `parent` parameter directly. This alters behavior: previously the code would find the block's actual parent in the DOM and remove from there, but now it uses whatever `parent` was passed in. If the caller passes a `parent` that differs from `block.parentNode`, the wrong node will be removed or an error will occur.",
+        "suggestion": "Restore the check for `block.parentNode` and use it for removal, or ensure the `parent` parameter is guaranteed to be the actual DOM parent before using it. At minimum, add a check: `const current = block.parentNode; if (current) current.removeChild(block);`"
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/runtime-vapor/src/block.ts",
+        "lineNumber": 427,
+        "code": "  } else {",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The condition changed from `else if (parent)` to `else`, and the implementation changed from using `block.parentNode` (the actual DOM parent) to using the `parent` parameter directly. This alters behavior: previously the code would find the block's actual parent in the DOM and remove from there, but now it uses whatever `parent` was passed in. If the caller passes a `parent` that differs from `block.parentNode`, the wrong node will be removed or an error will occur.",
+        "suggestion": "Restore the check for `block.parentNode` and use it for removal, or ensure the `parent` parameter is guaranteed to be the actual DOM parent before using it. At minimum, add a check: `const current = block.parentNode; if (current) current.removeChild(block);`"
+      }
+    ],
+    "confirmed": true
+  },
+  {
+    "url": "https://github.com/vuejs/core/pull/15866",
+    "title": "fix(runtime-vapor): defer interop fragment removal until leave completes",
+    "detected": true,
+    "seconds": 49.59414397199999,
+    "chunks": 1,
+    "findings": [
+      {
+        "filePath": "packages/runtime-core/src/renderer.ts",
+        "lineNumber": 2535,
+        "code": "performTransitionLeave(",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The transition leave logic for vapor components inside fragments is broken. The old code had special handling to call `getTransitionElement` on the vapor interface to find the correct DOM element for transition when a vapor component is inside a fragment. The new code removes this logic entirely and just uses `leavingNode.el` directly, which will be incorrect for vapor components in fragments since their `el` may not point to the actual transitionable element.",
+        "suggestion": "Restore the special handling for vapor components in fragments, or implement an alternative way to get the correct transition element for vapor components."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/runtime-core/src/renderer.ts",
+        "lineNumber": 2535,
+        "code": "performTransitionLeave(",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The transition leave logic for vapor components inside fragments is broken. The old code had special handling to call `getTransitionElement` on the vapor interface to find the correct DOM element for transition when a vapor component is inside a fragment. The new code removes this logic entirely and just uses `leavingNode.el` directly, which will be incorrect for vapor components in fragments since their `el` may not point to the actual transitionable element.",
+        "suggestion": "Restore the special handling for vapor components in fragments, or implement an alternative way to get the correct transition element for vapor components."
+      }
+    ],
+    "confirmed": true
+  },
+  {
+    "url": "https://github.com/vuejs/core/pull/15863",
+    "title": "fix(runtime-vapor): render nothing for an invalid v-for range in production",
+    "detected": true,
+    "seconds": 30.52229900499998,
+    "chunks": 1,
+    "findings": [
+      {
+        "filePath": "packages/runtime-vapor/src/apiCreateFor.ts",
+        "lineNumber": 974,
+        "code": "if (__DEV__ && (!Number.isInteger(source) || source < 0)) {",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The validation for v-for range input (non-integer or negative numbers) is now only executed in development mode (__DEV__). In production, invalid inputs like negative numbers or floats will bypass the check and reach `new Array(source)`, causing a RangeError for negative values or unexpected truncation for floats (e.g., 3.5 creates array of length 3). The original code validated in both dev and production, only suppressing the warning in production.",
+        "suggestion": "Move the validation condition outside the __DEV__ check, keeping only the warn() inside __DEV__: `if (!Number.isInteger(source) || source < 0) { if (__DEV__) { warn(...) } values = [] } else { values = new Array(source) }`"
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/runtime-vapor/src/apiCreateFor.ts",
+        "lineNumber": 974,
+        "code": "if (__DEV__ && (!Number.isInteger(source) || source < 0)) {",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The validation for v-for range input (non-integer or negative numbers) is now only executed in development mode (__DEV__). In production, invalid inputs like negative numbers or floats will bypass the check and reach `new Array(source)`, causing a RangeError for negative values or unexpected truncation for floats (e.g., 3.5 creates array of length 3). The original code validated in both dev and production, only suppressing the warning in production.",
+        "suggestion": "Move the validation condition outside the __DEV__ check, keeping only the warn() inside __DEV__: `if (!Number.isInteger(source) || source < 0) { if (__DEV__) { warn(...) } values = [] } else { values = new Array(source) }`"
+      }
+    ],
+    "confirmed": true
+  },
+  {
+    "url": "https://github.com/nestjs/nest/pull/18137",
+    "title": "fix(core): release the throwaway wrapper of each create() call",
+    "detected": true,
+    "seconds": 18.849163951000023,
+    "chunks": 1,
+    "findings": [
+      {
+        "filePath": "packages/core/injector/module-ref.ts",
+        "lineNumber": 217,
+        "code": "    });",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The `finally` block that called `wrapper.detachFromDependencies()` was removed. This method cleaned up dependency tree references (via `dependencyTreeParents`) and removed transient instances from `transientMap` across the dependency graph. Without this cleanup, detached instance wrappers remain referenced in dependency trees and transient maps, causing memory leaks and potential incorrect instance resolution when wrappers are replaced or disposed.",
+        "suggestion": "Restore the cleanup logic. Either keep the `finally` block calling `detachFromDependencies()`, or implement equivalent cleanup in the new code path."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/core/injector/module-ref.ts",
+        "lineNumber": 217,
+        "code": "    });",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The `finally` block that called `wrapper.detachFromDependencies()` was removed. This method cleaned up dependency tree references (via `dependencyTreeParents`) and removed transient instances from `transientMap` across the dependency graph. Without this cleanup, detached instance wrappers remain referenced in dependency trees and transient maps, causing memory leaks and potential incorrect instance resolution when wrappers are replaced or disposed.",
+        "suggestion": "Restore the cleanup logic. Either keep the `finally` block calling `detachFromDependencies()`, or implement equivalent cleanup in the new code path."
+      }
+    ],
+    "confirmed": true
+  },
+  {
+    "url": "https://github.com/nestjs/nest/pull/18127",
+    "title": "fix(microservices): match empty mqtt topic levels",
+    "detected": true,
+    "seconds": 79.42162921799999,
+    "chunks": 1,
+    "findings": [
+      {
+        "filePath": "packages/microservices/server/server-mqtt.ts",
+        "lineNumber": 237,
+        "code": "      if (!currentTopic && currentPattern !== MQTT_WILDCARD_ALL) {",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The change from `isUndefined(currentTopic)` to `!currentTopic` incorrectly treats empty string topic segments as missing. In MQTT, topics like 'a//b' produce an empty segment ['a', '', 'b']. A pattern 'a/+/b' should match this (single-level wildcard '+' matches any single level including empty), but the new code returns false because `!''` is true and '+' !== '#'.",
+        "suggestion": "Revert to checking specifically for undefined: `if (isUndefined(currentTopic) && currentPattern !== MQTT_WILDCARD_ALL)` or use `currentTopic === undefined`."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/microservices/server/server-mqtt.ts",
+        "lineNumber": 237,
+        "code": "      if (!currentTopic && currentPattern !== MQTT_WILDCARD_ALL) {",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The change from `isUndefined(currentTopic)` to `!currentTopic` incorrectly treats empty string topic segments as missing. In MQTT, topics like 'a//b' produce an empty segment ['a', '', 'b']. A pattern 'a/+/b' should match this (single-level wildcard '+' matches any single level including empty), but the new code returns false because `!''` is true and '+' !== '#'.",
+        "suggestion": "Revert to checking specifically for undefined: `if (isUndefined(currentTopic) && currentPattern !== MQTT_WILDCARD_ALL)` or use `currentTopic === undefined`."
+      }
+    ],
+    "confirmed": true
+  },
+  {
+    "url": "https://github.com/nestjs/nest/pull/18125",
+    "title": "fix(microservices): ignore a redis server's own replies under wildcards",
+    "detected": true,
+    "seconds": 9.843434452999965,
+    "chunks": 1,
+    "findings": [
+      {
+        "filePath": "packages/microservices/server/server-redis.ts",
+        "lineNumber": 156,
+        "code": "const packet = await this.deserializer.deserialize(rawMessage, { channel });",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The PR removed the guard that prevents the server from processing its own reply messages when wildcard subscriptions are enabled. Previously, when using wildcards (e.g., 'users.*'), the server would also match its own reply channels (e.g., 'users.created.reply'). The removed `isOwnReply` check detected and skipped these self-generated replies. Without this guard, the server will deserialize and process its own replies as incoming messages, potentially causing infinite reply loops, duplicate processing, or incorrect state transitions.",
+        "suggestion": "Restore the wildcard own-reply guard before deserializing the message. The check should verify that wildcards are enabled and that the incoming message is a reply on a channel matching the wildcard but not explicitly subscribed as a reply pattern."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/microservices/server/server-redis.ts",
+        "lineNumber": 156,
+        "code": "const packet = await this.deserializer.deserialize(rawMessage, { channel });",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The PR removed the guard that prevents the server from processing its own reply messages when wildcard subscriptions are enabled. Previously, when using wildcards (e.g., 'users.*'), the server would also match its own reply channels (e.g., 'users.created.reply'). The removed `isOwnReply` check detected and skipped these self-generated replies. Without this guard, the server will deserialize and process its own replies as incoming messages, potentially causing infinite reply loops, duplicate processing, or incorrect state transitions.",
+        "suggestion": "Restore the wildcard own-reply guard before deserializing the message. The check should verify that wildcards are enabled and that the incoming message is a reply on a channel matching the wildcard but not explicitly subscribed as a reply pattern."
+      }
+    ],
+    "confirmed": true
+  },
+  {
+    "url": "https://github.com/TanStack/query/pull/11999",
+    "title": "Fix/angular devtools lifecycle",
+    "detected": true,
+    "seconds": 63.112924684999975,
+    "chunks": 1,
+    "findings": [
+      {
+        "filePath": "packages/angular-query-devtools/src/with-devtools.ts",
+        "lineNumber": 76,
+        "code": "        devtoolsProvided.isProvided = true",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The cleanup that resets `devtoolsProvided.isProvided = false` on component destruction was removed. This flag is checked at line 70 (`if (devtoolsProvided.isProvided) return`) to prevent duplicate initialization. Without the cleanup, if the component using `withDevtools` is destroyed and recreated, the flag remains `true` and the new instance will silently fail to initialize devtools.",
+        "suggestion": "Add back the destroy callback: `destroyRef.onDestroy(() => { devtoolsProvided.isProvided = false })` after setting the flag to true."
+      },
+      {
+        "filePath": "packages/angular-query-devtools/src/devtools-panel/inject-devtools-panel.ts",
+        "lineNumber": 107,
+        "code": "        onClose && devtools.setOnClose(onClose)",
+        "severity": "medium",
+        "category": "bug",
+        "comment": "Changed from `devtools.setOnClose(onClose ?? (() => {}))` which ensured a no-op handler was always set. The new code only calls `setOnClose` when `onClose` is truthy. If `devtools` is reused (e.g., panel remounted) and a previous `onClose` handler was set, it will not be cleared when `onClose` is undefined/null, causing the old handler to fire unexpectedly.",
+        "suggestion": "Either always call `devtools.setOnClose(onClose ?? (() => {}))` or explicitly clear with `devtools.setOnClose(() => {})` when `onClose` is not provided."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/angular-query-devtools/src/with-devtools.ts",
+        "lineNumber": 76,
+        "code": "        devtoolsProvided.isProvided = true",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The cleanup that resets `devtoolsProvided.isProvided = false` on component destruction was removed. This flag is checked at line 70 (`if (devtoolsProvided.isProvided) return`) to prevent duplicate initialization. Without the cleanup, if the component using `withDevtools` is destroyed and recreated, the flag remains `true` and the new instance will silently fail to initialize devtools.",
+        "suggestion": "Add back the destroy callback: `destroyRef.onDestroy(() => { devtoolsProvided.isProvided = false })` after setting the flag to true."
+      },
+      {
+        "filePath": "packages/angular-query-devtools/src/devtools-panel/inject-devtools-panel.ts",
+        "lineNumber": 107,
+        "code": "        onClose && devtools.setOnClose(onClose)",
+        "severity": "medium",
+        "category": "bug",
+        "comment": "Changed from `devtools.setOnClose(onClose ?? (() => {}))` which ensured a no-op handler was always set. The new code only calls `setOnClose` when `onClose` is truthy. If `devtools` is reused (e.g., panel remounted) and a previous `onClose` handler was set, it will not be cleared when `onClose` is undefined/null, causing the old handler to fire unexpectedly.",
+        "suggestion": "Either always call `devtools.setOnClose(onClose ?? (() => {}))` or explicitly clear with `devtools.setOnClose(() => {})` when `onClose` is not provided."
+      }
+    ],
+    "confirmed": false
+  },
+  {
+    "url": "https://github.com/colinhacks/zod/pull/6662",
+    "title": "fix(v4): report a union option that only checks rejected",
+    "detected": true,
+    "seconds": 20.79840585000004,
+    "chunks": 1,
+    "findings": [
+      {
+        "filePath": "packages/zod/src/v4/core/schemas.ts",
+        "lineNumber": 2469,
+        "code": "  const nonaborted = results.filter((r) => !util.aborted(r));",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The change removes the fallback logic that handled cases where all union members produce errors but exactly one member produces only 'continuable' errors (issues where `continue !== undefined`). The old code would fall back to checking `!r.aborted && r.issues.every((iss) => iss.continue !== undefined)` when no non-aborted results existed. This fallback handled scenarios where a union member rejects the input but with errors that don't definitively rule out the input type (e.g., a type mismatch that another union member could satisfy). The new code will not select such a member, potentially causing valid union matches to be rejected.",
+        "suggestion": "Restore the fallback logic or add a comment explaining why it's no longer needed. If the fallback was intentionally removed, ensure there are tests covering the case where all union members error but one has only continuable issues."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/zod/src/v4/core/schemas.ts",
+        "lineNumber": 2469,
+        "code": "  const nonaborted = results.filter((r) => !util.aborted(r));",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The change removes the fallback logic that handled cases where all union members produce errors but exactly one member produces only 'continuable' errors (issues where `continue !== undefined`). The old code would fall back to checking `!r.aborted && r.issues.every((iss) => iss.continue !== undefined)` when no non-aborted results existed. This fallback handled scenarios where a union member rejects the input but with errors that don't definitively rule out the input type (e.g., a type mismatch that another union member could satisfy). The new code will not select such a member, potentially causing valid union matches to be rejected.",
+        "suggestion": "Restore the fallback logic or add a comment explaining why it's no longer needed. If the fallback was intentionally removed, ensure there are tests covering the case where all union members error but one has only continuable issues."
+      }
+    ],
+    "confirmed": false
+  },
+  {
+    "url": "https://github.com/colinhacks/zod/pull/6660",
+    "title": "fix(v4): run a record's key schema on an own __proto__ key",
+    "detected": true,
+    "seconds": 232.64273468400003,
+    "chunks": 1,
+    "findings": [
+      {
+        "filePath": "packages/zod/src/v4/core/compile.ts",
+        "lineNumber": 2033,
+        "code": "d.write(`if (${outKeyVar} === INVALID) { ${outputVar}[${kVar}] = ${accessor}[${kVar}]; continue; }`);",
+        "severity": "critical",
+        "category": "security",
+        "comment": "In loose mode, when key validation fails for a '__proto__' key, this code writes the unvalidated value to output['__proto__'], which mutates the output object's prototype (prototype pollution). The subsequent '__proto__' check at line 2037 is never reached because the loose block ends with 'continue;'. The old code explicitly guarded against this with 'if (${kVar} !== '__proto__')'.",
+        "suggestion": "Add a __proto__ guard to the loose-mode write: `if (${outKeyVar} === INVALID) { if (${kVar} !== '__proto__') ${outputVar}[${kVar}] = ${accessor}[${kVar}]; continue; }`"
+      },
+      {
+        "filePath": "packages/zod/src/v4/core/schemas.ts",
+        "lineNumber": 3363,
+        "code": "if (key === '__proto__') continue;",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "This early continue silently skips '__proto__' keys before key validation runs. In strict mode, this means a '__proto__' key that fails validation produces no error and is not added to unrecognized keys, whereas the compiled path (compile.ts) returns INVALID for such keys. This creates a behavioral divergence between interpreted and compiled validation.",
+        "suggestion": "Remove the early continue and instead check for '__proto__' after key validation (as done at line 3403), so strict mode properly reports validation failures for '__proto__' keys while still preventing prototype pollution on write."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/zod/src/v4/core/compile.ts",
+        "lineNumber": 2033,
+        "code": "d.write(`if (${outKeyVar} === INVALID) { ${outputVar}[${kVar}] = ${accessor}[${kVar}]; continue; }`);",
+        "severity": "critical",
+        "category": "security",
+        "comment": "In loose mode, when key validation fails for a '__proto__' key, this code writes the unvalidated value to output['__proto__'], which mutates the output object's prototype (prototype pollution). The subsequent '__proto__' check at line 2037 is never reached because the loose block ends with 'continue;'. The old code explicitly guarded against this with 'if (${kVar} !== '__proto__')'.",
+        "suggestion": "Add a __proto__ guard to the loose-mode write: `if (${outKeyVar} === INVALID) { if (${kVar} !== '__proto__') ${outputVar}[${kVar}] = ${accessor}[${kVar}]; continue; }`"
+      },
+      {
+        "filePath": "packages/zod/src/v4/core/schemas.ts",
+        "lineNumber": 3363,
+        "code": "if (key === '__proto__') continue;",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "This early continue silently skips '__proto__' keys before key validation runs. In strict mode, this means a '__proto__' key that fails validation produces no error and is not added to unrecognized keys, whereas the compiled path (compile.ts) returns INVALID for such keys. This creates a behavioral divergence between interpreted and compiled validation.",
+        "suggestion": "Remove the early continue and instead check for '__proto__' after key validation (as done at line 3403), so strict mode properly reports validation failures for '__proto__' keys while still preventing prototype pollution on write."
+      }
+    ],
+    "confirmed": true
+  },
+  {
+    "url": "https://github.com/nestjs/nest/pull/18121",
+    "title": "fix(core): keep route options when the route triggered hook is set",
+    "detected": true,
+    "seconds": 14.925697144999983,
+    "chunks": 1,
+    "findings": [
+      {
+        "filePath": "packages/core/router/router-explorer.ts",
+        "lineNumber": 256,
+        "code": "handler = (...args: unknown[]) => {",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The change removes Object.assign and copyMetadataToCallback which were copying route metadata (e.g., version) from the original handler to the wrapper. The removed comment explicitly states 'Adapters read route options (e.g. the version) from the handler'. Without this metadata copying, HTTP adapters that inspect the handler function for route options like versioning will fail to find them, breaking versioned routes and potentially other adapter functionality.",
+        "suggestion": "Restore the Object.assign to copy properties from routeHandler to the wrapper, and call copyMetadataToCallback to preserve metadata that adapters depend on."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/core/router/router-explorer.ts",
+        "lineNumber": 256,
+        "code": "handler = (...args: unknown[]) => {",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The change removes Object.assign and copyMetadataToCallback which were copying route metadata (e.g., version) from the original handler to the wrapper. The removed comment explicitly states 'Adapters read route options (e.g. the version) from the handler'. Without this metadata copying, HTTP adapters that inspect the handler function for route options like versioning will fail to find them, breaking versioned routes and potentially other adapter functionality.",
+        "suggestion": "Restore the Object.assign to copy properties from routeHandler to the wrapper, and call copyMetadataToCallback to preserve metadata that adapters depend on."
+      }
+    ],
+    "confirmed": true
+  },
+  {
+    "url": "https://github.com/nestjs/nest/pull/18110",
+    "title": "fix(express): guard async request hook completion",
+    "detected": true,
+    "seconds": 27.295094833000096,
+    "chunks": 1,
+    "findings": [
+      {
+        "filePath": "packages/platform-express/adapters/express-adapter.ts",
+        "lineNumber": 78,
+        "code": "    done: () => void,",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The onRequestHook type signature declares the third parameter as `done: () => void` (no arguments), but at line 94 the code passes `next` (Express's NextFunction which accepts an optional error). This creates a type mismatch: hooks written to the new signature cannot signal errors via the callback, yet the runtime passes a function that expects an error argument.",
+        "suggestion": "Change the type signature to `done: (err?: Error) => void` to match the actual argument passed at line 94, or change the call site to pass a wrapper that matches the new signature."
+      },
+      {
+        "filePath": "packages/platform-express/adapters/express-adapter.ts",
+        "lineNumber": 94,
+        "code": "        void this.onRequestHook.apply(this, [req, res, next]);",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The previous implementation (runRequestHook) handled promise rejections from the hook by calling doneOnce(err). This new direct call provides no promise handling: if the hook returns a rejected promise, the rejection is unhandled and the Express request hangs (next() is never called).",
+        "suggestion": "Restore promise handling: await the hook result and call next(err) on rejection, or wrap in a try/catch for synchronous errors."
+      },
+      {
+        "filePath": "packages/platform-express/adapters/express-adapter.ts",
+        "lineNumber": 94,
+        "code": "        void this.onRequestHook.apply(this, [req, res, next]);",
+        "severity": "medium",
+        "category": "bug",
+        "comment": "The removed runRequestHook had a `completed` guard preventing multiple calls to next(). Without it, a hook that calls next() multiple times (or calls next() and also throws/returns a rejected promise) will cause Express to throw 'Cannot set headers after they are sent' or similar errors.",
+        "suggestion": "Re-add a completion guard around the next() call, or document that hooks must not call next() multiple times."
+      },
+      {
+        "filePath": "packages/platform-express/adapters/express-adapter.ts",
+        "lineNumber": 89,
+        "code": "          void this.onResponseHook!.apply(this, [req, res]);",
+        "severity": "medium",
+        "category": "bug",
+        "comment": "The previous implementation wrapped the response hook in try/catch and logged errors. The new code removes all error handling: if onResponseHook throws or returns a rejected promise, the error becomes an unhandled rejection (for promises) or crashes the Node process (for sync throws in the 'finish' event handler).",
+        "suggestion": "Restore error handling: wrap the hook call in try/catch and handle promise rejections with .catch(logger.error)."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/platform-express/adapters/express-adapter.ts",
+        "lineNumber": 78,
+        "code": "    done: () => void,",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The onRequestHook type signature declares the third parameter as `done: () => void` (no arguments), but at line 94 the code passes `next` (Express's NextFunction which accepts an optional error). This creates a type mismatch: hooks written to the new signature cannot signal errors via the callback, yet the runtime passes a function that expects an error argument.",
+        "suggestion": "Change the type signature to `done: (err?: Error) => void` to match the actual argument passed at line 94, or change the call site to pass a wrapper that matches the new signature."
+      },
+      {
+        "filePath": "packages/platform-express/adapters/express-adapter.ts",
+        "lineNumber": 94,
+        "code": "        void this.onRequestHook.apply(this, [req, res, next]);",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The previous implementation (runRequestHook) handled promise rejections from the hook by calling doneOnce(err). This new direct call provides no promise handling: if the hook returns a rejected promise, the rejection is unhandled and the Express request hangs (next() is never called).",
+        "suggestion": "Restore promise handling: await the hook result and call next(err) on rejection, or wrap in a try/catch for synchronous errors."
+      },
+      {
+        "filePath": "packages/platform-express/adapters/express-adapter.ts",
+        "lineNumber": 94,
+        "code": "        void this.onRequestHook.apply(this, [req, res, next]);",
+        "severity": "medium",
+        "category": "bug",
+        "comment": "The removed runRequestHook had a `completed` guard preventing multiple calls to next(). Without it, a hook that calls next() multiple times (or calls next() and also throws/returns a rejected promise) will cause Express to throw 'Cannot set headers after they are sent' or similar errors.",
+        "suggestion": "Re-add a completion guard around the next() call, or document that hooks must not call next() multiple times."
+      },
+      {
+        "filePath": "packages/platform-express/adapters/express-adapter.ts",
+        "lineNumber": 89,
+        "code": "          void this.onResponseHook!.apply(this, [req, res]);",
+        "severity": "medium",
+        "category": "bug",
+        "comment": "The previous implementation wrapped the response hook in try/catch and logged errors. The new code removes all error handling: if onResponseHook throws or returns a rejected promise, the error becomes an unhandled rejection (for promises) or crashes the Node process (for sync throws in the 'finish' event handler).",
+        "suggestion": "Restore error handling: wrap the hook call in try/catch and handle promise rejections with .catch(logger.error)."
+      }
+    ],
+    "confirmed": true
+  },
+  {
+    "url": "https://github.com/nestjs/nest/pull/18109",
+    "title": "fix(fastify): answer the shutdown hooks 503 with fastify's json body",
+    "detected": true,
+    "seconds": 40.81539973200008,
+    "chunks": 1,
+    "findings": [
+      {
+        "filePath": "packages/platform-fastify/adapters/fastify-adapter.ts",
+        "lineNumber": 365,
+        "code": "        reply.code(503).send('Service Unavailable');",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "Changed the 503 response during shutdown from JSON format (matching Fastify's native 503 response) to plain text. The removed comment explicitly stated this was intentional to provide 'one response shape for the whole shutdown'. Clients expecting consistent JSON error responses will now receive plain text, breaking API contracts and error handling.",
+        "suggestion": "Restore the JSON response format to maintain consistency with Fastify's native 503 response shape: reply.code(503).send({ error: 'Service Unavailable', message: 'Service Unavailable', statusCode: 503 });"
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/platform-fastify/adapters/fastify-adapter.ts",
+        "lineNumber": 365,
+        "code": "        reply.code(503).send('Service Unavailable');",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "Changed the 503 response during shutdown from JSON format (matching Fastify's native 503 response) to plain text. The removed comment explicitly stated this was intentional to provide 'one response shape for the whole shutdown'. Clients expecting consistent JSON error responses will now receive plain text, breaking API contracts and error handling.",
+        "suggestion": "Restore the JSON response format to maintain consistency with Fastify's native 503 response shape: reply.code(503).send({ error: 'Service Unavailable', message: 'Service Unavailable', statusCode: 503 });"
+      }
+    ],
+    "confirmed": true
+  },
+  {
+    "url": "https://github.com/nestjs/nest/pull/18104",
+    "title": "fix(core): fail at startup for request-scoped class global enhancers",
+    "detected": true,
+    "seconds": 198.443958753,
+    "chunks": 1,
+    "findings": [
+      {
+        "filePath": "packages/core/scanner.ts",
+        "lineNumber": 711,
+        "code": "        if (",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The condition changed from `!instanceWrapper.isDependencyTreeStatic()` to `isNil(instanceWrapper.instance) && !instanceWrapper.isDependencyTreeStatic()`. For a class-based enhancer (useClass) with request-scoped dependencies, `instanceWrapper.instance` is the class prototype (not nil), so the exception is not thrown. This silently drops a global enhancer that would run with undefined dependencies, instead of failing at startup as intended.",
+        "suggestion": "Revert to checking only `!instanceWrapper.isDependencyTreeStatic()`, or add a specific check for class providers with request-scoped dependencies."
+      },
+      {
+        "filePath": "packages/core/scanner.ts",
+        "lineNumber": 730,
+        "code": "  private describeEnhancerProvider(wrapper: InstanceWrapper): string {",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The new implementation returns 'useFactory' for both useClass and useFactory providers (when `!wrapper.isAlias`). It completely omits the useClass case that returned `useClass: ${wrapper.metatype!.name}`. This causes the exception message to show an incorrect provider string ('useFactory') for class-based enhancers.",
+        "suggestion": "Restore the useClass branch: check `isNil(wrapper.inject)` to distinguish useClass from useFactory, and return the class name for useClass."
+      },
+      {
+        "filePath": "packages/core/errors/messages.ts",
+        "lineNumber": 265,
+        "code": "export const REQUEST_SCOPED_GLOBAL_ENHANCER_MESSAGE = (",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The error message now only branches on `isAlias` (boolean), losing the useClass case. For a class-based enhancer (useClass), `isAlias` is false, so it shows the factory provider advice ('Set scope: Scope.REQUEST on the factory provider') instead of the correct class advice ('Mark the class with @Injectable({ scope: Scope.REQUEST })').",
+        "suggestion": "Restore the three-way branch on kind ('useClass' | 'useExisting' | 'useFactory'), or pass the provider kind from the scanner to select the correct message."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/core/scanner.ts",
+        "lineNumber": 711,
+        "code": "        if (",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The condition changed from `!instanceWrapper.isDependencyTreeStatic()` to `isNil(instanceWrapper.instance) && !instanceWrapper.isDependencyTreeStatic()`. For a class-based enhancer (useClass) with request-scoped dependencies, `instanceWrapper.instance` is the class prototype (not nil), so the exception is not thrown. This silently drops a global enhancer that would run with undefined dependencies, instead of failing at startup as intended.",
+        "suggestion": "Revert to checking only `!instanceWrapper.isDependencyTreeStatic()`, or add a specific check for class providers with request-scoped dependencies."
+      },
+      {
+        "filePath": "packages/core/scanner.ts",
+        "lineNumber": 730,
+        "code": "  private describeEnhancerProvider(wrapper: InstanceWrapper): string {",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The new implementation returns 'useFactory' for both useClass and useFactory providers (when `!wrapper.isAlias`). It completely omits the useClass case that returned `useClass: ${wrapper.metatype!.name}`. This causes the exception message to show an incorrect provider string ('useFactory') for class-based enhancers.",
+        "suggestion": "Restore the useClass branch: check `isNil(wrapper.inject)` to distinguish useClass from useFactory, and return the class name for useClass."
+      },
+      {
+        "filePath": "packages/core/errors/messages.ts",
+        "lineNumber": 265,
+        "code": "export const REQUEST_SCOPED_GLOBAL_ENHANCER_MESSAGE = (",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The error message now only branches on `isAlias` (boolean), losing the useClass case. For a class-based enhancer (useClass), `isAlias` is false, so it shows the factory provider advice ('Set scope: Scope.REQUEST on the factory provider') instead of the correct class advice ('Mark the class with @Injectable({ scope: Scope.REQUEST })').",
+        "suggestion": "Restore the three-way branch on kind ('useClass' | 'useExisting' | 'useFactory'), or pass the provider kind from the scanner to select the correct message."
+      }
+    ],
+    "confirmed": true
+  },
+  {
+    "url": "https://github.com/vuejs/core/pull/15850",
+    "title": "fix(runtime-vapor): start a vapor slot vnode in a vdom outlet on a node of its own",
+    "detected": true,
+    "seconds": 109.87473293900001,
+    "chunks": 1,
+    "findings": [
+      {
+        "filePath": "packages/runtime-vapor/src/vdomInterop.ts",
+        "lineNumber": 699,
+        "code": "      insert((n2.el = n2.anchor = selfAnchor), container, anchor)",
+        "severity": "high",
+        "category": "bug",
+        "comment": "This change makes n2.el and n2.anchor point to the same node (selfAnchor). Previously, n2.el was a newly created text node and n2.anchor was selfAnchor, creating two distinct boundary markers for the fragment. Many DOM operations (move, remove, hydrate) rely on el and anchor being different nodes to identify the fragment range. Setting both to the same node will break fragment boundary detection and cause incorrect DOM mutations.",
+        "suggestion": "Restore separate nodes for el and anchor: create a text node for n2.el and keep n2.anchor as selfAnchor, with separate insert calls for each."
+      },
+      {
+        "filePath": "packages/runtime-vapor/src/vdomInterop.ts",
+        "lineNumber": 3104,
+        "code": "    vnode.el = open || anchor",
+        "severity": "high",
+        "category": "bug",
+        "comment": "When open is falsy, vnode.el is set to anchor, making el and anchor the same node. The previous code created a new text node (start) for el when open didn't exist, ensuring el and anchor were distinct boundary markers. This change breaks the fragment invariant that el and anchor are different nodes, which will cause incorrect behavior in move, remove, and hydration operations that depend on having two distinct boundary nodes.",
+        "suggestion": "Restore the creation of a separate start node when open is not provided: const start = open || createTextNode(); vnode.el = start;"
+      },
+      {
+        "filePath": "packages/runtime-vapor/src/vdomInterop.ts",
+        "lineNumber": 1119,
+        "code": "    return el && el !== anchor && isRangeStart(el as Node)",
+        "severity": "medium",
+        "category": "bug",
+        "comment": "The resolveVNodeNodes function now returns the fragment nodes only when el is a range start marker. However, not all valid fragment start nodes are necessarily 'range starts' (e.g., a regular element or text node that starts a fragment). This will cause resolveVNodeNodes to incorrectly return just [vb, anchor] for fragments that don't use hydration range markers, breaking callers that expect [el, vb, anchor] for proper fragment handling.",
+        "suggestion": "Revert to the previous condition (el && el !== anchor) or ensure isRangeStart correctly identifies all valid fragment start nodes, not just hydration range markers."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/runtime-vapor/src/vdomInterop.ts",
+        "lineNumber": 699,
+        "code": "      insert((n2.el = n2.anchor = selfAnchor), container, anchor)",
+        "severity": "high",
+        "category": "bug",
+        "comment": "This change makes n2.el and n2.anchor point to the same node (selfAnchor). Previously, n2.el was a newly created text node and n2.anchor was selfAnchor, creating two distinct boundary markers for the fragment. Many DOM operations (move, remove, hydrate) rely on el and anchor being different nodes to identify the fragment range. Setting both to the same node will break fragment boundary detection and cause incorrect DOM mutations.",
+        "suggestion": "Restore separate nodes for el and anchor: create a text node for n2.el and keep n2.anchor as selfAnchor, with separate insert calls for each."
+      },
+      {
+        "filePath": "packages/runtime-vapor/src/vdomInterop.ts",
+        "lineNumber": 3104,
+        "code": "    vnode.el = open || anchor",
+        "severity": "high",
+        "category": "bug",
+        "comment": "When open is falsy, vnode.el is set to anchor, making el and anchor the same node. The previous code created a new text node (start) for el when open didn't exist, ensuring el and anchor were distinct boundary markers. This change breaks the fragment invariant that el and anchor are different nodes, which will cause incorrect behavior in move, remove, and hydration operations that depend on having two distinct boundary nodes.",
+        "suggestion": "Restore the creation of a separate start node when open is not provided: const start = open || createTextNode(); vnode.el = start;"
+      },
+      {
+        "filePath": "packages/runtime-vapor/src/vdomInterop.ts",
+        "lineNumber": 1119,
+        "code": "    return el && el !== anchor && isRangeStart(el as Node)",
+        "severity": "medium",
+        "category": "bug",
+        "comment": "The resolveVNodeNodes function now returns the fragment nodes only when el is a range start marker. However, not all valid fragment start nodes are necessarily 'range starts' (e.g., a regular element or text node that starts a fragment). This will cause resolveVNodeNodes to incorrectly return just [vb, anchor] for fragments that don't use hydration range markers, breaking callers that expect [el, vb, anchor] for proper fragment handling.",
+        "suggestion": "Revert to the previous condition (el && el !== anchor) or ensure isRangeStart correctly identifies all valid fragment start nodes, not just hydration range markers."
+      }
+    ],
+    "confirmed": true
+  },
+  {
+    "url": "https://github.com/nestjs/nest/pull/18101",
+    "title": "fix(fastify): honor `return503OnClosing` during the shutdown hooks",
+    "detected": true,
+    "seconds": 14.400666679000016,
+    "chunks": 1,
+    "findings": [
+      {
+        "filePath": "packages/platform-fastify/adapters/fastify-adapter.ts",
+        "lineNumber": 758,
+        "code": "  public async close() {",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The `beforeClose()` method and the `onRequest` hook that returns 503 during shutdown have been removed. Previously, `beforeClose()` would set `isShuttingDown = true` before the actual `close()` method ran, allowing the `onRequest` hook to reject new requests with 503 during the shutdown grace period. Now there is no mechanism to signal shutdown before closing, and the `return503OnClosing` option is ignored. This breaks graceful shutdown behavior where load balancers expect 503 responses to drain connections before the server actually closes.",
+        "suggestion": "Restore the `beforeClose()` method and the `onRequest` hook that checks `isShuttingDown` and returns 503, or implement an equivalent graceful shutdown mechanism that honors the `return503OnClosing` option."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/platform-fastify/adapters/fastify-adapter.ts",
+        "lineNumber": 758,
+        "code": "  public async close() {",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The `beforeClose()` method and the `onRequest` hook that returns 503 during shutdown have been removed. Previously, `beforeClose()` would set `isShuttingDown = true` before the actual `close()` method ran, allowing the `onRequest` hook to reject new requests with 503 during the shutdown grace period. Now there is no mechanism to signal shutdown before closing, and the `return503OnClosing` option is ignored. This breaks graceful shutdown behavior where load balancers expect 503 responses to drain connections before the server actually closes.",
+        "suggestion": "Restore the `beforeClose()` method and the `onRequest` hook that checks `isShuttingDown` and returns 503, or implement an equivalent graceful shutdown mechanism that honors the `return503OnClosing` option."
+      }
+    ],
+    "confirmed": true
+  },
+  {
+    "url": "https://github.com/nestjs/nest/pull/18100",
+    "title": "fix(microservices): default server options like the client factory does",
+    "detected": true,
+    "seconds": 16.686922098000068,
+    "chunks": 1,
+    "findings": [
+      {
+        "filePath": "packages/microservices/server/server-factory.ts",
+        "lineNumber": 19,
+        "code": "    const { transport, options } = microserviceOptions as Exclude<",
+        "severity": "high",
+        "category": "bug",
+        "comment": "Removed the default value `= {}` for `options` destructuring. If `microserviceOptions` does not include an `options` property (which is valid for some transport configurations), `options` will now be `undefined` instead of an empty object. This `undefined` value is then passed to server constructors like `ServerMqtt`, `ServerGrpc`, `ServerKafka`, etc., which likely expect an options object and may throw when accessing properties on `undefined`.",
+        "suggestion": "Restore the default value: `const { transport, options = {} } = microserviceOptions as Exclude<MicroserviceOptions, CustomStrategy>;`"
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/microservices/server/server-factory.ts",
+        "lineNumber": 19,
+        "code": "    const { transport, options } = microserviceOptions as Exclude<",
+        "severity": "high",
+        "category": "bug",
+        "comment": "Removed the default value `= {}` for `options` destructuring. If `microserviceOptions` does not include an `options` property (which is valid for some transport configurations), `options` will now be `undefined` instead of an empty object. This `undefined` value is then passed to server constructors like `ServerMqtt`, `ServerGrpc`, `ServerKafka`, etc., which likely expect an options object and may throw when accessing properties on `undefined`.",
+        "suggestion": "Restore the default value: `const { transport, options = {} } = microserviceOptions as Exclude<MicroserviceOptions, CustomStrategy>;`"
+      }
+    ],
+    "confirmed": true
+  },
+  {
+    "url": "https://github.com/nestjs/nest/pull/18095",
+    "title": "fix(microservices): fail mqtt requests whose publish fails",
+    "detected": true,
+    "seconds": 32.66523172699986,
+    "chunks": 1,
+    "findings": [
+      {
+        "filePath": "packages/microservices/client/client-mqtt.ts",
+        "lineNumber": 353,
+        "code": "            this.mergePacketOptions(options),",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The error-handling callback was removed from the method call. The original callback checked for errors and if the client wasn't torn down, it would call undoBookkeeping() and propagate the error to the caller's callback. Without this callback, errors from the underlying MQTT operation (publish/subscribe) will not be propagated to the caller, leading to silent failures and potential resource leaks since undoBookkeeping() is no longer called on error.",
+        "suggestion": "Restore the error-handling callback or implement equivalent error handling. The callback should check for errors, verify the client isn't torn down, call undoBookkeeping(), and invoke the original callback with the error."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/microservices/client/client-mqtt.ts",
+        "lineNumber": 353,
+        "code": "            this.mergePacketOptions(options),",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The error-handling callback was removed from the method call. The original callback checked for errors and if the client wasn't torn down, it would call undoBookkeeping() and propagate the error to the caller's callback. Without this callback, errors from the underlying MQTT operation (publish/subscribe) will not be propagated to the caller, leading to silent failures and potential resource leaks since undoBookkeeping() is no longer called on error.",
+        "suggestion": "Restore the error-handling callback or implement equivalent error handling. The callback should check for errors, verify the client isn't torn down, call undoBookkeeping(), and invoke the original callback with the error."
+      }
+    ],
+    "confirmed": true
+  },
+  {
+    "url": "https://github.com/remix-run/react-router/pull/15620",
+    "title": "fix(node): write file sessions atomically",
+    "detected": true,
+    "seconds": 8.886250419000163,
+    "chunks": 1,
+    "findings": [
+      {
+        "filePath": "packages/react-router-node/sessions/fileStorage.ts",
+        "lineNumber": 95,
+        "code": "await fsp.writeFile(file, content, 'utf-8');",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The atomic write pattern has been removed. The original code wrote to a temporary file and used rename() to atomically replace the session file, preventing concurrent reads from seeing partially written data. The new direct writeFile() call can leave the file in a corrupted state if the process crashes mid-write, and concurrent readers can see incomplete data.",
+        "suggestion": "Restore the atomic write pattern using a temporary file and rename, or at minimum document why the safety guarantee was removed."
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/react-router-node/sessions/fileStorage.ts",
+        "lineNumber": 95,
+        "code": "await fsp.writeFile(file, content, 'utf-8');",
+        "severity": "high",
+        "category": "correctness",
+        "comment": "The atomic write pattern has been removed. The original code wrote to a temporary file and used rename() to atomically replace the session file, preventing concurrent reads from seeing partially written data. The new direct writeFile() call can leave the file in a corrupted state if the process crashes mid-write, and concurrent readers can see incomplete data.",
+        "suggestion": "Restore the atomic write pattern using a temporary file and rename, or at minimum document why the safety guarantee was removed."
+      }
+    ],
+    "confirmed": true
+  },
+  {
+    "url": "https://github.com/vuejs/core/pull/15846",
+    "title": "fix(runtime-vapor): finish a deactivation leave where the element is after a KeepAlive move",
+    "detected": true,
+    "seconds": 33.05347277200013,
+    "chunks": 1,
+    "findings": [
+      {
+        "filePath": "packages/runtime-vapor/src/block.ts",
+        "lineNumber": 286,
+        "code": "parent.insertBefore(block, anchor as Node)",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The condition `!anchor || anchor.parentNode === parent` was removed. This condition guarded against inserting a block before an anchor that has been moved to a different parent (e.g., during KeepAlive reactivation). Without this check, `insertBefore` will be called with an anchor that may no longer be a child of `parent`, causing a DOMException ('The node before which the new node is to be inserted is not a child of this node') or incorrect DOM structure.",
+        "suggestion": "Restore the anchor parent check: `} else if (!anchor || anchor.parentNode === parent) { parent.insertBefore(block, anchor) }`"
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/runtime-vapor/src/block.ts",
+        "lineNumber": 286,
+        "code": "parent.insertBefore(block, anchor as Node)",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The condition `!anchor || anchor.parentNode === parent` was removed. This condition guarded against inserting a block before an anchor that has been moved to a different parent (e.g., during KeepAlive reactivation). Without this check, `insertBefore` will be called with an anchor that may no longer be a child of `parent`, causing a DOMException ('The node before which the new node is to be inserted is not a child of this node') or incorrect DOM structure.",
+        "suggestion": "Restore the anchor parent check: `} else if (!anchor || anchor.parentNode === parent) { parent.insertBefore(block, anchor) }`"
+      }
+    ],
+    "confirmed": true
+  },
+  {
+    "url": "https://github.com/vuejs/core/pull/15844",
+    "title": "fix(runtime-vapor): render the deferred out-in branch where the fragment is after a KeepAlive move",
+    "detected": true,
+    "seconds": 54.03547327399999,
+    "chunks": 1,
+    "findings": [
+      {
+        "filePath": "packages/runtime-vapor/src/block.ts",
+        "lineNumber": 325,
+        "code": "    // fragment",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The check `if (isTransitionEnabled && (block as DynamicFragment).leaving) return` was removed from the move() function. This check prevented moving a fragment that is currently in a leave transition. Without it, a leaving branch can be moved during its leave animation, breaking the transition visual effect and potentially causing DOM corruption.",
+        "suggestion": "Restore the leaving check in move(): `if (isTransitionEnabled && (block as DynamicFragment).leaving) return`"
+      },
+      {
+        "filePath": "packages/runtime-vapor/src/block.ts",
+        "lineNumber": 519,
+        "code": "    const nodes = block.nodes",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The check `if (isTransitionEnabled && (block as DynamicFragment).leaving) { return block.anchor }` was removed from getBlockFirstNode(). For a leaving branch, the anchor should be returned as the first node since the fragment stays behind at its anchor position during leave. Without this, getBlockFirstNode() may return incorrect nodes for leaving fragments, breaking insertion positioning during transitions.",
+        "suggestion": "Restore the leaving branch anchor return in getBlockFirstNode()."
+      },
+      {
+        "filePath": "packages/runtime-vapor/src/components/Transition.ts",
+        "lineNumber": 709,
+        "code": "      parent && remove(frag.nodes, parent)",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The `frag.leaving = true` assignment was removed in out-in mode. This flag was critical for tracking that a branch is currently leaving. Without it, the transition system cannot distinguish between a branch that is leaving vs one that has already left, breaking the out-in transition sequencing where the entering branch must wait for the leaving branch's afterLeave callback.",
+        "suggestion": "Restore `frag.leaving = true` before the remove() call in out-in mode."
+      },
+      {
+        "filePath": "packages/runtime-vapor/src/components/Transition.ts",
+        "lineNumber": 686,
+        "code": "            parent,",
+        "severity": "medium",
+        "category": "bug",
+        "comment": "The `liveParent` check was removed and replaced with `parent`. The original code verified `const liveParent = parent && frag.anchor.parentNode` and returned early if `parent && !liveParent`, ensuring the parent is still connected to the DOM before rendering the deferred branch. Without this check, a deferred out-in branch could render into a detached parent if the component was unmounted during the leave transition.",
+        "suggestion": "Restore the liveParent check: `const liveParent = parent && frag.anchor.parentNode; if (parent && !liveParent) return;`"
+      }
+    ],
+    "matched": [
+      {
+        "filePath": "packages/runtime-vapor/src/block.ts",
+        "lineNumber": 325,
+        "code": "    // fragment",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The check `if (isTransitionEnabled && (block as DynamicFragment).leaving) return` was removed from the move() function. This check prevented moving a fragment that is currently in a leave transition. Without it, a leaving branch can be moved during its leave animation, breaking the transition visual effect and potentially causing DOM corruption.",
+        "suggestion": "Restore the leaving check in move(): `if (isTransitionEnabled && (block as DynamicFragment).leaving) return`"
+      },
+      {
+        "filePath": "packages/runtime-vapor/src/block.ts",
+        "lineNumber": 519,
+        "code": "    const nodes = block.nodes",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The check `if (isTransitionEnabled && (block as DynamicFragment).leaving) { return block.anchor }` was removed from getBlockFirstNode(). For a leaving branch, the anchor should be returned as the first node since the fragment stays behind at its anchor position during leave. Without this, getBlockFirstNode() may return incorrect nodes for leaving fragments, breaking insertion positioning during transitions.",
+        "suggestion": "Restore the leaving branch anchor return in getBlockFirstNode()."
+      },
+      {
+        "filePath": "packages/runtime-vapor/src/components/Transition.ts",
+        "lineNumber": 709,
+        "code": "      parent && remove(frag.nodes, parent)",
+        "severity": "high",
+        "category": "bug",
+        "comment": "The `frag.leaving = true` assignment was removed in out-in mode. This flag was critical for tracking that a branch is currently leaving. Without it, the transition system cannot distinguish between a branch that is leaving vs one that has already left, breaking the out-in transition sequencing where the entering branch must wait for the leaving branch's afterLeave callback.",
+        "suggestion": "Restore `frag.leaving = true` before the remove() call in out-in mode."
+      },
+      {
+        "filePath": "packages/runtime-vapor/src/components/Transition.ts",
+        "lineNumber": 686,
+        "code": "            parent,",
+        "severity": "medium",
+        "category": "bug",
+        "comment": "The `liveParent` check was removed and replaced with `parent`. The original code verified `const liveParent = parent && frag.anchor.parentNode` and returned early if `parent && !liveParent`, ensuring the parent is still connected to the DOM before rendering the deferred branch. Without this check, a deferred out-in branch could render into a detached parent if the component was unmounted during the leave transition.",
+        "suggestion": "Restore the liveParent check: `const liveParent = parent && frag.anchor.parentNode; if (parent && !liveParent) return;`"
+      }
+    ],
+    "confirmed": true,
+    "judgedBy": "hand (judge hit the free daily rate limit)"
+  }
+]

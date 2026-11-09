@@ -13,7 +13,9 @@
  *   pnpm benchmark collect           add bug-fix PRs and recent PRs, cache their diffs
  *   pnpm benchmark index             clone each buggy commit, build its code graph
  *                                    in Neo4j and cache the graph evidence (no LLM)
- *   pnpm benchmark judge [--diff]    only judge the reviewed cases
+ *   pnpm benchmark judge [--diff] [--rejudge]
+ *                                    only judge the reviewed cases; --rejudge
+ *                                    clears earlier verdicts first
  *   pnpm benchmark report            only rewrite the report from saved results
  *
  * Every step skips work already done and the run stops cleanly when
@@ -90,6 +92,9 @@ const LINE_TOLERANCE = 3;
 const SOURCE_FILE = /\.(ts|tsx|js|jsx|mjs|cjs|vue|svelte)$/;
 /** Example apps, docs sites and playgrounds: a fix there is rarely a product bug. */
 const NON_PRODUCT = /(^|\/)(examples?|docs?|playgrounds?|sandbox)\//;
+/** Docs, dependency, test and typo PRs: "fix" in the title, but no product bug. */
+const NOT_A_BUG =
+  /^(docs|chore|test|tests|ci|build|style)\b|\(deps\)|\b(tests?|docs?|documentation|typos?|jsdoc)\b/i;
 const TEST_FILE =
   /(^|\/)(__tests__|tests?|spec|e2e|fixtures?|__snapshots__)\/|\.(test|spec|bench)\.\w+$/i;
 
@@ -210,8 +215,19 @@ function changedLineCount(patch: string): number {
 }
 
 /** Small, source-only bug fixes: the reversed diff has one clear defect to find. */
-function isDetectionCandidate(files: PrFile[]): boolean {
+/** True when every changed line of the patch is blank or a comment. */
+function commentsOnly(patch: string): boolean {
+  return patch
+    .split("\n")
+    .filter((l) => /^[+-]/.test(l) && !/^(\+\+\+|---)/.test(l))
+    .map((l) => l.slice(1).trim())
+    .every((l) => l === "" || /^(\/\/|\/\*|\*|<!--)/.test(l));
+}
+
+function isDetectionCandidate(files: PrFile[], title: string): boolean {
+  if (NOT_A_BUG.test(title)) return false;
   const source = sourceFiles(files);
+  if (source.every((f) => f.patch && commentsOnly(f.patch))) return false;
   if (source.some((f) => NON_PRODUCT.test(f.filePath))) return false;
   if (source.length < 1 || source.length > 3) return false;
   if (source.some((f) => f.status !== "modified" || !f.patch)) return false;
@@ -247,7 +263,7 @@ async function collect() {
         continue;
       known.add(pr.url);
       const files = await prFiles(get, pr.url);
-      if (!isDetectionCandidate(files)) continue;
+      if (!isDetectionCandidate(files, pr.title)) continue;
       cases.detection.push({
         url: pr.url,
         title: pr.title,
@@ -290,7 +306,7 @@ function loadCases(): Cases {
     filter: [],
   });
   cases.detection = cases.detection.filter((c) =>
-    isDetectionCandidate(c.files),
+    isDetectionCandidate(c.files, c.title),
   );
   return cases;
 }
@@ -311,7 +327,9 @@ async function index() {
     filter: [],
   });
   const graphs = readJson<Record<string, GraphEntry>>(GRAPHS_FILE, {});
-  const eligible = cases.detection.filter((c) => isDetectionCandidate(c.files));
+  const eligible = cases.detection.filter((c) =>
+    isDetectionCandidate(c.files, c.title),
+  );
   let get: GitHub | undefined;
 
   for (const [i, c] of eligible.entries()) {
@@ -562,7 +580,10 @@ const loadResults = (m: Mode) => readJson<CaseResult[]>(resultsFile(m), []);
 function stopForToday(step: string, done: number, total: number) {
   console.log(
     `\n[${step}] OpenRouter's free daily limit is reached after ${done}/${total} cases. ` +
-      `Run "pnpm benchmark ${process.argv.slice(2).join(" ")}" again after the daily reset (00:00 UTC) to continue.`,
+      `Run "pnpm benchmark ${process.argv
+        .slice(2)
+        .filter((arg) => arg !== "--rejudge")
+        .join(" ")}" again after the daily reset (00:00 UTC) to continue.`,
   );
 }
 
@@ -651,6 +672,11 @@ async function judge(mode: Mode): Promise<boolean> {
   const cases = new Map(loadCases().detection.map((c) => [c.url, c]));
   const config = defaultLlmConfig();
   const results = loadResults(mode);
+  if (process.argv.includes("--rejudge"))
+    for (const r of results) {
+      delete r.confirmed;
+      delete r.judgedBy;
+    }
   for (const [index, result] of results.entries()) {
     if (result.confirmed !== undefined) continue;
     const c = cases.get(result.url);
@@ -675,10 +701,10 @@ Title: ${c.title}
 Fix (unified diff):
 ${fix}
 
-A code reviewer, shown only the code BEFORE this fix, reported:
+A code reviewer was shown this fix REVERSED: a diff that removes the fix and reintroduces the defect. So the reviewer describes the change from the reviewer's side. A finding such as "this PR removes the check for X" or "X is no longer handled" matches a fix that adds the check for X. The reviewer reported:
 ${findings}
 
-Does any reported finding identify the same defect this fix addresses (the same root cause, not just the same lines)? Answer with exactly one word: YES or NO.`;
+Does any reported finding identify the defect this fix addresses, meaning the same root cause and not just the same lines? Judge the substance, not the wording or which direction the change is described in. Answer with exactly one word: YES or NO.`;
     try {
       const answer = await withRetries(async () => {
         const response = await fetch(`${baseUrlFor(config)}/chat/completions`, {
@@ -787,8 +813,9 @@ ${g.judged && d.judged ? `\n- Identified only with the graph: ${won.length}. Ide
 
 function report() {
   const cases = loadCases();
-  const graphResults = loadResults("graph");
-  const diffResults = loadResults("diff");
+  const valid = new Set(cases.detection.map((c) => c.url));
+  const graphResults = loadResults("graph").filter((r) => valid.has(r.url));
+  const diffResults = loadResults("diff").filter((r) => valid.has(r.url));
   const graphs = readJson<Record<string, GraphEntry>>(GRAPHS_FILE, {});
   const model = process.env.LLM_MODEL ?? DEFAULT_LLM_MODEL;
   const s = summarize(graphResults);
@@ -838,7 +865,7 @@ Run ${new Date().toISOString().slice(0, 10)} with model \`${model}\` and the \`c
 ${comparisonSection(graphResults, diffResults)}
 ## Method
 
-- **Cases:** merged PRs with "fix" in the title, touching 1–3 source files (no examples or docs) and 2–60 changed lines, at most ${MAX_CASES_PER_REPO} per repository, from ${repos.join(", ")}. Each patch is reversed so the diff reintroduces the bug the maintainers fixed. The title is replaced, and the description and test changes are withheld.
+- **Cases:** merged PRs with "fix" in the title, touching 1–3 source files (no examples or docs) and 2–60 changed lines, at most ${MAX_CASES_PER_REPO} per repository, excluding docs, dependency, test-only and comment-only PRs, from ${repos.join(", ")}. Each patch is reversed so the diff reintroduces the bug the maintainers fixed. The title is replaced, and the description and test changes are withheld.
 - **Graph context:** the production indexer builds the code graph of the fix PR's base commit (the code with the bug) in Neo4j, and the review receives the same one-hop traces it would in production.
 - **Flagged:** any finding points within ${LINE_TOLERANCE} lines of a reintroduced change. On small diffs this is loose, so it is an upper bound.
 - **Identified:** a judge model, given the real fix's title and patch, says a flagged finding describes the same defect. This is the headline number.${byHand ? ` ${byHand} verdict${byHand === 1 ? " was" : "s were"} made by hand after the judge hit a rate limit (marked in the results files).` : ""}

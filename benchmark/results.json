@@ -87,7 +87,7 @@
         "suggestion": "Either keep the bound function: `const replacer = this.stringifyReplacer.bind(this);` and call as `replacer(key, value)`, or if you want to use the JSON.stringify context, ensure `stringifyReplacer` doesn't rely on the ConsoleLogger instance. Given the method is an instance method, the bound approach is likely correct."
       }
     ],
-    "confirmed": false
+    "confirmed": true
   },
   {
     "url": "https://github.com/nestjs/nest/pull/18145",
@@ -165,7 +165,7 @@
         "suggestion": "Add back the `|| isUndefined(args[1])` check if `undefined` should be accepted as a valid stack argument, or ensure callers never pass `undefined`."
       }
     ],
-    "confirmed": false
+    "confirmed": true
   },
   {
     "url": "https://github.com/vitejs/vite/pull/23758",
@@ -205,7 +205,7 @@
         "suggestion": "Change the parameter type to TKey (or Type<unknown>) and use the controller directly instead of controller.constructor: const controllerKey = controller[CONTROLLER_ID_KEY] || controller.name;"
       }
     ],
-    "confirmed": true
+    "confirmed": false
   },
   {
     "url": "https://github.com/vuejs/core/pull/15867",
@@ -433,7 +433,7 @@
         "suggestion": "Either always call `devtools.setOnClose(onClose ?? (() => {}))` or explicitly clear with `devtools.setOnClose(() => {})` when `onClose` is not provided."
       }
     ],
-    "confirmed": false
+    "confirmed": true
   },
   {
     "url": "https://github.com/colinhacks/zod/pull/6662",
@@ -463,7 +463,7 @@
         "suggestion": "Restore the fallback logic or add a comment explaining why it's no longer needed. If the fallback was intentionally removed, ensure there are tests covering the case where all union members error but one has only continuable issues."
       }
     ],
-    "confirmed": false
+    "confirmed": true
   },
   {
     "url": "https://github.com/colinhacks/zod/pull/6660",
@@ -1021,7 +1021,6 @@
         "suggestion": "Restore the liveParent check: `const liveParent = parent && frag.anchor.parentNode; if (parent && !liveParent) return;`"
       }
     ],
-    "confirmed": true,
-    "judgedBy": "hand (judge hit the free daily rate limit)"
+    "confirmed": true
   }
 ]
